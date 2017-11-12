@@ -3,9 +3,22 @@ package vst2
 //TODO: add exceptions handling
 
 /*
+#cgo CFLAGS: -std=gnu99
 #cgo CPPFLAGS:  -I${SRCDIR}/../../vendor/vst2/
+#include <stdlib.h>
+#include <stdio.h>
 #include "aeffectx.h"
-#include "stdlib.h"
+
+// Plugin's entry point
+typedef AEffect * (*vstPluginFuncPtr)(audioMasterCallback host);
+// Plugin's dispatcher function
+typedef VstIntPtr (*dispatcherFuncPtr)(AEffect *effect, VstInt32 opCode, VstInt32 index, VstInt32 value, void *ptr, float opt);
+// Plugin's getParameter() method
+typedef float (*getParameterFuncPtr)(AEffect *effect, VstInt32 index);
+// Plugin's setParameter() method
+typedef void (*setParameterFuncPtr)(AEffect *effect, VstInt32 index, float value);
+// Plugin's processEvents() method
+typedef void (*processFuncPtr)(AEffect *effect, float **inputs,  float **outputs, VstInt32 sampleFrames);
 
 // Main host callback
 VstIntPtr VSTCALLBACK hostCallback(AEffect *effect, VstInt32 opcode, VstInt32 index, VstInt32 value, void *ptr, float opt){
@@ -21,17 +34,6 @@ VstIntPtr VSTCALLBACK hostCallback(AEffect *effect, VstInt32 opcode, VstInt32 in
   }
 }
 
-// Plugin's entry point
-typedef AEffect * (*vstPluginFuncPtr)(audioMasterCallback host);
-// Plugin's dispatcher function
-typedef VstIntPtr (*dispatcherFuncPtr)(AEffect *effect, VstInt32 opCode, VstInt32 index, VstInt32 value, void *ptr, float opt);
-// Plugin's getParameter() method
-typedef float (*getParameterFuncPtr)(AEffect *effect, VstInt32 index);
-// Plugin's setParameter() method
-typedef void (*setParameterFuncPtr)(AEffect *effect, VstInt32 index, float value);
-// Plugin's processEvents() method
-typedef void (*processFuncPtr)(AEffect *effect, float **inputs,  float **outputs, VstInt32 sampleFrames);
-
 //Bridge function to call entry point on AEffect
 AEffect * createEffectInstance(AEffect * (*load)(audioMasterCallback), audioMasterCallback host){
 	return load(host);
@@ -42,11 +44,23 @@ VstIntPtr dispatch(AEffect *effect, VstInt32 opCode, VstInt32 index, VstInt32 va
 	return effect->dispatcher(effect, opCode, index, value, ptr, opt);
 }
 
+//Bridge to call process replacing function of loaded plugin
+double** processAudio(AEffect *effect, double *leftInputs, double *rightInputs, int blocksize){
+	double** inputs;
+	double** outputs;
+	for(int channel = 0; channel < 2; channel++) {
+    	outputs[channel] = (double*)malloc(sizeof(double*) * blocksize);
+  	}
+
+	effect -> processDoubleReplacing(effect, inputs, outputs, blocksize);
+	return outputs;
+}
 */
 import "C"
 
 import (
 	"fmt"
+	"github.com/youpy/go-wav"
 	"syscall"
 	"unsafe"
 )
@@ -59,14 +73,14 @@ type Plugin struct {
 func LoadPlugin(path string) (plugin *Plugin) {
 
 	//Load plugin by path
-	modulePtr, err := syscall.LoadLibrary(path)
+	modulePtr, err := syscall.LoadDLL(path)
 	if err != nil {
-		fmt.Printf("Failed trying to load VST from '%s', error %d\n", path, err.Error())
+		fmt.Printf("Failed trying to load VST from '%s', error %v\n", path, err.Error())
 		return nil
 	}
 
 	//Get pointer to plugin's Main function
-	mainEntryPoint, err := syscall.GetProcAddress(modulePtr, "VSTPluginMain")
+	mainEntryPoint, err := syscall.GetProcAddress(modulePtr.Handle, "VSTPluginMain")
 	if err != nil {
 		fmt.Printf("Failed trying to obtain VST entry point '%s', error %d\n", path, err.Error())
 		return nil
@@ -80,31 +94,15 @@ func LoadPlugin(path string) (plugin *Plugin) {
 	return &Plugin{C.createEffectInstance(vstEntryPoint, callback)}
 }
 
-func configurePluginCallbacks(plugin *C.AEffect) {
-	// Check plugin's magic number
-	// If incorrect, then the file either was not loaded properly, is not a
-	// real VST plugin, or is otherwise corrupt.
-	if plugin.magic != C.kEffectMagic {
-		fmt.Printf("Plugin's magic number is bad\n")
-		// return -1
-	}
-
-	fmt.Printf("Plugin name is %v", plugin.uniqueID)
-
-	// Set up plugin callback functions
-	plugin.getParameter = plugin.getParameter
-	plugin.setParameter = plugin.setParameter
-
-	// return plugin
+//Resumes the plugin
+func (plugin *Plugin) resume() {
+	C.dispatch(plugin.Effect, C.effMainsChanged, 0, 1, nil, 0.0)
 }
 
-/*func resumePlugin(plugin *C.AEffect) {
-	dispatcher(plugin, C.effMainsChanged, 0, 1, nil, 0.0)
+//Suspends the plugin
+func (plugin *Plugin) suspend() {
+	C.dispatch(plugin.Effect, C.effMainsChanged, 0, 0, nil, 0.0)
 }
-
-func suspendPlugin(plugin *C.AEffect, dispatcher C.dispatcherFuncPtr) {
-	dispatcher(plugin, C.effMainsChanged, 0, 0, nil, 0.0)
-}*/
 
 //Starts the plugin
 func (plugin *Plugin) start() {
@@ -116,4 +114,23 @@ func (plugin *Plugin) start() {
 
 	blocksize := C.VstInt32(512)
 	C.dispatch(plugin.Effect, C.effSetBlockSize, 0, blocksize, nil, 0.0)
+}
+
+func (plugin *Plugin) processAudio(samples []wav.Sample) {
+	//convert Samples to float **
+	var rightSamples []C.double
+	var leftSamples []C.double
+
+	for _, sample := range samples {
+		rightSamples = append(rightSamples, C.double(float64(sample.Values[0])/32768))
+		leftSamples = append(leftSamples, C.double(float64(sample.Values[1])/32768))
+	}
+
+	rightCSamples := (*C.double)(unsafe.Pointer(&rightSamples[0]))
+	leftCSamples := (*C.double)(unsafe.Pointer(&rightSamples[0]))
+	//fmt.Printf("\nprocess samples type: %T\n", inSamples)
+	blocksize := C.int(len(samples))
+	//fmt.Printf("\nblocksize type: %T value: %v\n", blocksize, blocksize)
+
+	C.processAudio(plugin.Effect, leftCSamples, rightCSamples, blocksize)
 }

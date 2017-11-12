@@ -1,13 +1,45 @@
 package vst2
 
 import (
-	"fmt"
+	"github.com/youpy/go-wav"
+	"io"
+	"os"
 	"testing"
 )
 
+const (
+	pluginPath = "_testdata/ValhallaFreqEcho_x64.dll"
+	wavPath    = "_testdata/test.wav"
+)
+
 func TestLoadPlugin(t *testing.T) {
-	fmt.Print("Hello vst host!\n")
-	plugin := LoadPlugin("D:\\vst_home\\ValhallaFreqEcho_x64.dll")
+	plugin := LoadPlugin(pluginPath)
 	plugin.start()
-	fmt.Printf("%v\n", plugin)
+}
+
+func TestProcessWav(t *testing.T) {
+
+	file, _ := os.Open(wavPath)
+	reader := wav.NewReader(file)
+
+	defer file.Close()
+
+	var samples []wav.Sample
+
+	for {
+		read, err := reader.ReadSamples()
+		if err == io.EOF {
+			break
+		}
+
+		samples = append(samples, read...)
+		/*for _, sample := range samples {
+			fmt.Printf("L/R: %d/%d\n", reader.IntValue(sample, 0), reader.IntValue(sample, 1))
+		}*/
+	}
+
+	plugin := LoadPlugin(pluginPath)
+	plugin.start()
+
+	plugin.processAudio(samples)
 }

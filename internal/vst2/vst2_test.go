@@ -1,6 +1,7 @@
 package vst2
 
 import (
+	// "fmt"
 	"github.com/youpy/go-wav"
 	"io"
 	"os"
@@ -12,19 +13,32 @@ const (
 	wavPath    = "_testdata/test.wav"
 )
 
+//Test load plugin
 func TestLoadPlugin(t *testing.T) {
-	plugin := LoadPlugin(pluginPath)
+	plugin, err := LoadPlugin(pluginPath)
+	if err != nil {
+		t.Fatalf("Failed LoadPlugin: %v\n", err)
+	}
 	plugin.start()
 }
 
-func TestProcessWav(t *testing.T) {
+//Test processAudio function
+func TestProcessAudio(t *testing.T) {
+	samples := readWav(wavPath)
+
+	plugin, _ := LoadPlugin(pluginPath)
+	plugin.start()
+
+	plugin.processAudio(samples)
+}
+
+//Read wav for test
+func readWav(wavPath string) (wavSamples []wav.Sample) {
 
 	file, _ := os.Open(wavPath)
 	reader := wav.NewReader(file)
 
 	defer file.Close()
-
-	var samples []wav.Sample
 
 	for {
 		read, err := reader.ReadSamples()
@@ -32,14 +46,8 @@ func TestProcessWav(t *testing.T) {
 			break
 		}
 
-		samples = append(samples, read...)
-		/*for _, sample := range samples {
-			fmt.Printf("L/R: %d/%d\n", reader.IntValue(sample, 0), reader.IntValue(sample, 1))
-		}*/
+		wavSamples = append(wavSamples, read...)
 	}
 
-	plugin := LoadPlugin(pluginPath)
-	plugin.start()
-
-	plugin.processAudio(samples)
+	return
 }

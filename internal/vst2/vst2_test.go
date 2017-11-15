@@ -1,7 +1,6 @@
 package vst2
 
 import (
-	// "fmt"
 	"github.com/youpy/go-wav"
 	"io"
 	"os"
@@ -24,10 +23,12 @@ func TestLoadPlugin(t *testing.T) {
 
 //Test processAudio function
 func TestProcessAudio(t *testing.T) {
-	samples := readWav(wavPath)
+	samples := ConvertWavSamplesToFloat64(readWav(wavPath))
 
 	plugin, _ := LoadPlugin(pluginPath)
 	plugin.start()
+
+	plugin.resume()
 
 	plugin.processAudio(samples)
 }
@@ -50,4 +51,18 @@ func readWav(wavPath string) (wavSamples []wav.Sample) {
 	}
 
 	return
+}
+
+//convert WAV samples to float slice
+func ConvertWavSamplesToFloat64(wavSamples []wav.Sample) (samples [][]float64) {
+	samples = make([][]float64, 2)
+
+	samples[0] = make([]float64, len(wavSamples))
+	samples[1] = make([]float64, len(wavSamples))
+
+	for i, sample := range wavSamples {
+		samples[0][i] = float64(sample.Values[0]) / 32768
+		samples[1][i] = float64(sample.Values[1]) / 32768
+	}
+	return samples
 }

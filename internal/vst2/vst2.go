@@ -37,34 +37,36 @@ VstIntPtr dispatch(AEffect *effect, VstInt32 opCode, int index, int value, void 
 }
 
 //Bridge to call process replacing function of loaded plugin
-double** processAudio(AEffect *effect, int numChannels, int blocksize, double *leftInputs, double *rightInputs){
+double** processAudio(AEffect *effect, int numChannels, int blocksize, double ** goInputs){
 
 	printf("in params: numChannels[%d] blocksize[%d]\n", numChannels, blocksize);
 
 	double* inputs[numChannels];
-	inputs[0] = &leftInputs[0];
-	inputs[1] = &rightInputs[0];
-	printf("inputs initialized!\n");
+	for(int channel = 0; channel < numChannels; channel++) {
+    	inputs[channel] = &goInputs[channel];
+  	}
+
+
+	for (int i = 0; i < 20; i++) {
+		for(int channel = 0; channel < numChannels; channel++) {
+			printf("[%.6f]", inputs[channel][i]);
+    	}
+    	printf("\n");
+    }
 
 	double** outputs = (double**)malloc(sizeof(double**) * numChannels);
 	for(int channel = 0; channel < numChannels; channel++) {
     	outputs[channel] = (double*)malloc(sizeof(double*) * blocksize);
   	}
-  	printf("outputs initialized!\n");
-
-	for (int j = 0; j < 10; j++) {
-			printf("[%.6f][%.6f]\n", leftInputs[j], rightInputs[j]);
-    }
 
 	effect -> processDoubleReplacing(effect, &inputs, &outputs, blocksize);
+
 	return outputs;
 }
 */
 import "C"
 
 import (
-	"fmt"
-	"github.com/youpy/go-wav"
 	"log"
 	"syscall"
 	"unsafe"
@@ -125,45 +127,14 @@ func (plugin *Plugin) start() {
 
 //TODO: catch panic
 //process audio
-func (plugin *Plugin) processAudio(wavSamples []wav.Sample) {
+func (plugin *Plugin) processAudio(samples [][]float64) {
 
-	samples := ConvertWavSamplesToFloat64(wavSamples)
 	//convert Samples to float **
-
-	rightCSamples := (*C.double)(unsafe.Pointer(&samples[0][0]))
-	leftCSamples := (*C.double)(unsafe.Pointer(&samples[1][0]))
-
+	cSamples := (**C.double)(unsafe.Pointer(&samples[0][0]))
 	//fmt.Printf("\nprocess samples type: %T\n", inSamples)
 	blocksize := C.int(len(samples[0]))
 	numChannels := C.int(len(samples))
 	//fmt.Printf("\nblocksize: %v numchannels: %v\n", blocksize, numChannels)
 
-	C.processAudio(plugin.Effect, numChannels, blocksize, leftCSamples, rightCSamples)
-}
-
-func ConvertWavSamplesToCDouble(wavSamples []wav.Sample) (samples [][]C.double) {
-	samples = make([][]C.double, 2)
-	//convert samples to float slice
-	samples[0] = make([]C.double, len(wavSamples))
-	samples[1] = make([]C.double, len(wavSamples))
-
-	for i, sample := range wavSamples {
-		samples[0][i] = C.double(float64(sample.Values[0]) / 32768)
-		samples[1][i] = C.double(float64(sample.Values[1]) / 32768)
-	}
-	return samples
-}
-
-func ConvertWavSamplesToFloat64(wavSamples []wav.Sample) (samples [][]float64) {
-	fmt.Println("Call from convert to float64")
-	samples = make([][]float64, 2)
-	//convert samples to float slice
-	samples[0] = make([]float64, len(wavSamples))
-	samples[1] = make([]float64, len(wavSamples))
-
-	for i, sample := range wavSamples {
-		samples[0][i] = float64(sample.Values[0]) / 32768
-		samples[1][i] = float64(sample.Values[1]) / 32768
-	}
-	return samples
+	C.processAudio(plugin.Effect, numChannels, blocksize, cSamples)
 }

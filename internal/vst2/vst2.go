@@ -41,9 +41,9 @@ double** processAudio(AEffect *effect, int numChannels, int blocksize, double **
 
 	printf("in params: numChannels[%d] blocksize[%d]\n", numChannels, blocksize);
 
-	double* inputs[numChannels];
+	double** inputs = (double**)malloc(sizeof(double**) * numChannels);
 	for(int channel = 0; channel < numChannels; channel++) {
-    	inputs[channel] = &goInputs[channel];
+    	inputs[channel] = &goInputs[numChannels];
   	}
 
 
@@ -59,7 +59,14 @@ double** processAudio(AEffect *effect, int numChannels, int blocksize, double **
     	outputs[channel] = (double*)malloc(sizeof(double*) * blocksize);
   	}
 
-	effect -> processDoubleReplacing(effect, &inputs, &outputs, blocksize);
+	effect -> processDoubleReplacing(effect, inputs, outputs, blocksize);
+
+	for (int i = 0; i < 20; i++) {
+		for(int channel = 0; channel < numChannels; channel++) {
+			printf("[%.6f]", outputs[channel][i]);
+    	}
+    	printf("\n");
+    }
 
 	return outputs;
 }

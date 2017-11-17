@@ -43,7 +43,7 @@ double** processAudio(AEffect *effect, int numChannels, int blocksize, double **
 
 	double** inputs = (double**)malloc(sizeof(double**) * numChannels);
 	for(int channel = 0; channel < numChannels; channel++) {
-    	inputs[channel] = &goInputs[numChannels];
+    	inputs[channel] = (double*)&goInputs[channel];
   	}
 
 
@@ -128,7 +128,7 @@ func (plugin *Plugin) start() {
 	sampleRate := C.float(44100.0)
 	C.dispatch(plugin.Effect, C.effSetSampleRate, 0, 0, nil, sampleRate)
 
-	blocksize := C.int(512)
+	blocksize := C.int(4096)
 	C.dispatch(plugin.Effect, C.effSetBlockSize, 0, blocksize, nil, 0.0)
 }
 

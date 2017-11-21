@@ -27,8 +27,8 @@ VstIntPtr VSTCALLBACK hostCallback(AEffect *effect, VstInt32 opcode, VstInt32 in
 }
 
 //Bridge function to call entry point on AEffect
-AEffect * createEffectInstance(AEffect * (*load)(audioMasterCallback), audioMasterCallback host){
-	return load(host);
+AEffect * loadEffect(AEffect * (*load)(audioMasterCallback), audioMasterCallback hostCallback){
+	return load(hostCallback);
 }
 
 //Bridge to call dispatch function of loaded plugin
@@ -39,20 +39,10 @@ VstIntPtr dispatch(AEffect *effect, VstInt32 opCode, int index, int value, void 
 //Bridge to call process replacing function of loaded plugin
 double** processAudio(AEffect *effect, int numChannels, int blocksize, double ** goInputs){
 
-	printf("in params: numChannels[%d] blocksize[%d]\n", numChannels, blocksize);
-
 	double** inputs = (double**)malloc(sizeof(double**) * numChannels);
 	for(int channel = 0; channel < numChannels; channel++) {
     	inputs[channel] = (double*)&goInputs[channel];
   	}
-
-
-	for (int i = 0; i < 20; i++) {
-		for(int channel = 0; channel < numChannels; channel++) {
-			printf("[%.6f]", inputs[channel][i]);
-    	}
-    	printf("\n");
-    }
 
 	double** outputs = (double**)malloc(sizeof(double**) * numChannels);
 	for(int channel = 0; channel < numChannels; channel++) {
@@ -60,13 +50,6 @@ double** processAudio(AEffect *effect, int numChannels, int blocksize, double **
   	}
 
 	effect -> processDoubleReplacing(effect, inputs, outputs, blocksize);
-
-	for (int i = 0; i < 20; i++) {
-		for(int channel = 0; channel < numChannels; channel++) {
-			printf("[%.6f]", outputs[channel][i]);
-    	}
-    	printf("\n");
-    }
 
 	return outputs;
 }
@@ -88,26 +71,25 @@ type Plugin struct {
 func LoadPlugin(path string) (*Plugin, error) {
 
 	//Load plugin by path
-	modulePtr, err := syscall.LoadDLL(path)
+	moduleHandle, err := syscall.LoadLibrary(path)
 	if err != nil {
-		log.Printf("Failed trying to load VST from '%s'. %v\n", path, err)
+		log.Printf("Failed to load VST from '%s': %v\n", path, err)
 		return nil, err
 	}
 
 	//Get pointer to plugin's Main function
-	mainEntryPoint, err := syscall.GetProcAddress(modulePtr.Handle, "VSTPluginMain")
+	mainEntryPoint, err := syscall.GetProcAddress(moduleHandle, "VSTPluginMain")
 	if err != nil {
-		log.Printf("Failed trying to obtain VST entry point '%s'. %v\n", path, err)
+		log.Printf("Failed to obtain VST entry point '%s': %v\n", path, err)
 		return nil, err
 	}
 
 	//Convert to C++ pointer type
 	vstEntryPoint := (C.vstPluginFuncPtr)(unsafe.Pointer(mainEntryPoint))
-
 	//Convert callback function to C++ type
 	callback := (C.audioMasterCallback)(C.hostCallback)
 
-	return &Plugin{Effect: C.createEffectInstance(vstEntryPoint, callback)}, nil
+	return &Plugin{Effect: C.loadEffect(vstEntryPoint, callback)}, nil
 }
 
 //Resumes the plugin
@@ -132,16 +114,18 @@ func (plugin *Plugin) start() {
 	C.dispatch(plugin.Effect, C.effSetBlockSize, 0, blocksize, nil, 0.0)
 }
 
-//TODO: catch panic
-//process audio
-func (plugin *Plugin) processAudio(samples [][]float64) {
-
+//Process audio with VST plugin
+func (plugin *Plugin) Process(samples [][]float64) (processed [][]float64) {
 	//convert Samples to float **
-	cSamples := (**C.double)(unsafe.Pointer(&samples[0][0]))
-	//fmt.Printf("\nprocess samples type: %T\n", inSamples)
+	inSamples := (**C.double)(unsafe.Pointer(&samples[0][0]))
 	blocksize := C.int(len(samples[0]))
 	numChannels := C.int(len(samples))
-	//fmt.Printf("\nblocksize: %v numchannels: %v\n", blocksize, numChannels)
-
-	C.processAudio(plugin.Effect, numChannels, blocksize, cSamples)
+	//call plugin and convert result to slice of slices
+	outSamples := (*[1 << 30]*C.double)(unsafe.Pointer(C.processAudio(plugin.Effect, numChannels, blocksize, inSamples)))[:numChannels]
+	//convert slices to [][]float64
+	processed = make([][]float64, numChannels)
+	for channel, data := range outSamples {
+		processed[channel] = (*[1 << 30]float64)(unsafe.Pointer(data))[:blocksize]
+	}
+	return processed
 }

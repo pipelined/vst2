@@ -8,7 +8,7 @@ import (
 )
 
 const (
-	pluginPath = "_testdata/ValhallaFreqEcho_x64.dll"
+	pluginPath = "_testdata/2-band distortion.dll"
 	wavPath    = "_testdata/test.wav"
 )
 
@@ -18,11 +18,19 @@ func TestLoadPlugin(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed LoadPlugin: %v\n", err)
 	}
-	plugin.start()
+	t.Logf("Passed LoadPlugin: %v\n", plugin)
+}
+
+//Test load plugin
+func TestFailLoadPlugin(t *testing.T) {
+	_, err := LoadPlugin(pluginPath)
+	if err != nil {
+		t.Logf("Passed FailLoadPlugin: %v\n", err)
+	}
 }
 
 //Test processAudio function
-func TestProcessAudio(t *testing.T) {
+func TestProcess(t *testing.T) {
 	samples := ConvertWavSamplesToFloat64(readWav(wavPath))
 
 	plugin, _ := LoadPlugin(pluginPath)
@@ -30,7 +38,7 @@ func TestProcessAudio(t *testing.T) {
 
 	plugin.resume()
 
-	plugin.processAudio(samples)
+	plugin.Process(samples)
 }
 
 //Read wav for test

@@ -2,7 +2,7 @@ package vst2
 
 /*
 #cgo CFLAGS: -std=gnu99
-#cgo CPPFLAGS: -I${SRCDIR}/../../vendor/vst2/
+#cgo CPPFLAGS: -I${SRCDIR}/../vendor/vst2/
 
 #include <stdlib.h>
 #include <stdio.h>

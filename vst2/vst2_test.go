@@ -2,6 +2,7 @@ package vst2
 
 import (
 	"github.com/youpy/go-wav"
+	// "go/build"
 	"io"
 	"os"
 	"testing"

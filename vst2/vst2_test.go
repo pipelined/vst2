@@ -15,18 +15,9 @@ const (
 
 //Test load plugin
 func TestLoadPlugin(t *testing.T) {
-	plugin, err := LoadPlugin(pluginPath)
-	if err != nil {
-		t.Fatalf("Failed LoadPlugin: %v\n", err)
-	}
-	t.Logf("Passed LoadPlugin: %v\n", plugin)
-}
-
-//Test load plugin
-func TestFailLoadPlugin(t *testing.T) {
 	_, err := LoadPlugin(pluginPath)
 	if err != nil {
-		t.Logf("Passed FailLoadPlugin: %v\n", err)
+		t.Fatalf("Failed LoadPlugin: %v\n", err)
 	}
 }
 

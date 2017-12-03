@@ -16,3 +16,11 @@
 
 # Golang project vendor packages which should be ignored
 vendor/
+
+### VisualStudioCode ###
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+.history

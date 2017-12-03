@@ -1,4 +1,4 @@
-package loader
+package pool
 
 import (
 	//"fmt"
@@ -9,6 +9,17 @@ import (
 	"strings"
 	// "os"
 )
+
+var (
+	pool []audio.Processor
+)
+
+func New() []audio.Processor {
+	if pool == nil {
+	}
+
+	return pool
+}
 
 //Loads all plugins in provided directory
 func LoadAll(path string) ([]audio.Processor, error) {

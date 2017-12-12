@@ -14,10 +14,10 @@ const (
 )
 
 //Test load plugin
-func TestLoadPlugin(t *testing.T) {
-	_, err := LoadPlugin(pluginPath)
+func TestNewPlugin(t *testing.T) {
+	_, err := NewPlugin(pluginPath)
 	if err != nil {
-		t.Fatalf("Failed LoadPlugin: %v\n", err)
+		t.Fatalf("Failed NewPlugin: %v\n", err)
 	}
 }
 
@@ -25,7 +25,7 @@ func TestLoadPlugin(t *testing.T) {
 func TestProcess(t *testing.T) {
 	samples := ConvertWavSamplesToFloat64(readWav(wavPath))
 
-	plugin, _ := LoadPlugin(pluginPath)
+	plugin, _ := NewPlugin(pluginPath)
 	plugin.start()
 
 	plugin.resume()

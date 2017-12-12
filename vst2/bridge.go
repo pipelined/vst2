@@ -1,6 +1,6 @@
 package vst2
 
-/* 
+/*
 #cgo CFLAGS: -std=gnu99 -I${SRCDIR}/../vendor/vst2/
 #cgo LDFLAGS: -Wl,--allow-multiple-definition
 
@@ -42,8 +42,5 @@ double** processAudio(AEffect *effect, int numChannels, int blocksize, double **
 
 	return outputs;
 }
-
-//Go callback prototype
-int hostCallback(AEffect *effect, int opcode, int index, int value, void *ptr, float opt);
 */
 import "C"

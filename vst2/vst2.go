@@ -15,7 +15,6 @@ import "C"
 
 import (
 	"log"
-	"syscall"
 	"unsafe"
 )
 
@@ -41,6 +40,10 @@ const (
 	EffSetBlockSize  = pluginOpcode(C.effSetBlockSize)
 )
 
+const (
+	vstMain string = "VSTPluginMain"
+)
+
 //MasterOpcode used to wrap C opcodes values
 type MasterOpcode uint64
 
@@ -61,15 +64,8 @@ var (
 //NewPlugin loads the plugin into memory and stores callback func
 //TODO: catch panic
 func NewPlugin(path string) (*Plugin, error) {
-	//Load plugin by path
-	moduleHandle, err := syscall.LoadLibrary(path)
-	if err != nil {
-		log.Printf("Failed to load VST from '%s': %v\n", path, err)
-		return nil, err
-	}
-
 	//Get pointer to plugin's Main function
-	mainEntryPoint, err := syscall.GetProcAddress(moduleHandle, "VSTPluginMain")
+	mainEntryPoint, err := getEntryPoint(path)
 	if err != nil {
 		log.Printf("Failed to obtain VST entry point '%s': %v\n", path, err)
 		return nil, err

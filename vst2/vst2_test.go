@@ -26,7 +26,7 @@ func TestProcess(t *testing.T) {
 	samples := ConvertWavSamplesToFloat64(readWav(wavPath))
 
 	plugin, _ := NewPlugin(pluginPath)
-	plugin.start()
+	plugin.Start()
 
 	plugin.resume()
 

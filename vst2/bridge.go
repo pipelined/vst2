@@ -21,8 +21,8 @@ AEffect * loadEffect(AEffect * (*load)(audioMasterCallback)){
 }
 
 //Bridge to call dispatch function of loaded plugin
-VstIntPtr dispatch(AEffect *effect, int opCode, int index, int value, void *ptr, float opt){
-	return effect->dispatcher(effect, opCode, index, value, ptr, opt);
+VstIntPtr dispatch(AEffect *effect, int opcode, int index, int value, void *ptr, float opt){
+	return effect->dispatcher(effect, opcode, index, value, ptr, opt);
 }
 
 //Bridge to call process replacing function of loaded plugin

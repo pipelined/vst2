@@ -9,12 +9,11 @@ AEffect * loadEffect(AEffect * (*load)(vstPluginFuncPtr));
 
 double** processAudio(AEffect *effect, int numChannels, int blocksize, double ** goInputs);
 
-int dispatch(AEffect *effect, int opCode, int index, int value, void *ptr, float opt);
+int dispatch(AEffect *effect, int opcode, int index, int value, void *ptr, float opt);
 */
 import "C"
 
 import (
-	"fmt"
 	"log"
 	"syscall"
 	"unsafe"
@@ -24,17 +23,40 @@ import (
 type Plugin struct {
 	entryPoint uintptr
 	effect     *C.AEffect
-	callback   HostCallbackFunc
 }
 
 //HostCallbackFunc used as callback from plugin
-type HostCallbackFunc func(*Plugin, int64, int64, int64, unsafe.Pointer, float64) int
+type HostCallbackFunc func(*Plugin, MasterOpcode, int64, int64, unsafe.Pointer, float64) int
 
-//init package
-func init() {
-	opCode := new(C.enum_AudioMasterOpcodes)
-	fmt.Printf("OpCode: %v, type: %t\n", *opCode, *opCode)
-}
+//pluginOpcode used to wrap C opcodes values
+type pluginOpcode uint64
+
+//Constants for audio master callback opcodes
+//Host -> Plugin
+const (
+	EffEditIdle      = pluginOpcode(C.effEditIdle)
+	EffMainsChanged  = pluginOpcode(C.effMainsChanged)
+	EffOpen          = pluginOpcode(C.effOpen)
+	EffSetSampleRate = pluginOpcode(C.effSetSampleRate)
+	EffSetBlockSize  = pluginOpcode(C.effSetBlockSize)
+)
+
+//MasterOpcode used to wrap C opcodes values
+type MasterOpcode uint64
+
+//Constants for audio master callback opcodes
+//Plugin -> Host
+const (
+	AudioMasterAutomate  = MasterOpcode(C.audioMasterAutomate)
+	AudioMasterVersion   = MasterOpcode(C.audioMasterVersion)
+	AudioMasterCurrentID = MasterOpcode(C.audioMasterCurrentId)
+	AudioMasterIdle      = MasterOpcode(C.audioMasterIdle)
+	AudioMasterGetTime   = MasterOpcode(C.audioMasterGetTime)
+)
+
+var (
+	callback HostCallbackFunc = HostCallback
+)
 
 //NewPlugin loads the plugin into memory and stores callback func
 //TODO: catch panic
@@ -56,30 +78,37 @@ func NewPlugin(path string) (*Plugin, error) {
 	return &Plugin{entryPoint: mainEntryPoint}, nil
 }
 
-//Resumes the plugin
+//Dispatch wraps-up C method to dispatch calls to plugin
+func (plugin *Plugin) Dispatch(opcode pluginOpcode, index int64, value int64, ptr unsafe.Pointer, opt float64) {
+	if plugin.effect != nil {
+		C.dispatch(plugin.effect, C.int(opcode), C.int(index), C.int(value), ptr, C.float(opt))
+	}
+}
+
+//Resume the plugin
 func (plugin *Plugin) resume() {
-	C.dispatch(plugin.effect, C.effMainsChanged, 0, 1, nil, 0.0)
+	plugin.Dispatch(EffMainsChanged, 0, 1, nil, 0.0)
 }
 
-//Suspends the plugin
+//Suspend the plugin
 func (plugin *Plugin) suspend() {
-	C.dispatch(plugin.effect, C.effMainsChanged, 0, 0, nil, 0.0)
+	plugin.Dispatch(EffMainsChanged, 0, 0, nil, 0.0)
 }
 
-//Starts the plugin
-func (plugin *Plugin) start() {
+//Start the plugin
+func (plugin *Plugin) Start() {
 	//Convert to C++ pointer type
 	vstEntryPoint := (C.vstPluginFuncPtr)(unsafe.Pointer(plugin.entryPoint))
 	plugin.effect = C.loadEffect(vstEntryPoint)
 
-	C.dispatch(plugin.effect, C.effOpen, 0, 0, nil, 0.0)
+	plugin.Dispatch(EffOpen, 0, 0, nil, 0.0)
 
 	// Set default sample rate and block size
-	sampleRate := C.float(44100.0)
-	C.dispatch(plugin.effect, C.effSetSampleRate, 0, 0, nil, sampleRate)
+	sampleRate := 44100.0
+	plugin.Dispatch(EffSetSampleRate, 0, 0, nil, sampleRate)
 
-	blocksize := C.int(4096)
-	C.dispatch(plugin.effect, C.effSetBlockSize, 0, blocksize, nil, 0.0)
+	blocksize := int64(4096)
+	plugin.Dispatch(EffSetBlockSize, 0, blocksize, nil, 0.0)
 }
 
 //Process audio with VST plugin
@@ -99,12 +128,29 @@ func (plugin *Plugin) Process(samples [][]float64) (processed [][]float64) {
 }
 
 //export hostCallback
+//calls real callback
 func hostCallback(effect *C.AEffect, opcode int64, index int64, value int64, ptr unsafe.Pointer, opt float64) int {
+	if callback == nil {
+		panic("Host callback is not defined!")
+	}
+
+	return callback(&Plugin{effect: effect}, MasterOpcode(opcode), index, value, ptr, opt)
+}
+
+//SetHostCallback allows to override default host callback with custom implementation
+func SetHostCallback(newCallback HostCallbackFunc) {
+	if newCallback != nil {
+		callback = newCallback
+	}
+}
+
+//HostCallback is a default callback, can be overriden with SetHostCallback
+func HostCallback(plugin *Plugin, opcode MasterOpcode, index int64, value int64, ptr unsafe.Pointer, opt float64) int {
 	switch opcode {
-	case C.audioMasterVersion:
+	case AudioMasterVersion:
 		return 2400
-	case C.audioMasterIdle:
-		C.dispatch(effect, C.effEditIdle, 0, 0, nil, 0)
+	case AudioMasterIdle:
+		plugin.Dispatch(EffEditIdle, 0, 0, nil, 0)
 	default:
 		log.Printf("Plugin requested value of opcode %v\n", opcode)
 		break

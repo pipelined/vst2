@@ -1,16 +1,15 @@
 package vst2
 
 import (
-	"github.com/youpy/go-wav"
-	// "go/build"
 	"io"
 	"os"
 	"testing"
+
+	"github.com/youpy/go-wav"
 )
 
 const (
-	pluginPath = "_testdata/2-band distortion.dll"
-	wavPath    = "_testdata/test.wav"
+	wavPath = "_testdata/test.wav"
 )
 
 //Test load plugin

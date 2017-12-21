@@ -2,7 +2,7 @@ package vst2
 
 /*
 #cgo CFLAGS: -std=gnu99 -I${SRCDIR}/../vendor/vst2/
-#cgo LDFLAGS: -Wl,--allow-multiple-definition
+#cgo windows LDFLAGS: -Wl,--allow-multiple-definition
 
 #include <stdlib.h>
 #include <stdio.h>

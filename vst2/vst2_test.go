@@ -20,6 +20,15 @@ func TestNewPlugin(t *testing.T) {
 	}
 }
 
+//Test load plugin
+func TestStartPlugin(t *testing.T) {
+	plugin, err := NewPlugin(pluginPath)
+	if err != nil {
+		t.Fatalf("Failed NewPlugin: %v\n", err)
+	}
+	plugin.Start()
+}
+
 //Test processAudio function
 func TestProcess(t *testing.T) {
 	samples := ConvertWavSamplesToFloat64(readWav(wavPath))

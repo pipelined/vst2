@@ -1,8 +1,7 @@
 package vst2
 
 /*
-#cgo CFLAGS: -std=gnu99 -I${SRCDIR}/../vendor/vst2/
-#cgo windows LDFLAGS: -Wl,--allow-multiple-definition
+#cgo CFLAGS: -std=gnu99 -I${SRCDIR}/vst2sdk/
 
 #include <stdlib.h>
 #include <stdio.h>

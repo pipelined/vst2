@@ -23,3 +23,6 @@ vendor/
 .vscode/launch.json
 .vscode/extensions.json
 .history
+
+# Golang dep tool
+Gopkg.lock

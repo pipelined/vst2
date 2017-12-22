@@ -1,4 +1,4 @@
-# Golang VST host
+# Golang VST package
 
 ## Dependencies 
 For Go dependencies **dep** is used.

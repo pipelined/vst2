@@ -16,6 +16,9 @@
 # Golang project vendor packages which should be ignored
 vendor/
 
+# Public repository for binary package
+public.vst2/
+
 ### VisualStudioCode ###
 .vscode/*
 .vscode/settings.json

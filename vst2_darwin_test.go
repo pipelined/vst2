@@ -1,5 +1,6 @@
 package vst2
 
 const (
-	pluginPath = "_testdata/mdaDubDelay.vst"
+	// pluginPath = "/Library/Audio/Plug-ins/VST/Krush.vst"
+	pluginPath = "_testdata/Krush.vst"
 )

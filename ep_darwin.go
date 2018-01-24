@@ -7,7 +7,7 @@ import "unsafe"
 
 import "fmt"
 
-func getEntryPoint(path string) (uintptr, error) {
+func getEntryPoint(path string) (unsafe.Pointer, error) {
 	//create C string
 	cpath := C.CString(path)
 	defer C.free(unsafe.Pointer(cpath))
@@ -18,13 +18,13 @@ func getEntryPoint(path string) (uintptr, error) {
 	//get bundle url
 	bundleURL := C.CFURLCreateWithFileSystemPath(C.kCFAllocatorDefault, cfpath, C.kCFURLPOSIXPathStyle, C.true)
 	if bundleURL == nil {
-		return 0, fmt.Errorf("Failed to create bundle url at %v", path)
+		return nil, fmt.Errorf("Failed to create bundle url at %v", path)
 	}
 	defer C.free(unsafe.Pointer(bundleURL))
 	//open bundle
 	bundleRef := C.CFBundleCreate(C.kCFAllocatorDefault, bundleURL)
 	if bundleRef == nil {
-		return 0, fmt.Errorf("Failed to create bundle at %v", path)
+		return nil, fmt.Errorf("Failed to create bundle at %v", path)
 	}
 	defer C.CFRelease(C.CFTypeRef(bundleRef))
 
@@ -35,6 +35,6 @@ func getEntryPoint(path string) (uintptr, error) {
 	cfvstMain := C.CFStringCreateWithCString(nil, cvstMain, C.kCFStringEncodingUTF8)
 	defer C.free(unsafe.Pointer(cfvstMain))
 
-	mainEntryPoint := uintptr(C.CFBundleGetFunctionPointerForName(bundleRef, cfvstMain))
+	mainEntryPoint := unsafe.Pointer(C.CFBundleGetFunctionPointerForName(bundleRef, cfvstMain))
 	return mainEntryPoint, nil
 }

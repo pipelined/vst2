@@ -17,7 +17,7 @@ import (
 
 //Plugin type provides interface
 type Plugin struct {
-	entryPoint uintptr
+	entryPoint unsafe.Pointer
 	effect     *C.AEffect
 }
 

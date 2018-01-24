@@ -11,3 +11,10 @@ VST SDK is also required
 * aeffect.h
 * aeffectx.h
 * vstfxstore.h
+
+## Building 
+1. Go to submodule diretory _vst2
+2. Run 
+~~~
+./build.sh <os> <arch>
+~~~

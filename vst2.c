@@ -1,13 +1,14 @@
 #include <stdlib.h>
 #include <stdio.h>
-#include <stdarg.h>
+//#include <stdarg.h>
+#include <stdint.h>
 #include "aeffectx.h"
 
 // Plugin's entry point
 typedef AEffect * (*vstPluginFuncPtr)(audioMasterCallback host);
 
 //Go callback prototype
-int hostCallback(AEffect *effect, int opcode, int index, int value, void *ptr, float opt);
+int hostCallback(AEffect *effect, int opcode, int index, int64_t value, void *ptr, float opt);
 
 //Bridge function to call entry point on AEffect
 AEffect * loadEffect(AEffect * (*load)(audioMasterCallback)){
@@ -80,7 +81,7 @@ AEffect * loadEffect(AEffect * (*load)(audioMasterCallback)){
 // }
 
 //Bridge to call dispatch function of loaded plugin
-VstIntPtr dispatch(AEffect *effect, int opcode, int index, int64_t value, void *ptr, float opt){
+VstIntPtr dispatch(AEffect *effect, int opcode, int index, int value, void *ptr, float opt){
 	return effect->dispatcher(effect, opcode, index, value, ptr, opt);
 }
 

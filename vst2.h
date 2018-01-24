@@ -1,3 +1,4 @@
+#include <stdint.h>
 #include "aeffectx.h"
 
 // Plugin's entry point

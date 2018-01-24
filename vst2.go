@@ -4,13 +4,13 @@ package vst2
 #cgo CFLAGS: -std=gnu99 -I${SRCDIR}/vst2sdk/ -I${SRCDIR}
 
 #include <stdlib.h>
+#include <stdint.h>
 #include "vst2.h"
 #include "aeffectx.h"
 */
 import "C"
 
 import (
-	"fmt"
 	"log"
 	"unsafe"
 )
@@ -36,7 +36,7 @@ func finalize(p *Plugin) {
 	C.free(unsafe.Pointer(p.effect))
 }
 
-//NewPlugin loads the plugin into memory and stores callback func
+//NewPlugin loads the plugin into memory and stores entry point func
 //TODO: catch panic
 func NewPlugin(path string) (*Plugin, error) {
 	//Get pointer to plugin's Main function
@@ -56,40 +56,21 @@ func (plugin *Plugin) Dispatch(opcode pluginOpcode, index int64, value int64, pt
 	}
 }
 
-//Resume the plugin
-func (plugin *Plugin) Resume() {
-	plugin.Dispatch(EffMainsChanged, 0, 1, nil, 0.0)
-	plugin.Dispatch(EffStartProcess, 0, 0, nil, 0.0)
-}
+// //Resume the plugin
+// func (plugin *Plugin) Resume() {
+// 	plugin.Dispatch(EffMainsChanged, 0, 1, nil, 0.0)
+// }
 
-//Suspend the plugin
-func (plugin *Plugin) Suspend() {
-	plugin.Dispatch(EffMainsChanged, 0, 0, nil, 0.0)
-}
+// //Suspend the plugin
+// func (plugin *Plugin) Suspend() {
+// 	plugin.Dispatch(EffMainsChanged, 0, 0, nil, 0.0)
+// }
 
 //Start the plugin
 func (plugin *Plugin) Start() {
 	//Convert to C++ pointer type
 	vstEntryPoint := C.vstPluginFuncPtr(unsafe.Pointer(plugin.entryPoint))
 	plugin.effect = C.loadEffect(vstEntryPoint)
-
-	plugin.Dispatch(EffOpen, 0, 0, nil, 0.0)
-
-	// Set default sample rate and block size
-	sampleRate := 44100.0
-	plugin.Dispatch(EffSetSampleRate, 0, 0, nil, sampleRate)
-
-	blocksize := int64(512)
-	plugin.Dispatch(EffSetBlockSize, 0, blocksize, nil, 0.0)
-
-	//TODO: CREATE ARRANGEMENT
-	//set speakers
-	//inSpeakers := C.getSpeakerArrangement(2)
-	//outSpeakers := C.getSpeakerArrangement(2)
-
-	//C.dispatch(plugin.effect, C.effSetSpeakerArrangement, 0, C.VstIntPtr(unsafe.Pointer(inSpeakers)), unsafe.Pointer(outSpeakers), C.float(0.0))
-	//plugin.Dispatch(EffSetSpeakerArrangement, 0, int64(unsafe.Pointer(inSpeakers)), unsafe.Pointer(outSpeakers), 0)
-	//fmt.Printf("Arrangement: %v", inSpeakers)
 }
 
 //Process audio with VST plugin
@@ -110,9 +91,6 @@ func (plugin *Plugin) Process(samples [][]float64) (processed [][]float64) {
 
 //ProcessFloat audio with VST plugin
 func (plugin *Plugin) ProcessFloat(samples [][]float32) (processed [][]float32) {
-	fmt.Printf("effFlagsCanReplacing: 		%v\n", plugin.effect.flags&C.effFlagsCanReplacing == C.effFlagsCanReplacing)
-	fmt.Printf("effFlagsCanDoubleReplacing: %v\n", plugin.effect.flags&C.effFlagsCanDoubleReplacing == C.effFlagsCanDoubleReplacing)
-
 	//convert Samples to C type
 	inSamples := (**C.float)(unsafe.Pointer(&samples[0][0]))
 	blocksize := C.int(len(samples[0]))
@@ -146,75 +124,19 @@ func hostCallback(effect *C.AEffect, opcode int64, index int64, value int64, ptr
 	return callback(&Plugin{effect: effect}, masterOpcode(opcode), index, value, ptr, opt)
 }
 
-//HostCallback is a default callback, can be overriden with SetHostCallback
+//HostCallback is a default callback, should be overriden with SetHostCallback
 func HostCallback(plugin *Plugin, opcode masterOpcode, index int64, value int64, ptr unsafe.Pointer, opt float64) int {
 	switch opcode {
-	case AudioMasterAutomate:
-		log.Printf("AudioMasterAutomate")
 	case AudioMasterVersion:
 		log.Printf("AudioMasterVersion")
 		return 2400
-	case AudioMasterCurrentID:
-		log.Printf("AudioMasterCurrentID")
 	case AudioMasterIdle:
 		log.Printf("AudioMasterIdle")
 		plugin.Dispatch(EffEditIdle, 0, 0, nil, 0)
 
-	case AudioMasterGetTime:
-		log.Printf("AudioMasterGetTime")
-	case AudioMasterProcessEvents:
-		log.Printf("AudioMasterProcessEvents")
-	case AudioMasterIOChanged:
-		log.Printf("AudioMasterIOChanged")
-	case AudioMasterSizeWindow:
-		log.Printf("AudioMasterSizeWindow")
-	case AudioMasterGetSampleRate:
-		log.Printf("AudioMasterGetSampleRate")
-	case AudioMasterGetBlockSize:
-		log.Printf("AudioMasterGetBlockSize")
-	case AudioMasterGetInputLatency:
-		log.Printf("AudioMasterGetInputLatency")
-	case AudioMasterGetOutputLatency:
-		log.Printf("AudioMasterGetOutputLatency")
 	case AudioMasterGetCurrentProcessLevel:
 		log.Printf("AudioMasterGetCurrentProcessLevel")
 		return C.kVstProcessLevelUnknown
-	case AudioMasterGetAutomationState:
-		log.Printf("AudioMasterGetAutomationState")
-	case AudioMasterOfflineStart:
-		log.Printf("AudioMasterOfflineStart")
-	case AudioMasterOfflineRead:
-		log.Printf("AudioMasterOfflineRead")
-	case AudioMasterOfflineWrite:
-		log.Printf("AudioMasterOfflineWrite")
-	case AudioMasterOfflineGetCurrentPass:
-		log.Printf("AudioMasterOfflineGetCurrentPass")
-	case AudioMasterOfflineGetCurrentMetaPass:
-		log.Printf("AudioMasterOfflineGetCurrentMetaPass")
-	case AudioMasterGetVendorString:
-		log.Printf("AudioMasterGetVendorString")
-	case AudioMasterGetProductString:
-		log.Printf("AudioMasterGetProductString")
-	case AudioMasterGetVendorVersion:
-		log.Printf("AudioMasterGetVendorVersion")
-	case AudioMasterVendorSpecific:
-		log.Printf("AudioMasterVendorSpecific")
-	case AudioMasterCanDo:
-		log.Printf("AudioMasterCanDo")
-	case AudioMasterGetLanguage:
-		log.Printf("AudioMasterGetLanguage")
-	case AudioMasterGetDirectory:
-		log.Printf("AudioMasterGetDirectory")
-	case AudioMasterUpdateDisplay:
-		log.Printf("AudioMasterUpdateDisplay")
-	case AudioMasterBeginEdit:
-		log.Printf("AudioMasterBeginEdit")
-	case AudioMasterEndEdit:
-		log.Printf("AudioMasterEndEdit")
-	case AudioMasterOpenFileSelector:
-		log.Printf("AudioMasterOpenFileSelector")
-	case AudioMasterCloseFileSelector:
-		log.Printf("AudioMasterCloseFileSelector")
 
 	default:
 		log.Printf("Plugin requested value of opcode %v\n", opcode)

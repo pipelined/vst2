@@ -1,10 +1,11 @@
 package vst2
 
 import (
-	"fmt"
 	"io"
+	"io/ioutil"
 	"os"
 	"testing"
+	"flag"
 
 	wav "github.com/youpy/go-wav"
 )
@@ -16,12 +17,18 @@ const (
 var (
 	samples64 [][]float64 //to test processDoubleReplacing
 	samples32 [][]float32 //to test processReplacing
-	// reader    wav.Reader
+
 	wavFormat *wav.WavFormat
+
+	outputFile string
 )
 
 //Read wav for test
 func init() {
+	out := flag.String("out", "", "Output file for processed audio")
+	flag.Parse()
+	outputFile = *out
+
 	var wavSamples []wav.Sample
 	inFile, _ := os.Open(wavPath)
 	defer inFile.Close()
@@ -41,49 +48,54 @@ func init() {
 }
 
 //Test load plugin
-func TestNewPlugin(t *testing.T) {
-	_, err := NewPlugin(pluginPath)
-	if err != nil {
-		t.Fatalf("Failed NewPlugin: %v\n", err)
-	}
-}
-
-//Test start plugin
-func TestStartPlugin(t *testing.T) {
+func TestPlugin(t *testing.T) {
 	plugin, err := NewPlugin(pluginPath)
 	if err != nil {
-		t.Fatalf("Failed NewPlugin: %v\n", err)
+		t.Fatalf("Failed to open plugin: %v\n", err)
 	}
-	plugin.Start()
-}
 
-//Test Process function
-func TestProcess(t *testing.T) {
-
-	plugin, _ := NewPlugin(pluginPath)
 	plugin.Start()
-	plugin.Resume()
+	if plugin.effect == nil {
+		t.Fatalf("Failed to start plugin: %v\n", err)
+	}
+
+	plugin.Dispatch(EffOpen, 0, 0, nil, 0.0)
+
+	// Set default sample rate and block size
+	sampleRate := 44100.0
+	plugin.Dispatch(EffSetSampleRate, 0, 0, nil, sampleRate)
+
+	blocksize := int64(512)
+	plugin.Dispatch(EffSetBlockSize, 0, blocksize, nil, 0.0)
+
+	plugin.Dispatch(EffMainsChanged, 0, 1, nil, 0.0)
+
 	processedSamples := plugin.ProcessFloat(samples32)
 
 	if processedSamples == nil {
 		return
 	}
 	for i := 0; i < 20; i++ {
-		fmt.Printf("Sample %d: [%.6f][%.6f]\n", i, processedSamples[0][i], processedSamples[1][i])
+		t.Logf("Sample %d: [%.6f][%.6f]\n", i, processedSamples[0][i], processedSamples[1][i])
 	}
 
-	fmt.Println(pluginOpcode(25))
+	if len(outputFile) > 0 {
+		saveSamples(t, processedSamples)
+	}
+}
 
-	// outFile, err := ioutil.TempFile("/tmp", "outfile.wav")
-	// if err != nil {
-	// 	t.Fatal(err)
-	// }
-	// defer outFile.Close()
+//save samples to temp file
+func saveSamples(t *testing.T, processedSamples [][]float32) {
+	outFile, err := ioutil.TempFile("./", outputFile)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer outFile.Close()
 
-	// numChannels := uint16(len(processedSamples))
-	// numSamples := uint32(len(processedSamples[0]))
-	// writer := wav.NewWriter(outFile, numSamples, numChannels, wavFormat.SampleRate, wavFormat.BitsPerSample)
-	// writer.WriteSamples(convertFloat32ToWavSamples(processedSamples))
+	numChannels := uint16(len(processedSamples))
+	numSamples := uint32(len(processedSamples[0]))
+	writer := wav.NewWriter(outFile, numSamples, numChannels, wavFormat.SampleRate, wavFormat.BitsPerSample)
+	writer.WriteSamples(convertFloat32ToWavSamples(processedSamples))
 }
 
 //convert WAV samples to float64 slice

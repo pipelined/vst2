@@ -1,6 +1,7 @@
 [submodule "vst2sdk"]
 	path = vst2sdk
 	url = https://github.com/dudk/vst2sdk.git
+	branch = master
 [submodule "public.vst2"]
 	path = _vst2
 	url = https://github.com/dudk/vst2

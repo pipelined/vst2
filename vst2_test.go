@@ -1,11 +1,11 @@
 package vst2
 
 import (
+	"flag"
 	"io"
 	"io/ioutil"
 	"os"
 	"testing"
-	"flag"
 
 	wav "github.com/youpy/go-wav"
 )
@@ -49,7 +49,7 @@ func init() {
 
 //Test load plugin
 func TestPlugin(t *testing.T) {
-	plugin, err := NewPlugin(pluginPath)
+	plugin, err := LoadPlugin(pluginPath)
 	if err != nil {
 		t.Fatalf("Failed to open plugin: %v\n", err)
 	}

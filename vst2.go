@@ -36,9 +36,9 @@ func finalize(p *Plugin) {
 	C.free(unsafe.Pointer(p.effect))
 }
 
-//NewPlugin loads the plugin into memory and stores entry point func
+//LoadPlugin loads the plugin into memory and stores entry point func
 //TODO: catch panic
-func NewPlugin(path string) (*Plugin, error) {
+func LoadPlugin(path string) (*Plugin, error) {
 	//Get pointer to plugin's Main function
 	mainEntryPoint, err := getEntryPoint(path)
 	if err != nil {

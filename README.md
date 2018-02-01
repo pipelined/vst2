@@ -18,3 +18,10 @@ VST SDK is also required
 ~~~
 ./build.sh <os> <arch>
 ~~~
+
+## Releasing 
+1. Go to submodule diretory _vst2
+2. Run 
+~~~
+./release.sh <version>
+~~~

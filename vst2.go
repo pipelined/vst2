@@ -19,6 +19,8 @@ import (
 type Plugin struct {
 	entryPoint unsafe.Pointer
 	effect     *C.AEffect
+	library    unsafe.Pointer
+	Name       string
 }
 
 //HostCallbackFunc used as callback from plugin

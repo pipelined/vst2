@@ -6,6 +6,7 @@ import (
 	"unsafe"
 )
 
+//TODO: refactor to plugin.load method
 func getEntryPoint(path string) (unsafe.Pointer, error) {
 	//Load plugin by path
 	moduleHandle, err := syscall.LoadLibrary(path)

@@ -12,15 +12,16 @@ import "C"
 
 import (
 	"log"
+	"path/filepath"
 	"unsafe"
 )
 
 //Plugin type provides interface
 type Plugin struct {
-	entryPoint unsafe.Pointer
-	effect     *C.AEffect
-	library    unsafe.Pointer
-	Name       string
+	effect  *C.AEffect
+	library unsafe.Pointer
+	Name    string
+	Path    string
 }
 
 //HostCallbackFunc used as callback from plugin
@@ -41,14 +42,22 @@ func finalize(p *Plugin) {
 //LoadPlugin loads the plugin into memory and stores entry point func
 //TODO: catch panic
 func LoadPlugin(path string) (*Plugin, error) {
-	//Get pointer to plugin's Main function
-	mainEntryPoint, err := getEntryPoint(path)
+	fullPath, err := filepath.Abs(path)
 	if err != nil {
-		log.Printf("Failed to obtain VST entry point '%s': %v\n", path, err)
+		log.Printf("Failed to obtain absolute path for '%s': %v\n", path, err)
+		return nil, err
+	}
+	plugin := &Plugin{
+		Path: fullPath,
+	}
+	//Get pointer to plugin's Main function
+	err = plugin.load()
+	if err != nil {
+		log.Printf("Failed to load VST '%s': %v\n", path, err)
 		return nil, err
 	}
 
-	return &Plugin{entryPoint: mainEntryPoint}, nil
+	return plugin, nil
 }
 
 //Dispatch wraps-up C method to dispatch calls to plugin
@@ -67,13 +76,6 @@ func (plugin *Plugin) Dispatch(opcode pluginOpcode, index int64, value int64, pt
 // func (plugin *Plugin) Suspend() {
 // 	plugin.Dispatch(EffMainsChanged, 0, 0, nil, 0.0)
 // }
-
-//Start the plugin
-func (plugin *Plugin) Start() {
-	//Convert to C++ pointer type
-	vstEntryPoint := C.vstPluginFuncPtr(unsafe.Pointer(plugin.entryPoint))
-	plugin.effect = C.loadEffect(vstEntryPoint)
-}
 
 //Process audio with VST plugin
 func (plugin *Plugin) Process(samples [][]float64) (processed [][]float64) {

@@ -53,8 +53,7 @@ func TestPlugin(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to open plugin: %v\n", err)
 	}
-
-	plugin.Start()
+	t.Logf("Loaded plugin: %v\n", plugin)
 	if plugin.effect == nil {
 		t.Fatalf("Failed to start plugin: %v\n", err)
 	}

@@ -2,6 +2,7 @@ package vst2
 
 //#cgo darwin LDFLAGS: -framework CoreFoundation
 //#include <CoreFoundation/CoreFoundation.h>
+//#include "vst2.h"
 /*
 char * MYCFStringCopyUTF8String(CFStringRef aString) {
 	if (aString == NULL) {
@@ -19,14 +20,15 @@ char * MYCFStringCopyUTF8String(CFStringRef aString) {
 }
 */
 import "C"
-import "unsafe"
-
-import "fmt"
+import (
+	"fmt"
+	"unsafe"
+)
 
 //TODO: refactor to plugin.load method
-func getEntryPoint(path string) (unsafe.Pointer, error) {
+func (plugin *Plugin) load() error {
 	//create C string
-	cpath := C.CString(path)
+	cpath := C.CString(plugin.Path)
 	defer C.free(unsafe.Pointer(cpath))
 	//convert to CF string
 	cfpath := C.CFStringCreateWithCString(nil, cpath, C.kCFStringEncodingUTF8)
@@ -35,28 +37,41 @@ func getEntryPoint(path string) (unsafe.Pointer, error) {
 	//get bundle url
 	bundleURL := C.CFURLCreateWithFileSystemPath(C.kCFAllocatorDefault, cfpath, C.kCFURLPOSIXPathStyle, C.true)
 	if bundleURL == nil {
-		return nil, fmt.Errorf("Failed to create bundle url at %v", path)
+		return fmt.Errorf("Failed to create bundle url at %v", plugin.Path)
 	}
 	defer C.free(unsafe.Pointer(bundleURL))
 	//open bundle and release it only if it failed
 	bundle := C.CFBundleCreate(C.kCFAllocatorDefault, bundleURL)
 	if bundle == nil {
-		return nil, fmt.Errorf("Failed to create bundle at %v", path)
+		return fmt.Errorf("Failed to create bundle at %v", plugin.Path)
 	}
-	defer C.CFRelease(C.CFTypeRef(bundle))
+	plugin.library = unsafe.Pointer(bundle)
+	//bundle ref should be released in the end of program with plugin.unload call
 
 	//create C string
 	cvstMain := C.CString(vstMain)
 	defer C.free(unsafe.Pointer(cvstMain))
 	//create CF string
 	cfvstMain := C.CFStringCreateWithCString(nil, cvstMain, C.kCFStringEncodingUTF8)
-	defer C.free(unsafe.Pointer(cfvstMain))
+	defer C.CFRelease(C.CFTypeRef(cfvstMain))
 
 	mainEntryPoint := unsafe.Pointer(C.CFBundleGetFunctionPointerForName(bundle, cfvstMain))
 	if mainEntryPoint == nil {
-		defer C.CFBundleUnloadExecutable(bundle)
+		plugin.Unload()
+		return fmt.Errorf("Failed to find entry point in bundle %v", plugin.Path)
 	}
-	return mainEntryPoint, nil
+	plugin.Name = getBundleString(bundle, "CFBundleName")
+	plugin.effect = C.loadEffect(C.vstPluginFuncPtr(mainEntryPoint))
+
+	return nil
+}
+
+//Unload cleans up plugin refs
+func (plugin *Plugin) Unload() {
+	bundle := C.CFBundleRef(plugin.library)
+	C.CFBundleUnloadExecutable(bundle)
+	C.CFRelease(C.CFTypeRef(bundle))
+	C.free(unsafe.Pointer(plugin.effect))
 }
 
 //get string from CFBundle

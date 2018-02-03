@@ -5,6 +5,8 @@ package vst2
 import "C"
 import (
 	"fmt"
+	"path/filepath"
+	"strings"
 	"syscall"
 	"unsafe"
 )
@@ -17,7 +19,7 @@ func (plugin *Plugin) load() error {
 		return fmt.Errorf("Failed to load VST from '%s': %v\n", plugin.Path, err)
 	}
 	plugin.library = unsafe.Pointer(vstDLL)
-	plugin.Name = vstDLL.Name
+	plugin.Name = strings.TrimSuffix(filepath.Base(vstDLL.Name), filepath.Ext(vstDLL.Name))
 
 	//Get pointer to plugin's Main function
 	mainEntryPoint, err := syscall.GetProcAddress(vstDLL.Handle, vstMain)

@@ -84,7 +84,7 @@ func getBundleString(bundle C.CFBundleRef, str string) string {
 	defer C.CFRelease(C.CFTypeRef(cfstring))
 
 	bundleString := C.CFStringRef(C.CFBundleGetValueForInfoDictionaryKey(bundle, cfstring))
-	defer C.free(unsafe.Pointer(bundleString))
+	defer C.CFRelease(C.CFTypeRef(bundleString))
 
 	convertedString := C.MYCFStringCopyUTF8String(bundleString)
 	defer C.free(unsafe.Pointer(convertedString))

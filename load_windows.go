@@ -23,15 +23,15 @@ func (library *Library) load() error {
 	//Get pointer to plugin's Main function
 	entryPoint, err := syscall.GetProcAddress(vstDLL.Handle, vstMain)
 	if err != nil {
-		library.Unload()
+		library.Close()
 		return fmt.Errorf("Failed to get entry point for plugin'%s': %v\n", library.Path, err)
 	}
 	library.entryPoint = unsafe.Pointer(entryPoint)
 	return nil
 }
 
-//Unload cleans up plugin refs
-func (library *Library) Unload() {
+//Close cleans up plugin refs
+func (library *Library) Close() {
 	vstDLL := (*syscall.DLL)(library.library)
 	vstDLL.Release()
 }

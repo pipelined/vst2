@@ -40,6 +40,7 @@ const (
 
 var (
 	callback HostCallbackFunc = HostCallback
+	plugins                   = make(map[*C.AEffect]*Plugin)
 )
 
 //Open loads the library into memory and stores entry point func
@@ -70,12 +71,14 @@ func (library *Library) Open() (*Plugin, error) {
 		Name: library.Name,
 	}
 	plugin.effect = C.loadEffect(C.vstPluginFuncPtr(library.entryPoint))
+	plugins[plugin.effect] = plugin
 	return plugin, nil
 }
 
 //Close cleans up C refs for plugin
 func (plugin *Plugin) Close() error {
 	plugin.Dispatch(EffClose, 0, 0, nil, 0.0)
+	delete(plugins, plugin.effect)
 	plugin.effect = nil
 	return nil
 }
@@ -144,8 +147,16 @@ func hostCallback(effect *C.AEffect, opcode int64, index int64, value int64, ptr
 	if callback == nil {
 		panic("Host callback is not defined!")
 	}
-
-	return callback(&Plugin{effect: effect}, masterOpcode(opcode), index, value, ptr, opt)
+	//AudioMasterVersion is requested when plugin is created
+	//It's never in map
+	plugin, ok := plugins[effect]
+	if !ok {
+		if masterOpcode(opcode) == AudioMasterVersion {
+			return callback(&Plugin{effect: effect}, masterOpcode(opcode), index, value, ptr, opt)
+		}
+		panic("Plugin was closed")
+	}
+	return callback(plugin, masterOpcode(opcode), index, value, ptr, opt)
 }
 
 //HostCallback is a default callback, should be overriden with SetHostCallback

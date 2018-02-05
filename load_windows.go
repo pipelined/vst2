@@ -11,30 +11,27 @@ import (
 	"unsafe"
 )
 
-//TODO: refactor to plugin.load method
-func (plugin *Plugin) load() error {
+func (library *Library) load() error {
 	//Load plugin by path
-	vstDLL, err := syscall.LoadDLL(plugin.Path)
+	vstDLL, err := syscall.LoadDLL(library.Path)
 	if err != nil {
-		return fmt.Errorf("Failed to load VST from '%s': %v\n", plugin.Path, err)
+		return fmt.Errorf("Failed to load VST from '%s': %v\n", library.Path, err)
 	}
-	plugin.library = unsafe.Pointer(vstDLL)
-	plugin.Name = strings.TrimSuffix(filepath.Base(vstDLL.Name), filepath.Ext(vstDLL.Name))
+	library.library = unsafe.Pointer(vstDLL)
+	library.Name = strings.TrimSuffix(filepath.Base(vstDLL.Name), filepath.Ext(vstDLL.Name))
 
 	//Get pointer to plugin's Main function
-	mainEntryPoint, err := syscall.GetProcAddress(vstDLL.Handle, vstMain)
+	entryPoint, err := syscall.GetProcAddress(vstDLL.Handle, vstMain)
 	if err != nil {
-		plugin.Unload()
-		return fmt.Errorf("Failed to get entry point for plugin'%s': %v\n", plugin.Path, err)
+		library.Unload()
+		return fmt.Errorf("Failed to get entry point for plugin'%s': %v\n", library.Path, err)
 	}
-
-	plugin.effect = C.loadEffect(C.vstPluginFuncPtr(unsafe.Pointer(mainEntryPoint)))
+	library.entryPoint = unsafe.Pointer(entryPoint)
 	return nil
 }
 
 //Unload cleans up plugin refs
-func (plugin *Plugin) Unload() {
-	vstDLL := (*syscall.DLL)(plugin.library)
+func (library *Library) Unload() {
+	vstDLL := (*syscall.DLL)(library.library)
 	vstDLL.Release()
-	C.free(unsafe.Pointer(plugin.effect))
 }

@@ -25,10 +25,9 @@ import (
 	"unsafe"
 )
 
-//TODO: refactor to plugin.load method
-func (plugin *Plugin) load() error {
+func (library *Library) load() error {
 	//create C string
-	cpath := C.CString(plugin.Path)
+	cpath := C.CString(library.Path)
 	defer C.free(unsafe.Pointer(cpath))
 	//convert to CF string
 	cfpath := C.CFStringCreateWithCString(nil, cpath, C.kCFStringEncodingUTF8)
@@ -37,15 +36,15 @@ func (plugin *Plugin) load() error {
 	//get bundle url
 	bundleURL := C.CFURLCreateWithFileSystemPath(C.kCFAllocatorDefault, cfpath, C.kCFURLPOSIXPathStyle, C.true)
 	if bundleURL == nil {
-		return fmt.Errorf("Failed to create bundle url at %v", plugin.Path)
+		return fmt.Errorf("Failed to create bundle url at %v", library.Path)
 	}
 	defer C.free(unsafe.Pointer(bundleURL))
 	//open bundle and release it only if it failed
 	bundle := C.CFBundleCreate(C.kCFAllocatorDefault, bundleURL)
 	if bundle == nil {
-		return fmt.Errorf("Failed to create bundle at %v", plugin.Path)
+		return fmt.Errorf("Failed to create bundle at %v", library.Path)
 	}
-	plugin.library = unsafe.Pointer(bundle)
+	library.library = unsafe.Pointer(bundle)
 	//bundle ref should be released in the end of program with plugin.unload call
 
 	//create C string
@@ -55,23 +54,23 @@ func (plugin *Plugin) load() error {
 	cfvstMain := C.CFStringCreateWithCString(nil, cvstMain, C.kCFStringEncodingUTF8)
 	defer C.CFRelease(C.CFTypeRef(cfvstMain))
 
-	mainEntryPoint := unsafe.Pointer(C.CFBundleGetFunctionPointerForName(bundle, cfvstMain))
-	if mainEntryPoint == nil {
-		plugin.Unload()
-		return fmt.Errorf("Failed to find entry point in bundle %v", plugin.Path)
+	library.entryPoint = unsafe.Pointer(C.CFBundleGetFunctionPointerForName(bundle, cfvstMain))
+	if library.entryPoint == nil {
+		library.Close()
+		return fmt.Errorf("Failed to find entry point in bundle %v", library.Path)
 	}
-	plugin.Name = getBundleString(bundle, "CFBundleName")
-	plugin.effect = C.loadEffect(C.vstPluginFuncPtr(mainEntryPoint))
+	library.Name = getBundleString(bundle, "CFBundleName")
 
 	return nil
 }
 
-//Unload cleans up plugin refs
-func (plugin *Plugin) Unload() {
-	bundle := C.CFBundleRef(plugin.library)
+//Close cleans up library refs
+//TODO: exceptions handling
+func (library *Library) Close() error {
+	bundle := C.CFBundleRef(library.library)
 	C.CFBundleUnloadExecutable(bundle)
 	C.CFRelease(C.CFTypeRef(bundle))
-	C.free(unsafe.Pointer(plugin.effect))
+	return nil
 }
 
 //get string from CFBundle

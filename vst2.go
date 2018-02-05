@@ -16,12 +16,19 @@ import (
 	"unsafe"
 )
 
+//Library used to instantiate new instances of plugin
+type Library struct {
+	entryPoint unsafe.Pointer
+	library    unsafe.Pointer
+	Name       string
+	Path       string
+}
+
 //Plugin type provides interface
 type Plugin struct {
-	effect  *C.AEffect
-	library unsafe.Pointer
-	Name    string
-	Path    string
+	effect *C.AEffect
+	Name   string
+	Path   string
 }
 
 //HostCallbackFunc used as callback from plugin
@@ -35,29 +42,42 @@ var (
 	callback HostCallbackFunc = HostCallback
 )
 
-func finalize(p *Plugin) {
-	C.free(unsafe.Pointer(p.effect))
-}
-
-//LoadPlugin loads the plugin into memory and stores entry point func
+//Open loads the library into memory and stores entry point func
 //TODO: catch panic
-func LoadPlugin(path string) (*Plugin, error) {
+func Open(path string) (*Library, error) {
 	fullPath, err := filepath.Abs(path)
 	if err != nil {
 		log.Printf("Failed to obtain absolute path for '%s': %v\n", path, err)
 		return nil, err
 	}
-	plugin := &Plugin{
+	library := &Library{
 		Path: fullPath,
 	}
 	//Get pointer to plugin's Main function
-	err = plugin.load()
+	err = library.load()
 	if err != nil {
-		log.Printf("Failed to load VST '%s': %v\n", path, err)
+		log.Printf("Failed to load VST library '%s': %v\n", path, err)
 		return nil, err
 	}
 
+	return library, nil
+}
+
+//Open creates new instance of plugin
+func (library *Library) Open() (*Plugin, error) {
+	plugin := &Plugin{
+		Path: library.Path,
+		Name: library.Name,
+	}
+	plugin.effect = C.loadEffect(C.vstPluginFuncPtr(library.entryPoint))
 	return plugin, nil
+}
+
+//Close cleans up C refs for plugin
+func (plugin *Plugin) Close() error {
+	plugin.Dispatch(EffClose, 0, 0, nil, 0.0)
+	plugin.effect = nil
+	return nil
 }
 
 //Dispatch wraps-up C method to dispatch calls to plugin

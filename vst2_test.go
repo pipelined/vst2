@@ -49,10 +49,18 @@ func init() {
 
 //Test load plugin
 func TestPlugin(t *testing.T) {
-	plugin, err := LoadPlugin(pluginPath)
+	library, err := Open(pluginPath)
+	if err != nil {
+		t.Fatalf("Failed to open library: %v\n", err)
+	}
+	defer library.Close()
+
+	plugin, err := library.Open()
 	if err != nil {
 		t.Fatalf("Failed to open plugin: %v\n", err)
 	}
+	defer plugin.Close()
+
 	t.Logf("Loaded plugin: %v\n", plugin)
 	if plugin.effect == nil {
 		t.Fatalf("Failed to start plugin: %v\n", err)

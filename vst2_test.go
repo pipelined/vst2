@@ -7,6 +7,7 @@ import (
 	"os"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	wav "github.com/youpy/go-wav"
 )
 
@@ -54,30 +55,36 @@ func TestPlugin(t *testing.T) {
 		t.Fatalf("Failed to open library: %v\n", err)
 	}
 	defer library.Close()
+	assert.NotNil(t, library.entryPoint)
+	assert.NotNil(t, library.library)
+	assert.NotNil(t, library.Name)
+	assert.NotNil(t, library.Path)
 
 	plugin, err := library.Open()
 	if err != nil {
 		t.Fatalf("Failed to open plugin: %v\n", err)
 	}
 	defer plugin.Close()
-
-	t.Logf("Loaded plugin: %v\n", plugin)
-	if plugin.effect == nil {
-		t.Fatalf("Failed to start plugin: %v\n", err)
-	}
+	assert.Equal(t, len(plugins), 1)
+	assert.NotNil(t, plugin.effect)
+	assert.NotNil(t, plugin.Name)
+	assert.NotNil(t, plugin.Path)
 
 	plugin.Dispatch(EffOpen, 0, 0, nil, 0.0)
 
 	// Set default sample rate and block size
 	sampleRate := 44100.0
-	plugin.Dispatch(EffSetSampleRate, 0, 0, nil, sampleRate)
-
 	blocksize := int64(512)
+	plugin.Dispatch(EffSetSampleRate, 0, 0, nil, sampleRate)
 	plugin.Dispatch(EffSetBlockSize, 0, blocksize, nil, 0.0)
-
 	plugin.Dispatch(EffMainsChanged, 0, 1, nil, 0.0)
 
 	processedSamples := plugin.ProcessFloat(samples32)
+	assert.NotNil(t, processedSamples)
+	assert.NotEmpty(t, processedSamples)
+	assert.Equal(t, len(processedSamples), 2)
+	assert.NotEqual(t, processedSamples[0][0], 0.0)
+	assert.NotEqual(t, processedSamples[0][1], 0.0)
 
 	if processedSamples == nil {
 		return

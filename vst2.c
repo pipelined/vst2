@@ -97,10 +97,6 @@ double** processDouble(AEffect *effect, int numChannels, int blocksize, double *
 	for(int channel = 0; channel < numChannels; channel++) {
     	outputs[channel] = (double*)malloc(sizeof(double*) * blocksize);
   	}
-
-	for (int i = 0; i < 20; i++){
-		printf("C in sample %d: [%.6f][%.6f]\n", i, inputs[0][i], inputs[1][i]);
-	}
 	
 	effect -> processDoubleReplacing(effect, inputs, outputs, blocksize);
 

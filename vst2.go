@@ -16,7 +16,7 @@ import (
 	"unsafe"
 )
 
-//Library used to instantiate new instances of plugin
+// Library used to instantiate new instances of plugin
 type Library struct {
 	entryPoint unsafe.Pointer
 	library    unsafe.Pointer
@@ -24,14 +24,15 @@ type Library struct {
 	Path       string
 }
 
-//Plugin type provides interface
+// Plugin type provides interface
 type Plugin struct {
-	effect *C.AEffect
-	Name   string
-	Path   string
+	effect   *C.AEffect
+	Name     string
+	Path     string
+	callback HostCallbackFunc
 }
 
-//HostCallbackFunc used as callback from plugin
+// HostCallbackFunc used as callback from plugin
 type HostCallbackFunc func(*Plugin, masterOpcode, int64, int64, unsafe.Pointer, float64) int
 
 const (
@@ -39,11 +40,11 @@ const (
 )
 
 var (
-	callback HostCallbackFunc = HostCallback
-	plugins                   = make(map[*C.AEffect]*Plugin)
+	plugins     = make(map[*C.AEffect]*Plugin)
+	vst2version = 2400
 )
 
-//Open loads the library into memory and stores entry point func
+// Open loads the library into memory and stores entry point func
 //TODO: catch panic
 func Open(path string) (*Library, error) {
 	fullPath, err := filepath.Abs(path)
@@ -64,18 +65,19 @@ func Open(path string) (*Library, error) {
 	return library, nil
 }
 
-//Open creates new instance of plugin
-func (library *Library) Open() (*Plugin, error) {
+// Open creates new instance of plugin
+func (library *Library) Open(callback HostCallbackFunc) (*Plugin, error) {
 	plugin := &Plugin{
-		Path: library.Path,
-		Name: library.Name,
+		Path:     library.Path,
+		Name:     library.Name,
+		callback: callback,
 	}
 	plugin.effect = C.loadEffect(C.vstPluginFuncPtr(library.entryPoint))
 	plugins[plugin.effect] = plugin
 	return plugin, nil
 }
 
-//Close cleans up C refs for plugin
+// Close cleans up C refs for plugin
 func (plugin *Plugin) Close() error {
 	plugin.Dispatch(EffClose, 0, 0, nil, 0.0)
 	delete(plugins, plugin.effect)
@@ -83,24 +85,14 @@ func (plugin *Plugin) Close() error {
 	return nil
 }
 
-//Dispatch wraps-up C method to dispatch calls to plugin
+// Dispatch wraps-up C method to dispatch calls to plugin
 func (plugin *Plugin) Dispatch(opcode pluginOpcode, index int64, value int64, ptr unsafe.Pointer, opt float64) {
 	if plugin.effect != nil {
 		C.dispatch(plugin.effect, C.int(opcode), C.int(index), C.int64_t(value), ptr, C.float(opt))
 	}
 }
 
-// //Resume the plugin
-// func (plugin *Plugin) Resume() {
-// 	plugin.Dispatch(EffMainsChanged, 0, 1, nil, 0.0)
-// }
-
-// //Suspend the plugin
-// func (plugin *Plugin) Suspend() {
-// 	plugin.Dispatch(EffMainsChanged, 0, 0, nil, 0.0)
-// }
-
-//Process audio with VST plugin
+// Process audio with VST plugin
 func (plugin *Plugin) Process(samples [][]float64) (processed [][]float64) {
 	//convert Samples to C type
 	inSamples := (**C.double)(unsafe.Pointer(&samples[0][0]))
@@ -116,7 +108,7 @@ func (plugin *Plugin) Process(samples [][]float64) (processed [][]float64) {
 	return processed
 }
 
-//ProcessFloat audio with VST plugin
+// ProcessFloat audio with VST plugin
 func (plugin *Plugin) ProcessFloat(samples [][]float32) (processed [][]float32) {
 	//convert Samples to C type
 	inSamples := (**C.float)(unsafe.Pointer(&samples[0][0]))
@@ -134,32 +126,27 @@ func (plugin *Plugin) ProcessFloat(samples [][]float32) (processed [][]float32) 
 	return processed
 }
 
-//SetHostCallback allows to override default host callback with custom implementation
-func SetHostCallback(newCallback HostCallbackFunc) {
-	if newCallback != nil {
-		callback = newCallback
-	}
-}
-
 //export hostCallback
-//calls real callback
+// calls real callback
 func hostCallback(effect *C.AEffect, opcode int64, index int64, value int64, ptr unsafe.Pointer, opt float64) int {
-	if callback == nil {
-		panic("Host callback is not defined!")
+	// AudioMasterVersion is requested when plugin is created
+	// It's never in map
+	if masterOpcode(opcode) == AudioMasterVersion {
+		return vst2version
 	}
-	//AudioMasterVersion is requested when plugin is created
-	//It's never in map
+
 	plugin, ok := plugins[effect]
 	if !ok {
-		if masterOpcode(opcode) == AudioMasterVersion {
-			return callback(&Plugin{effect: effect}, masterOpcode(opcode), index, value, ptr, opt)
-		}
 		panic("Plugin was closed")
 	}
-	return callback(plugin, masterOpcode(opcode), index, value, ptr, opt)
+
+	if plugin.callback == nil {
+		panic("Host callback is not defined!")
+	}
+	return plugin.callback(plugin, masterOpcode(opcode), index, value, ptr, opt)
 }
 
-//HostCallback is a default callback, should be overriden with SetHostCallback
+// HostCallback is a default callback, should be overriden with SetHostCallback
 func HostCallback(plugin *Plugin, opcode masterOpcode, index int64, value int64, ptr unsafe.Pointer, opt float64) int {
 	switch opcode {
 	case AudioMasterVersion:

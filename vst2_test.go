@@ -60,7 +60,7 @@ func TestPlugin(t *testing.T) {
 	assert.NotNil(t, library.Name)
 	assert.NotNil(t, library.Path)
 
-	plugin, err := library.Open()
+	plugin, err := library.Open(HostCallback)
 	if err != nil {
 		t.Fatalf("Failed to open plugin: %v\n", err)
 	}

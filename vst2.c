@@ -11,7 +11,7 @@ typedef AEffect * (*vstPluginFuncPtr)(audioMasterCallback host);
 int hostCallback(AEffect *effect, int opcode, int index, int64_t value, void *ptr, float opt);
 
 //Bridge function to call entry point on AEffect
-AEffect * loadEffect(AEffect * (*load)(audioMasterCallback)){
+AEffect * loadEffect(vstPluginFuncPtr load){
 	return load((audioMasterCallback)hostCallback);
 }
 

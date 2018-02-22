@@ -33,7 +33,7 @@ type Plugin struct {
 }
 
 // HostCallbackFunc used as callback from plugin
-type HostCallbackFunc func(*Plugin, masterOpcode, int64, int64, unsafe.Pointer, float64) int
+type HostCallbackFunc func(*Plugin, MasterOpcode, int64, int64, unsafe.Pointer, float64) int
 
 const (
 	vstMain string = "VSTPluginMain"
@@ -66,11 +66,11 @@ func Open(path string) (*Library, error) {
 }
 
 // Open creates new instance of plugin
-func (library *Library) Open(callback HostCallbackFunc) (*Plugin, error) {
+func (library *Library) Open() (*Plugin, error) {
 	plugin := &Plugin{
 		Path:     library.Path,
 		Name:     library.Name,
-		callback: callback,
+		callback: DefaultHostCallback,
 	}
 	plugin.effect = C.loadEffect(C.vstPluginFuncPtr(library.entryPoint))
 	plugins[plugin.effect] = plugin
@@ -86,7 +86,7 @@ func (plugin *Plugin) Close() error {
 }
 
 // Dispatch wraps-up C method to dispatch calls to plugin
-func (plugin *Plugin) Dispatch(opcode pluginOpcode, index int64, value int64, ptr unsafe.Pointer, opt float64) {
+func (plugin *Plugin) Dispatch(opcode PluginOpcode, index int64, value int64, ptr unsafe.Pointer, opt float64) {
 	if plugin.effect != nil {
 		C.dispatch(plugin.effect, C.int(opcode), C.int(index), C.int64_t(value), ptr, C.float(opt))
 	}
@@ -131,7 +131,7 @@ func (plugin *Plugin) ProcessFloat(samples [][]float32) (processed [][]float32) 
 func hostCallback(effect *C.AEffect, opcode int64, index int64, value int64, ptr unsafe.Pointer, opt float64) int {
 	// AudioMasterVersion is requested when plugin is created
 	// It's never in map
-	if masterOpcode(opcode) == AudioMasterVersion {
+	if MasterOpcode(opcode) == AudioMasterVersion {
 		return vst2version
 	}
 
@@ -143,11 +143,18 @@ func hostCallback(effect *C.AEffect, opcode int64, index int64, value int64, ptr
 	if plugin.callback == nil {
 		panic("Host callback is not defined!")
 	}
-	return plugin.callback(plugin, masterOpcode(opcode), index, value, ptr, opt)
+	return plugin.callback(plugin, MasterOpcode(opcode), index, value, ptr, opt)
 }
 
-// HostCallback is a default callback, should be overriden with SetHostCallback
-func HostCallback(plugin *Plugin, opcode masterOpcode, index int64, value int64, ptr unsafe.Pointer, opt float64) int {
+// SetCallback overrides plugin's callback
+func (plugin *Plugin) SetCallback(c HostCallbackFunc) {
+	if c != nil {
+		plugin.callback = c
+	}
+}
+
+// DefaultHostCallback is a default callback, just prints incoming opcodes should be overriden with SetHostCallback
+func DefaultHostCallback(plugin *Plugin, opcode MasterOpcode, index int64, value int64, ptr unsafe.Pointer, opt float64) int {
 	switch opcode {
 	case AudioMasterVersion:
 		log.Printf("AudioMasterVersion")

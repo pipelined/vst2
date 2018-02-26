@@ -17,7 +17,7 @@ func (library *Library) load() error {
 	if err != nil {
 		return fmt.Errorf("Failed to load VST from '%s': %v\n", library.Path, err)
 	}
-	library.library = unsafe.Pointer(vstDLL)
+	library.library = uintptr(unsafe.Pointer(vstDLL))
 	library.Name = strings.TrimSuffix(filepath.Base(vstDLL.Name), filepath.Ext(vstDLL.Name))
 
 	//Get pointer to plugin's Main function
@@ -32,6 +32,6 @@ func (library *Library) load() error {
 
 //Close cleans up plugin refs
 func (library *Library) Close() {
-	vstDLL := (*syscall.DLL)(library.library)
+	vstDLL := (*syscall.DLL)(unsafe.Pointer((library.library)))
 	vstDLL.Release()
 }

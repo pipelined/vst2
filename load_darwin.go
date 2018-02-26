@@ -41,10 +41,11 @@ func (library *Library) load() error {
 	defer C.free(unsafe.Pointer(bundleURL))
 	//open bundle and release it only if it failed
 	bundle := C.CFBundleCreate(C.kCFAllocatorDefault, bundleURL)
-	if bundle == nil {
-		return fmt.Errorf("Failed to create bundle at %v", library.Path)
-	}
-	library.library = unsafe.Pointer(bundle)
+	//	if bundle == nil {
+	// return fmt.Errorf("Failed to create bundle at %v", library.Path)
+	//	}
+	fmt.Printf("Type of bundle: %T\n", bundle)
+	library.library = uintptr(bundle)
 	//bundle ref should be released in the end of program with plugin.unload call
 
 	//create C string

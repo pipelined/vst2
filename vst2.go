@@ -19,7 +19,7 @@ import (
 // Library used to instantiate new instances of plugin
 type Library struct {
 	entryPoint unsafe.Pointer
-	library    unsafe.Pointer
+	library    uintptr
 	Name       string
 	Path       string
 }

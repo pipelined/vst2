@@ -11,13 +11,21 @@ import (
 	"unsafe"
 )
 
+// Library used to instantiate new instances of plugin
+type Library struct {
+	entryPoint unsafe.Pointer
+	library    unsafe.Pointer
+	Name       string
+	Path       string
+}
+
 func (library *Library) load() error {
 	//Load plugin by path
 	vstDLL, err := syscall.LoadDLL(library.Path)
 	if err != nil {
 		return fmt.Errorf("Failed to load VST from '%s': %v\n", library.Path, err)
 	}
-	library.library = uintptr(unsafe.Pointer(vstDLL))
+	library.library = unsafe.Pointer(vstDLL)
 	library.Name = strings.TrimSuffix(filepath.Base(vstDLL.Name), filepath.Ext(vstDLL.Name))
 
 	//Get pointer to plugin's Main function
@@ -32,6 +40,7 @@ func (library *Library) load() error {
 
 //Close cleans up plugin refs
 func (library *Library) Close() {
-	vstDLL := (*syscall.DLL)(unsafe.Pointer((library.library)))
+	vstDLL := (*syscall.DLL)(library.library)
 	vstDLL.Release()
+	library.library = nil
 }

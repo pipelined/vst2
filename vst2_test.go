@@ -79,12 +79,24 @@ func TestPlugin(t *testing.T) {
 	plugin.Dispatch(EffSetBlockSize, 0, blocksize, nil, 0.0)
 	plugin.Dispatch(EffMainsChanged, 0, 1, nil, 0.0)
 
-	processedSamples := plugin.ProcessFloat(samples32)
+	processedSamples := make([][]float64, len(samples64))
+	for i := range processedSamples {
+		processedSamples[i] = make([]float64, 0, len(samples64[0]))
+	}
+	c := float64AsChan(samples64, int(blocksize))
+	for samples := range c {
+		processedChunk := plugin.Process(samples)
+		for i := range processedChunk {
+			processedSamples[i] = append(processedSamples[i], processedChunk[i]...) 
+		}
+	}
+
+	//processedSamples := plaugin.Process(samples64)
 	assert.NotNil(t, processedSamples)
 	assert.NotEmpty(t, processedSamples)
-	assert.Equal(t, len(processedSamples), 2)
-	assert.NotEqual(t, processedSamples[0][0], 0.0)
-	assert.NotEqual(t, processedSamples[0][1], 0.0)
+	assert.Equal(t, 2, len(processedSamples))
+	assert.NotEqual(t, 0.0, processedSamples[0][0])
+	assert.NotEqual(t, 0.0, processedSamples[0][1])
 
 	if processedSamples == nil {
 		return
@@ -99,7 +111,7 @@ func TestPlugin(t *testing.T) {
 }
 
 //save samples to temp file
-func saveSamples(t *testing.T, processedSamples [][]float32) {
+func saveSamples(t *testing.T, processedSamples [][]float64) {
 	outFile, err := ioutil.TempFile("./", outputFile)
 	if err != nil {
 		t.Fatal(err)
@@ -109,7 +121,7 @@ func saveSamples(t *testing.T, processedSamples [][]float32) {
 	numChannels := uint16(len(processedSamples))
 	numSamples := uint32(len(processedSamples[0]))
 	writer := wav.NewWriter(outFile, numSamples, numChannels, wavFormat.SampleRate, wavFormat.BitsPerSample)
-	writer.WriteSamples(convertFloat32ToWavSamples(processedSamples))
+	writer.WriteSamples(convertFloat64ToWavSamples(processedSamples))
 }
 
 //convert WAV samples to float64 slice
@@ -160,4 +172,22 @@ func convertFloat32ToWavSamples(samples [][]float32) (wavSamples []wav.Sample) {
 		wavSamples[i].Values[1] = int(samples[1][i] * 0x7FFF)
 	}
 	return
+}
+
+func float64AsChan(samples [][]float64, blocksize int) (chan [][]float64){
+	c := make(chan [][]float64)
+	numChannels := len(samples)
+	start, end := 0, blocksize
+	go func() {
+		defer close(c)
+		for end < len(samples[0]) {
+			s := make([][]float64, numChannels)
+			for i := range samples {
+				s[i] = samples[i][start:end]
+			}
+			end += blocksize
+			c <- s
+		}
+	} ()
+	return c
 }

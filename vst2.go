@@ -11,18 +11,11 @@ package vst2
 import "C"
 
 import (
+	//"fmt"
 	"log"
 	"path/filepath"
 	"unsafe"
 )
-
-// Library used to instantiate new instances of plugin
-type Library struct {
-	entryPoint unsafe.Pointer
-	library    uintptr
-	Name       string
-	Path       string
-}
 
 // Plugin type provides interface
 type Plugin struct {
@@ -93,19 +86,30 @@ func (plugin *Plugin) Dispatch(opcode PluginOpcode, index int64, value int64, pt
 }
 
 // Process audio with VST plugin
-func (plugin *Plugin) Process(samples [][]float64) (processed [][]float64) {
+func (plugin *Plugin) Process(in [][]float64) (out [][]float64) {
 	//convert Samples to C type
-	inSamples := (**C.double)(unsafe.Pointer(&samples[0][0]))
-	blocksize := C.int(len(samples[0]))
-	numChannels := C.int(len(samples))
-	//call plugin and convert result to slice of slices
-	outSamples := (*[1 << 30]*C.double)(unsafe.Pointer(C.processDouble(plugin.effect, numChannels, blocksize, inSamples)))[:numChannels]
-	//convert slices to [][]float64
-	processed = make([][]float64, numChannels)
-	for channel, data := range outSamples {
-		processed[channel] = (*[1 << 30]float64)(unsafe.Pointer(data))[:blocksize]
+	cin := (**C.double)(unsafe.Pointer(&in[0][0]))
+	numChannels := C.int(len(in))
+	blocksize := C.int(len(in[0]))
+
+	cout := C.processDouble(plugin.effect, numChannels, blocksize, cin)
+
+	defer C.free(unsafe.Pointer(cout))
+	//convert result to slice of *C.double slices
+	outSamples := (*[1 << 30]*C.double)(unsafe.Pointer(cout))[:numChannels]
+
+	//convert *C.double slices to [][]float64
+	out = make([][]float64, numChannels)
+	for c, data := range outSamples {
+		defer C.free(unsafe.Pointer(data))
+		// not sure about this conversion, since it's not visible for GC
+		out[c] = (*[1 << 30]float64)(unsafe.Pointer(data))[:blocksize]
+		// this one better?
+		// temp := (*[1 << 30]float64)(unsafe.Pointer(data))[:blocksize]
+		// out[c] = make([]float64, blocksize)
+		// copy(out[c], temp)
 	}
-	return processed
+	return out
 }
 
 // ProcessFloat audio with VST plugin

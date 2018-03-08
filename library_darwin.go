@@ -25,6 +25,14 @@ import (
 	"unsafe"
 )
 
+// Library used to instantiate new instances of plugin
+type Library struct {
+	entryPoint unsafe.Pointer
+	library    uintptr
+	Name       string
+	Path       string
+}
+
 func (library *Library) load() error {
 	//create C string
 	cpath := C.CString(library.Path)
@@ -41,10 +49,6 @@ func (library *Library) load() error {
 	defer C.free(unsafe.Pointer(bundleURL))
 	//open bundle and release it only if it failed
 	bundle := C.CFBundleCreate(C.kCFAllocatorDefault, bundleURL)
-	//	if bundle == nil {
-	// return fmt.Errorf("Failed to create bundle at %v", library.Path)
-	//	}
-	fmt.Printf("Type of bundle: %T\n", bundle)
 	library.library = uintptr(bundle)
 	//bundle ref should be released in the end of program with plugin.unload call
 
@@ -68,9 +72,8 @@ func (library *Library) load() error {
 //Close cleans up library refs
 //TODO: exceptions handling
 func (library *Library) Close() error {
-	bundle := C.CFBundleRef(library.library)
-	C.CFBundleUnloadExecutable(bundle)
-	C.CFRelease(C.CFTypeRef(bundle))
+	C.CFRelease(C.CFTypeRef(C.CFBundleRef(library.library)))
+	library.library = 0
 	return nil
 }
 

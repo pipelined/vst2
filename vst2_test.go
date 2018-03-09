@@ -69,6 +69,8 @@ func TestPlugin(t *testing.T) {
 	assert.NotNil(t, plugin.effect)
 	assert.NotNil(t, plugin.Name)
 	assert.NotNil(t, plugin.Path)
+	assert.Equal(t, true, plugin.CanProcessFloat32())
+	assert.Equal(t, false, plugin.CanProcessFloat64())
 
 	plugin.Dispatch(EffOpen, 0, 0, nil, 0.0)
 
@@ -79,7 +81,8 @@ func TestPlugin(t *testing.T) {
 	plugin.Dispatch(EffSetBlockSize, 0, blocksize, nil, 0.0)
 	plugin.Dispatch(EffMainsChanged, 0, 1, nil, 0.0)
 
-	processedSamples := plugin.ProcessFloat64(samples64)
+	processedSamples := plugin.ProcessFloat32(samples32)
+	// processedSamples := plugin.ProcessFloat64(samples64)
 	// processedSamples := make([][]float64, len(samples64))
 	// for i := range processedSamples {
 	// 	processedSamples[i] = make([]float64, 0, len(samples64[0]))
@@ -93,6 +96,7 @@ func TestPlugin(t *testing.T) {
 	// }
 
 	//processedSamples := plaugin.Process(samples64)
+
 	assert.NotNil(t, processedSamples)
 	assert.NotEmpty(t, processedSamples)
 	assert.Equal(t, 2, len(processedSamples))
@@ -107,12 +111,12 @@ func TestPlugin(t *testing.T) {
 	}
 
 	if len(outputFile) > 0 {
-		saveSamples(t, processedSamples)
+		saveSamples32(t, processedSamples)
 	}
 }
 
-//save samples to temp file
-func saveSamples(t *testing.T, processedSamples [][]float64) {
+// save samples to temp file
+func saveSamples64(t *testing.T, processedSamples [][]float64) {
 	outFile, err := ioutil.TempFile("./", outputFile)
 	if err != nil {
 		t.Fatal(err)
@@ -123,6 +127,20 @@ func saveSamples(t *testing.T, processedSamples [][]float64) {
 	numSamples := uint32(len(processedSamples[0]))
 	writer := wav.NewWriter(outFile, numSamples, numChannels, wavFormat.SampleRate, wavFormat.BitsPerSample)
 	writer.WriteSamples(convertFloat64ToWavSamples(processedSamples))
+}
+
+// save samples to temp file
+func saveSamples32(t *testing.T, processedSamples [][]float32) {
+	outFile, err := ioutil.TempFile("./", outputFile)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer outFile.Close()
+
+	numChannels := uint16(len(processedSamples))
+	numSamples := uint32(len(processedSamples[0]))
+	writer := wav.NewWriter(outFile, numSamples, numChannels, wavFormat.SampleRate, wavFormat.BitsPerSample)
+	writer.WriteSamples(convertFloat32ToWavSamples(processedSamples))
 }
 
 //convert WAV samples to float64 slice

@@ -84,6 +84,22 @@ func (plugin *Plugin) Dispatch(opcode PluginOpcode, index int64, value int64, pt
 	}
 }
 
+// CanProcessFloat32 checks if plugin can process float32
+func (plugin *Plugin) CanProcessFloat32() bool {
+	if plugin.effect == nil {
+		return false
+	}
+	return plugin.effect.flags&C.effFlagsCanReplacing == C.effFlagsCanReplacing
+}
+
+// CanProcessFloat64 checks if plugin can process float64
+func (plugin *Plugin) CanProcessFloat64() bool {
+	if plugin.effect == nil {
+		return false
+	}
+	return plugin.effect.flags&C.effFlagsCanDoubleReplacing == C.effFlagsCanDoubleReplacing
+}
+
 // ProcessFloat64 audio with VST plugin
 func (plugin *Plugin) ProcessFloat64(in [][]float64) (out [][]float64) {
 	numChannels := len(in)

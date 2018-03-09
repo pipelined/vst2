@@ -11,7 +11,6 @@ package vst2
 import "C"
 
 import (
-	//"fmt"
 	"log"
 	"path/filepath"
 	"unsafe"
@@ -85,49 +84,76 @@ func (plugin *Plugin) Dispatch(opcode PluginOpcode, index int64, value int64, pt
 	}
 }
 
-// Process audio with VST plugin
-func (plugin *Plugin) Process(in [][]float64) (out [][]float64) {
-	//convert Samples to C type
-	cin := (**C.double)(unsafe.Pointer(&in[0][0]))
-	numChannels := C.int(len(in))
-	blocksize := C.int(len(in[0]))
+// ProcessFloat64 audio with VST plugin
+func (plugin *Plugin) ProcessFloat64(in [][]float64) (out [][]float64) {
+	numChannels := len(in)
+	blocksize := len(in[0])
 
-	cout := C.processDouble(plugin.effect, numChannels, blocksize, cin)
+	// convert [][]float64 to []*C.double
+	input := make([]*C.double, numChannels)
+	output := make([]*C.double, numChannels)
+	for i, row := range in {
+		// allocate input memory for C layout
+		inp := (*C.double)(C.malloc(C.size_t(C.sizeof_double * blocksize)))
+		input[i] = inp
+		defer C.free(unsafe.Pointer(inp))
 
-	defer C.free(unsafe.Pointer(cout))
-	//convert result to slice of *C.double slices
-	outSamples := (*[1 << 30]*C.double)(unsafe.Pointer(cout))[:numChannels]
+		// copy data from slice to C array
+		pa := (*[1 << 30]C.double)(unsafe.Pointer(inp))
+		for j, v := range row {
+			(*pa)[j] = C.double(v)
+		}
 
-	//convert *C.double slices to [][]float64
+		// allocate output memory for C layout
+		outp := (*C.double)(C.malloc(C.size_t(C.sizeof_double * blocksize)))
+		output[i] = outp
+		defer C.free(unsafe.Pointer(outp))
+	}
+
+	C.processDouble(plugin.effect, C.int(numChannels), C.int(blocksize), &input[0], &output[0])
+
+	//convert []*C.double slices to [][]float64
 	out = make([][]float64, numChannels)
-	for c, data := range outSamples {
-		defer C.free(unsafe.Pointer(data))
-		// not sure about this conversion, since it's not visible for GC
+	for c, data := range output {
 		out[c] = (*[1 << 30]float64)(unsafe.Pointer(data))[:blocksize]
-		// this one better?
-		// temp := (*[1 << 30]float64)(unsafe.Pointer(data))[:blocksize]
-		// out[c] = make([]float64, blocksize)
-		// copy(out[c], temp)
 	}
 	return out
 }
 
-// ProcessFloat audio with VST plugin
-func (plugin *Plugin) ProcessFloat(samples [][]float32) (processed [][]float32) {
-	//convert Samples to C type
-	inSamples := (**C.float)(unsafe.Pointer(&samples[0][0]))
-	blocksize := C.int(len(samples[0]))
-	numChannels := C.int(len(samples))
-	plugin.Dispatch(EffSetBlockSize, 0, int64(len(samples[0])), nil, 0.0)
-	//call plugin and convert result to slice of slices
-	outSamples := (*[1 << 30]*C.float)(unsafe.Pointer(C.processFloat(plugin.effect, numChannels, blocksize, inSamples)))[:numChannels]
-	//convert slices to [][]float64
+// ProcessFloat32 audio with VST plugin
+func (plugin *Plugin) ProcessFloat32(in [][]float32) (out [][]float32) {
+	numChannels := len(in)
+	blocksize := len(in[0])
 
-	processed = make([][]float32, numChannels)
-	for channel, data := range outSamples {
-		processed[channel] = (*[1 << 30]float32)(unsafe.Pointer(data))[:blocksize]
+	// convert [][]float32 to []*C.float
+	input := make([]*C.float, numChannels)
+	output := make([]*C.float, numChannels)
+	for i, row := range in {
+		// allocate input memory for C layout
+		inp := (*C.float)(C.malloc(C.size_t(C.sizeof_float * blocksize)))
+		input[i] = inp
+		defer C.free(unsafe.Pointer(inp))
+
+		// copy data from slice to C array
+		pa := (*[1 << 30]C.float)(unsafe.Pointer(inp))
+		for j, v := range row {
+			(*pa)[j] = C.float(v)
+		}
+
+		// allocate output memory for C layout
+		outp := (*C.float)(C.malloc(C.size_t(C.sizeof_float * blocksize)))
+		output[i] = outp
+		defer C.free(unsafe.Pointer(outp))
 	}
-	return processed
+
+	C.processFloat(plugin.effect, C.int(numChannels), C.int(blocksize), &input[0], &output[0])
+
+	//convert []*C.float slices to [][]float32
+	out = make([][]float32, numChannels)
+	for c, data := range output {
+		out[c] = (*[1 << 30]float32)(unsafe.Pointer(data))[:blocksize]
+	}
+	return out
 }
 
 //export hostCallback

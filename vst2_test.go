@@ -79,17 +79,18 @@ func TestPlugin(t *testing.T) {
 	plugin.Dispatch(EffSetBlockSize, 0, blocksize, nil, 0.0)
 	plugin.Dispatch(EffMainsChanged, 0, 1, nil, 0.0)
 
-	processedSamples := make([][]float64, len(samples64))
-	for i := range processedSamples {
-		processedSamples[i] = make([]float64, 0, len(samples64[0]))
-	}
-	c := float64AsChan(samples64, int(blocksize))
-	for samples := range c {
-		processedChunk := plugin.Process(samples)
-		for i := range processedChunk {
-			processedSamples[i] = append(processedSamples[i], processedChunk[i]...) 
-		}
-	}
+	processedSamples := plugin.ProcessFloat64(samples64)
+	// processedSamples := make([][]float64, len(samples64))
+	// for i := range processedSamples {
+	// 	processedSamples[i] = make([]float64, 0, len(samples64[0]))
+	// }
+	// c := float64AsChan(samples64, int(blocksize))
+	// for samples := range c {
+	// 	processedChunk := plugin.Process(samples)
+	// 	for i := range processedChunk {
+	// 		processedSamples[i] = append(processedSamples[i], processedChunk[i]...)
+	// 	}
+	// }
 
 	//processedSamples := plaugin.Process(samples64)
 	assert.NotNil(t, processedSamples)
@@ -174,7 +175,7 @@ func convertFloat32ToWavSamples(samples [][]float32) (wavSamples []wav.Sample) {
 	return
 }
 
-func float64AsChan(samples [][]float64, blocksize int) (chan [][]float64){
+func float64AsChan(samples [][]float64, blocksize int) chan [][]float64 {
 	c := make(chan [][]float64)
 	numChannels := len(samples)
 	start, end := 0, blocksize
@@ -188,6 +189,6 @@ func float64AsChan(samples [][]float64, blocksize int) (chan [][]float64){
 			end += blocksize
 			c <- s
 		}
-	} ()
+	}()
 	return c
 }

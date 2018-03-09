@@ -80,42 +80,17 @@ AEffect * loadEffect(vstPluginFuncPtr load){
 //   	return &speakerArrangement;
 // }
 
-//Bridge to call dispatch function of loaded plugin
+// Bridge to call dispatch function of loaded plugin
 VstIntPtr dispatch(AEffect *effect, int opcode, int index, int value, void *ptr, float opt){
 	return effect->dispatcher(effect, opcode, index, value, ptr, opt);
 }
 
-//Bridge to call process replacing function of loaded plugin
-double** processDouble(AEffect *effect, int numChannels, int blocksize, double ** goInputs){
-
-	double** inputs = (double**)malloc(sizeof(double*) * numChannels);
-	for(int channel = 0; channel < numChannels; channel++) {
-    	inputs[channel] = (double*)&goInputs[channel];
-  	}
-
-	double** outputs = (double**)malloc(sizeof(double*) * numChannels);
-	for(int channel = 0; channel < numChannels; channel++) {
-    	outputs[channel] = (double*)malloc(sizeof(double) * blocksize);
-  	}
-
+// Bridge to call process replacing function of loaded plugin
+void processDouble(AEffect *effect, int numChannels, int blocksize, double ** inputs, double ** outputs){
 	effect -> processDoubleReplacing(effect, inputs, outputs, blocksize);
-	free(inputs);
-	return outputs;
 }
 
-//Bridge to call process replacing function of loaded plugin
-float** processFloat(AEffect *effect, int numChannels, int blocksize, float ** goInputs){
-	float** inputs = (float**)malloc(sizeof(float*) * numChannels);
-	for(int channel = 0; channel < numChannels; channel++) {
-    	inputs[channel] = (float*)&goInputs[channel];
-  	}
-	
-	float** outputs = (float**)malloc(sizeof(float*) * numChannels);
-	for(int channel = 0; channel < numChannels; channel++) {
-    	outputs[channel] = (float*)malloc(sizeof(float) * blocksize);
-  	}
-
+// Bridge to call process replacing function of loaded plugin
+void processFloat(AEffect *effect, int numChannels, int blocksize, float **inputs, float **outputs){
 	effect -> processReplacing(effect, inputs, outputs, blocksize);
-	free(inputs);
-	return outputs;
 }

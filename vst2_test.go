@@ -1,7 +1,6 @@
 package vst2
 
 import (
-	"fmt"
 	"runtime"
 	"testing"
 
@@ -34,7 +33,8 @@ const (
 func init() {
 	switch os := runtime.GOOS; os {
 	case "darwin":
-		pluginPath = "_testdata/Krush.vst"
+		// pluginPath = "_testdata/Krush.vst"
+		pluginPath = "_testdata/TAL-Reverb.vst"
 	case "windows":
 		pluginPath = "_testdata/TAL-Reverb.dll"
 	default:
@@ -75,56 +75,61 @@ func TestPlugin(t *testing.T) {
 
 	if plugin.CanProcessFloat64() {
 		assert.Equal(t, false, plugin.CanProcessFloat32())
-		processedSamples := plugin.ProcessFloat64(samples64)
-		assert.NotNil(t, processedSamples)
-		assert.NotEmpty(t, processedSamples)
-		assert.Equal(t, len(samples64), len(processedSamples))
-		for c, samples := range processedSamples {
-			assert.Equal(t, len(samples64[c]), len(processedSamples[c]), "Output channel %v has wrong size. Expected: %v got: %v", c, len(samples64[c]), len(processedSamples[c]))
-			zeroesProportion := zeroesProportionFloat64(samples)
-			assert.Equal(t, true, zeroesProportionThreshold > zeroesProportion, "Too many zeroed samples in channel %v expected: %v%% got: %.4f%%", c, zeroesProportionThreshold, zeroesProportion)
+		ps := plugin.ProcessFloat64(samples64)
+		assert.NotNil(t, ps)
+		assert.NotEmpty(t, ps)
+		assert.Equal(t, len(samples64), len(ps))
+		for c, s := range ps {
+			assert.Equal(t, len(samples64[c]), len(s), "Output channel %v has wrong size. Expected: %v got: %v", c, len(samples64[c]), len(s))
+			zc, zp, zpos := zeroesFloat64(s)
+			assert.Equal(t, true, zeroesProportionThreshold >= zp, "Too many zeroed samples in channel %v expected: %v%% got: %.4f%% zeroes count: %v zeroes positions: %v", c, zeroesProportionThreshold, zp, zc, zpos)
 		}
 	}
 
 	if plugin.CanProcessFloat32() {
 		assert.Equal(t, false, plugin.CanProcessFloat64())
-		processedSamples := plugin.ProcessFloat32(samples32)
-		assert.NotNil(t, processedSamples)
-		assert.NotEmpty(t, processedSamples)
-		assert.Equal(t, len(samples32), len(processedSamples))
-		for c, samples := range processedSamples {
-			assert.Equal(t, len(samples32[c]), len(processedSamples[c]), "Output channel %v has wrong size. Expected: %v got: %v", c, len(samples32[c]), len(processedSamples[c]))
-			zeroesProportion := zeroesProportionFloat32(samples)
-			assert.Equal(t, true, zeroesProportionThreshold > zeroesProportion, "Too many zeroed samples in channel %v. Expected: %v%% got: %.4f%%", c, zeroesProportionThreshold, zeroesProportion)
+		ps := plugin.ProcessFloat32(samples32)
+		assert.NotNil(t, ps)
+		assert.NotEmpty(t, ps)
+		assert.Equal(t, len(samples32), len(ps))
+		for c, s := range ps {
+			assert.Equal(t, len(samples32[c]), len(s), "Output channel %v has wrong size. Expected: %v got: %v", c, len(samples32[c]), len(s))
+			zc, zp, zpos := zeroesFloat32(s)
+			assert.Equal(t, true, zeroesProportionThreshold >= zp, "Too many zeroed samples in channel %v. Expected: %v%% got: %.4f%% zeroes count: %v zeroes positions: %v", c, zeroesProportionThreshold, zp, zc, zpos)
 		}
 	}
 }
 
 // count zeroes proportion in float64 slice
-func zeroesProportionFloat64(nums []float64) (result float64) {
+func zeroesFloat64(nums []float64) (count int, proportion float64, positions []int) {
 	if nums == nil {
 		return
 	}
 
-	for _, v := range nums {
-		if v == 0.0 {
-			result++
-		}
-	}
-	return result / float64(len(nums))
-}
-
-// count zeroes proportion in float64 slice
-func zeroesProportionFloat32(nums []float32) (result float64) {
-	if nums == nil {
-		return
-	}
-
+	positions = make([]int, 0, len(nums))
 	for i, v := range nums {
 		if v == 0.0 {
-			result++
-			fmt.Println(i)
+			count++
+			positions = append(positions, i)
 		}
 	}
-	return 100 * result / float64(len(nums))
+	proportion = float64(100*count) / float64(len(nums))
+	return
+}
+
+// count zeroes proportion in float64 slice
+func zeroesFloat32(nums []float32) (count int, proportion float64, positions []int) {
+	if nums == nil {
+		return
+	}
+
+	positions = make([]int, 0, len(nums))
+	for i, v := range nums {
+		if v == 0.0 {
+			count++
+			positions = append(positions, i)
+		}
+	}
+	proportion = float64(100*count) / float64(len(nums))
+	return
 }

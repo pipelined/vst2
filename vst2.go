@@ -130,8 +130,13 @@ func (plugin *Plugin) ProcessFloat64(in [][]float64) (out [][]float64) {
 
 	//convert []*C.double slices to [][]float64
 	out = make([][]float64, numChannels)
-	for c, data := range output {
-		out[c] = (*[1 << 30]float64)(unsafe.Pointer(data))[:blocksize]
+	for i, data := range output {
+		// copy data from C array to slice
+		pa := (*[1 << 30]C.float)(unsafe.Pointer(data))
+		out[i] = make([]float64, blocksize)
+		for j := range out[i] {
+			out[i][j] = float64(pa[j])
+		}
 	}
 	return out
 }
@@ -166,8 +171,13 @@ func (plugin *Plugin) ProcessFloat32(in [][]float32) (out [][]float32) {
 
 	//convert []*C.float slices to [][]float32
 	out = make([][]float32, numChannels)
-	for c, data := range output {
-		out[c] = (*[1 << 30]float32)(unsafe.Pointer(data))[:blocksize]
+	for i, data := range output {
+		// copy data from C array to slice
+		pa := (*[1 << 30]C.float)(unsafe.Pointer(data))
+		out[i] = make([]float32, blocksize)
+		for j := range out[i] {
+			out[i][j] = float32(pa[j])
+		}
 	}
 	return out
 }

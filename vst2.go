@@ -213,18 +213,18 @@ func (plugin *Plugin) SetCallback(c HostCallbackFunc) {
 func DefaultHostCallback(plugin *Plugin, opcode MasterOpcode, index int64, value int64, ptr unsafe.Pointer, opt float64) int {
 	switch opcode {
 	case AudioMasterVersion:
-		//	log.Printf("AudioMasterVersion")
+		log.Printf("AudioMasterVersion")
 		return 2400
 	case AudioMasterIdle:
-		// log.Printf("AudioMasterIdle")
+		log.Printf("AudioMasterIdle")
 		plugin.Dispatch(EffEditIdle, 0, 0, nil, 0)
 
 	case AudioMasterGetCurrentProcessLevel:
-		// log.Printf("AudioMasterGetCurrentProcessLevel")
+		log.Printf("AudioMasterGetCurrentProcessLevel")
 		return C.kVstProcessLevelUnknown
 
 	default:
-		// log.Printf("Plugin requested value of opcode %v\n", opcode)
+		log.Printf("Plugin requested value of opcode %v\n", opcode)
 		break
 	}
 	return 0

@@ -33,9 +33,9 @@ type Library struct {
 	Path       string
 }
 
-func (library *Library) load() error {
+func (l *Library) load() error {
 	//create C string
-	cpath := C.CString(library.Path)
+	cpath := C.CString(l.Path)
 	defer C.free(unsafe.Pointer(cpath))
 	//convert to CF string
 	cfpath := C.CFStringCreateWithCString(nil, cpath, C.kCFStringEncodingUTF8)
@@ -44,12 +44,12 @@ func (library *Library) load() error {
 	//get bundle url
 	bundleURL := C.CFURLCreateWithFileSystemPath(C.kCFAllocatorDefault, cfpath, C.kCFURLPOSIXPathStyle, C.true)
 	if bundleURL == nil {
-		return fmt.Errorf("Failed to create bundle url at %v", library.Path)
+		return fmt.Errorf("Failed to create bundle url at %v", l.Path)
 	}
 	defer C.free(unsafe.Pointer(bundleURL))
 	//open bundle and release it only if it failed
 	bundle := C.CFBundleCreate(C.kCFAllocatorDefault, bundleURL)
-	library.library = uintptr(bundle)
+	l.library = uintptr(bundle)
 	//bundle ref should be released in the end of program with plugin.unload call
 
 	//create C string
@@ -59,21 +59,21 @@ func (library *Library) load() error {
 	cfvstMain := C.CFStringCreateWithCString(nil, cvstMain, C.kCFStringEncodingUTF8)
 	defer C.CFRelease(C.CFTypeRef(cfvstMain))
 
-	library.entryPoint = unsafe.Pointer(C.CFBundleGetFunctionPointerForName(bundle, cfvstMain))
-	if library.entryPoint == nil {
-		library.Close()
-		return fmt.Errorf("Failed to find entry point in bundle %v", library.Path)
+	l.entryPoint = unsafe.Pointer(C.CFBundleGetFunctionPointerForName(bundle, cfvstMain))
+	if l.entryPoint == nil {
+		l.Close()
+		return fmt.Errorf("Failed to find entry point in bundle %v", l.Path)
 	}
-	library.Name = getBundleString(bundle, "CFBundleName")
+	l.Name = getBundleString(bundle, "CFBundleName")
 
 	return nil
 }
 
 //Close cleans up library refs
 //TODO: exceptions handling
-func (library *Library) Close() error {
-	C.CFRelease(C.CFTypeRef(C.CFBundleRef(library.library)))
-	library.library = 0
+func (l *Library) Close() error {
+	C.CFRelease(C.CFTypeRef(C.CFBundleRef(l.library)))
+	l.library = 0
 	return nil
 }
 

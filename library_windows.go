@@ -19,28 +19,28 @@ type Library struct {
 	Path       string
 }
 
-func (library *Library) load() error {
+func (l *Library) load() error {
 	//Load plugin by path
-	vstDLL, err := syscall.LoadDLL(library.Path)
+	vstDLL, err := syscall.LoadDLL(l.Path)
 	if err != nil {
-		return fmt.Errorf("Failed to load VST from '%s': %v\n", library.Path, err)
+		return fmt.Errorf("Failed to load VST from '%s': %v\n", l.Path, err)
 	}
-	library.library = unsafe.Pointer(vstDLL)
-	library.Name = strings.TrimSuffix(filepath.Base(vstDLL.Name), filepath.Ext(vstDLL.Name))
+	l.library = unsafe.Pointer(vstDLL)
+	l.Name = strings.TrimSuffix(filepath.Base(vstDLL.Name), filepath.Ext(vstDLL.Name))
 
 	//Get pointer to plugin's Main function
 	entryPoint, err := syscall.GetProcAddress(vstDLL.Handle, vstMain)
 	if err != nil {
-		library.Close()
-		return fmt.Errorf("Failed to get entry point for plugin'%s': %v\n", library.Path, err)
+		l.Close()
+		return fmt.Errorf("Failed to get entry point for plugin'%s': %v\n", l.Path, err)
 	}
-	library.entryPoint = unsafe.Pointer(entryPoint)
+	l.entryPoint = unsafe.Pointer(entryPoint)
 	return nil
 }
 
 //Close cleans up plugin refs
-func (library *Library) Close() {
-	vstDLL := (*syscall.DLL)(library.library)
+func (l *Library) Close() {
+	vstDLL := (*syscall.DLL)(l.library)
 	vstDLL.Release()
-	library.library = nil
+	l.library = nil
 }

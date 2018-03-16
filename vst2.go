@@ -6,6 +6,7 @@ package vst2
 #include <stdlib.h>
 #include <stdint.h>
 #include "vst2.h"
+#include "aeffect.h"
 #include "aeffectx.h"
 */
 import "C"
@@ -23,6 +24,9 @@ type Plugin struct {
 	Path     string
 	callback HostCallbackFunc
 }
+
+// speakerArrangement is a wrapper over vst2 VstSpeakerArrangement structure
+type speakerArrangement C.struct_VstSpeakerArrangement
 
 // HostCallbackFunc used as callback from plugin
 type HostCallbackFunc func(*Plugin, MasterOpcode, int64, int64, unsafe.Pointer, float64) int
@@ -80,7 +84,7 @@ func (p *Plugin) Close() error {
 // Dispatch wraps-up C method to dispatch calls to plugin
 func (p *Plugin) Dispatch(opcode PluginOpcode, index int64, value int64, ptr unsafe.Pointer, opt float64) {
 	if p.effect != nil {
-		C.dispatch(p.effect, C.int(opcode), C.int(index), C.int64_t(value), ptr, C.float(opt))
+		C.dispatch(p.effect, C.int(opcode), C.int(index), C.VstIntPtr(value), ptr, C.float(opt))
 	}
 }
 
@@ -187,6 +191,51 @@ func (p *Plugin) SetCallback(c HostCallbackFunc) {
 	if c != nil {
 		p.callback = c
 	}
+}
+
+// SetSpeakerArrangement craetes and passes VstSpeakerArrangement structures to plugin
+func (p *Plugin) SetSpeakerArrangement(numChannels int) {
+	in := newSpeakerArrangement(numChannels)
+	out := newSpeakerArrangement(numChannels)
+	inp := uintptr(unsafe.Pointer(in))
+	p.Dispatch(EffSetSpeakerArrangement, 0, int64(inp), unsafe.Pointer(out), 0.0)
+}
+
+func newSpeakerArrangement(numChannels int) *speakerArrangement {
+	sa := speakerArrangement{}
+	sa.numChannels = C.int(numChannels)
+	switch numChannels {
+	case 0:
+		sa._type = C.kSpeakerArrEmpty
+	case 1:
+		sa._type = C.kSpeakerArrMono
+	case 2:
+		sa._type = C.kSpeakerArrStereo
+	case 3:
+		sa._type = C.kSpeakerArr30Music
+	case 4:
+		sa._type = C.kSpeakerArr40Music
+	case 5:
+		sa._type = C.kSpeakerArr50
+	case 6:
+		sa._type = C.kSpeakerArr60Music
+	case 7:
+		sa._type = C.kSpeakerArr70Music
+	case 8:
+		sa._type = C.kSpeakerArr80Music
+	default:
+		sa._type = C.kSpeakerArrUserDefined
+	}
+
+	for i := 0; i < numChannels; i++ {
+		sa.speakers[i].azimuth = 0.0
+		sa.speakers[i].elevation = 0.0
+		sa.speakers[i].radius = 0.0
+		sa.speakers[i].reserved = 0.0
+		sa.speakers[i].name[0] = C.char(0)
+		sa.speakers[i]._type = C.kSpeakerUndefined
+	}
+	return &sa
 }
 
 //export hostCallback

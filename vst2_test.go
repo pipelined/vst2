@@ -41,7 +41,7 @@ func init() {
 	}
 }
 
-// sTest load plugin
+// Test plugin
 func TestPlugin(t *testing.T) {
 	library, err := Open(pluginPath)
 	if err != nil {
@@ -71,6 +71,7 @@ func TestPlugin(t *testing.T) {
 	plugin.Dispatch(EffSetSampleRate, 0, 0, nil, sampleRate)
 	plugin.Dispatch(EffSetBlockSize, 0, blocksize, nil, 0.0)
 	plugin.Dispatch(EffMainsChanged, 0, 1, nil, 0.0)
+	plugin.SetSpeakerArrangement(2)
 
 	if plugin.CanProcessFloat64() {
 		assert.Equal(t, false, plugin.CanProcessFloat32())

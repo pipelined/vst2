@@ -58,50 +58,50 @@ func Open(path string) (*Library, error) {
 }
 
 // Open creates new instance of plugin
-func (library *Library) Open() (*Plugin, error) {
+func (l *Library) Open() (*Plugin, error) {
 	plugin := &Plugin{
-		Path:     library.Path,
-		Name:     library.Name,
+		Path:     l.Path,
+		Name:     l.Name,
 		callback: DefaultHostCallback,
 	}
-	plugin.effect = C.loadEffect(C.vstPluginFuncPtr(library.entryPoint))
+	plugin.effect = C.loadEffect(C.vstPluginFuncPtr(l.entryPoint))
 	plugins[plugin.effect] = plugin
 	return plugin, nil
 }
 
 // Close cleans up C refs for plugin
-func (plugin *Plugin) Close() error {
-	plugin.Dispatch(EffClose, 0, 0, nil, 0.0)
-	delete(plugins, plugin.effect)
-	plugin.effect = nil
+func (p *Plugin) Close() error {
+	p.Dispatch(EffClose, 0, 0, nil, 0.0)
+	delete(plugins, p.effect)
+	p.effect = nil
 	return nil
 }
 
 // Dispatch wraps-up C method to dispatch calls to plugin
-func (plugin *Plugin) Dispatch(opcode PluginOpcode, index int64, value int64, ptr unsafe.Pointer, opt float64) {
-	if plugin.effect != nil {
-		C.dispatch(plugin.effect, C.int(opcode), C.int(index), C.int64_t(value), ptr, C.float(opt))
+func (p *Plugin) Dispatch(opcode PluginOpcode, index int64, value int64, ptr unsafe.Pointer, opt float64) {
+	if p.effect != nil {
+		C.dispatch(p.effect, C.int(opcode), C.int(index), C.int64_t(value), ptr, C.float(opt))
 	}
 }
 
 // CanProcessFloat32 checks if plugin can process float32
-func (plugin *Plugin) CanProcessFloat32() bool {
-	if plugin.effect == nil {
+func (p *Plugin) CanProcessFloat32() bool {
+	if p.effect == nil {
 		return false
 	}
-	return plugin.effect.flags&C.effFlagsCanReplacing == C.effFlagsCanReplacing
+	return p.effect.flags&C.effFlagsCanReplacing == C.effFlagsCanReplacing
 }
 
 // CanProcessFloat64 checks if plugin can process float64
-func (plugin *Plugin) CanProcessFloat64() bool {
-	if plugin.effect == nil {
+func (p *Plugin) CanProcessFloat64() bool {
+	if p.effect == nil {
 		return false
 	}
-	return plugin.effect.flags&C.effFlagsCanDoubleReplacing == C.effFlagsCanDoubleReplacing
+	return p.effect.flags&C.effFlagsCanDoubleReplacing == C.effFlagsCanDoubleReplacing
 }
 
 // ProcessFloat64 audio with VST plugin
-func (plugin *Plugin) ProcessFloat64(in [][]float64) (out [][]float64) {
+func (p *Plugin) ProcessFloat64(in [][]float64) [][]float64 {
 	numChannels := len(in)
 	blocksize := len(in[0])
 
@@ -126,10 +126,10 @@ func (plugin *Plugin) ProcessFloat64(in [][]float64) (out [][]float64) {
 		defer C.free(unsafe.Pointer(outp))
 	}
 
-	C.processDouble(plugin.effect, C.int(numChannels), C.int(blocksize), &input[0], &output[0])
+	C.processDouble(p.effect, C.int(numChannels), C.int(blocksize), &input[0], &output[0])
 
 	//convert []*C.double slices to [][]float64
-	out = make([][]float64, numChannels)
+	out := make([][]float64, numChannels)
 	for i, data := range output {
 		// copy data from C array to slice
 		pa := (*[1 << 30]C.float)(unsafe.Pointer(data))
@@ -142,7 +142,7 @@ func (plugin *Plugin) ProcessFloat64(in [][]float64) (out [][]float64) {
 }
 
 // ProcessFloat32 audio with VST plugin
-func (plugin *Plugin) ProcessFloat32(in [][]float32) (out [][]float32) {
+func (p *Plugin) ProcessFloat32(in [][]float32) (out [][]float32) {
 	numChannels := len(in)
 	blocksize := len(in[0])
 
@@ -167,7 +167,7 @@ func (plugin *Plugin) ProcessFloat32(in [][]float32) (out [][]float32) {
 		defer C.free(unsafe.Pointer(outp))
 	}
 
-	C.processFloat(plugin.effect, C.int(numChannels), C.int(blocksize), &input[0], &output[0])
+	C.processFloat(p.effect, C.int(numChannels), C.int(blocksize), &input[0], &output[0])
 
 	//convert []*C.float slices to [][]float32
 	out = make([][]float32, numChannels)
@@ -180,6 +180,13 @@ func (plugin *Plugin) ProcessFloat32(in [][]float32) (out [][]float32) {
 		}
 	}
 	return out
+}
+
+// SetCallback overrides plugin's callback
+func (p *Plugin) SetCallback(c HostCallbackFunc) {
+	if c != nil {
+		p.callback = c
+	}
 }
 
 //export hostCallback
@@ -200,13 +207,6 @@ func hostCallback(effect *C.AEffect, opcode int64, index int64, value int64, ptr
 		panic("Host callback is not defined!")
 	}
 	return plugin.callback(plugin, MasterOpcode(opcode), index, value, ptr, opt)
-}
-
-// SetCallback overrides plugin's callback
-func (plugin *Plugin) SetCallback(c HostCallbackFunc) {
-	if c != nil {
-		plugin.callback = c
-	}
 }
 
 // DefaultHostCallback is a default callback, just prints incoming opcodes should be overriden with SetHostCallback

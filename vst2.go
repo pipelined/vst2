@@ -23,10 +23,13 @@ type Plugin struct {
 	Name     string
 	Path     string
 	callback HostCallbackFunc
+	timeInfo *vstTimeInfo
 }
 
 // speakerArrangement is a wrapper over vst2 VstSpeakerArrangement structure
 type speakerArrangement C.struct_VstSpeakerArrangement
+
+type vstTimeInfo C.struct_VstTimeInfo
 
 // HostCallbackFunc used as callback from plugin
 type HostCallbackFunc func(*Plugin, MasterOpcode, int64, int64, unsafe.Pointer, float64) int
@@ -67,6 +70,7 @@ func (l *Library) Open() (*Plugin, error) {
 		Path:     l.Path,
 		Name:     l.Name,
 		callback: DefaultHostCallback,
+		timeInfo: &vstTimeInfo{},
 	}
 	plugin.effect = C.loadEffect(C.vstPluginFuncPtr(l.entryPoint))
 	plugins[plugin.effect] = plugin
@@ -77,6 +81,7 @@ func (l *Library) Open() (*Plugin, error) {
 func (p *Plugin) Close() error {
 	p.Dispatch(EffClose, 0, 0, nil, 0.0)
 	delete(plugins, p.effect)
+	p.timeInfo = nil
 	p.effect = nil
 	return nil
 }
@@ -236,6 +241,15 @@ func newSpeakerArrangement(numChannels int) *speakerArrangement {
 		sa.speakers[i]._type = C.kSpeakerUndefined
 	}
 	return &sa
+}
+
+// SetTimeInfo sets new time info and returns pointer to it
+func (p *Plugin) SetTimeInfo(sampleRate int, samplePos uint64) int64 {
+	p.timeInfo.sampleRate = C.double(sampleRate)
+	p.timeInfo.samplePos = C.double(samplePos)
+	p.timeInfo.flags |= C.kVstTransportPlaying
+	p.timeInfo.flags |= C.kVstTransportChanged
+	return int64(uintptr(unsafe.Pointer(p.timeInfo)))
 }
 
 //export hostCallback

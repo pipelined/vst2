@@ -40,7 +40,7 @@ const (
 )
 
 var (
-	m           sync.Mutex
+	m           sync.RWMutex
 	plugins     = make(map[*C.AEffect]*Plugin)
 	vst2version = 2400
 )
@@ -266,9 +266,9 @@ func hostCallback(effect *C.AEffect, opcode int64, index int64, value int64, ptr
 	if MasterOpcode(opcode) == AudioMasterVersion {
 		return vst2version
 	}
-	m.Lock()
+	m.RLock()
 	plugin, ok := plugins[effect]
-	m.Unlock()
+	m.RUnlock()
 	if !ok {
 		panic("Plugin was closed")
 	}

@@ -14,6 +14,7 @@ import "C"
 import (
 	"log"
 	"path/filepath"
+	"sync"
 	"unsafe"
 )
 
@@ -39,6 +40,7 @@ const (
 )
 
 var (
+	m           sync.Mutex
 	plugins     = make(map[*C.AEffect]*Plugin)
 	vst2version = 2400
 )
@@ -73,14 +75,18 @@ func (l *Library) Open() (*Plugin, error) {
 		timeInfo: &vstTimeInfo{},
 	}
 	plugin.effect = C.loadEffect(C.vstPluginFuncPtr(l.entryPoint))
+	m.Lock()
 	plugins[plugin.effect] = plugin
+	m.Unlock()
 	return plugin, nil
 }
 
 // Close cleans up C refs for plugin
 func (p *Plugin) Close() error {
 	p.Dispatch(EffClose, 0, 0, nil, 0.0)
+	m.Lock()
 	delete(plugins, p.effect)
+	m.Unlock()
 	p.timeInfo = nil
 	p.effect = nil
 	return nil
@@ -260,8 +266,9 @@ func hostCallback(effect *C.AEffect, opcode int64, index int64, value int64, ptr
 	if MasterOpcode(opcode) == AudioMasterVersion {
 		return vst2version
 	}
-
+	m.Lock()
 	plugin, ok := plugins[effect]
+	m.Unlock()
 	if !ok {
 		panic("Plugin was closed")
 	}

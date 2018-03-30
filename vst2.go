@@ -250,11 +250,34 @@ func newSpeakerArrangement(numChannels int) *speakerArrangement {
 }
 
 // SetTimeInfo sets new time info and returns pointer to it
-func (p *Plugin) SetTimeInfo(sampleRate int, samplePos uint64) int64 {
+func (p *Plugin) SetTimeInfo(sampleRate int, samplePos int64, tempo int, timeSigNum int, timeSigDenom int, nanoSeconds int64, ppqPos float64, barPos float64) int64 {
+	// sample position
 	p.timeInfo.sampleRate = C.double(sampleRate)
 	p.timeInfo.samplePos = C.double(samplePos)
 	p.timeInfo.flags |= C.kVstTransportPlaying
 	p.timeInfo.flags |= C.kVstTransportChanged
+
+	// nanoseconds
+	p.timeInfo.nanoSeconds = C.double(nanoSeconds)
+	p.timeInfo.flags |= C.kVstNanosValid
+
+	// tempo
+	p.timeInfo.tempo = C.double(tempo)
+	p.timeInfo.flags |= C.kVstTempoValid
+
+	// time signature
+	p.timeInfo.timeSigNumerator = C.int(timeSigNum)
+	p.timeInfo.timeSigDenominator = C.int(timeSigDenom)
+	p.timeInfo.flags |= C.kVstTimeSigValid
+
+	// ppq
+	p.timeInfo.ppqPos = C.double(ppqPos)
+	p.timeInfo.flags |= C.kVstPpqPosValid
+
+	// bar start
+	p.timeInfo.barStartPos = C.double(barPos)
+	p.timeInfo.flags |= C.kVstBarsValid
+
 	return int64(uintptr(unsafe.Pointer(p.timeInfo)))
 }
 

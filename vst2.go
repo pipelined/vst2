@@ -1,7 +1,7 @@
 package vst2
 
 /*
-#cgo CFLAGS: -std=gnu99 -I${SRCDIR}/vst2sdk/ -I${SRCDIR}
+#cgo CFLAGS: -std=gnu99 -I${SRCDIR}
 
 #include <stdlib.h>
 #include <stdint.h>

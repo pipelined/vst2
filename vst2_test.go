@@ -33,7 +33,7 @@ const (
 func init() {
 	switch os := runtime.GOOS; os {
 	case "darwin":
-		pluginPath = "_testdata/TAL-Reverb.vst"
+		pluginPath = "_testdata/Krush.vst"
 	case "windows":
 		pluginPath = "_testdata/TAL-Reverb.dll"
 	default:

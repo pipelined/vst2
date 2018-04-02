@@ -3,7 +3,9 @@
 ## Dependencies 
 For Go dependencies **dep** is used.
 
-VST SDK is also required
+VST2 SDK is also required and since it is under commercial lincense, it cannot be a part of public repository. 
+
+To use this package:
 1. Go to [Steinberg web site](https://www.steinberg.net/en/company/developers.html) to get the SDK
 2. Extract downloaded archive
 3. Go to /VST2_SDK/public.sdk/source/vst2.x
@@ -11,17 +13,3 @@ VST SDK is also required
 * aeffect.h
 * aeffectx.h
 * vstfxstore.h
-
-## Building 
-1. Go to submodule diretory _vst2
-2. Run 
-~~~
-./build.sh <os> <arch>
-~~~
-
-## Releasing 
-1. Go to submodule diretory _vst2
-2. Run 
-~~~
-./release.sh <version>
-~~~

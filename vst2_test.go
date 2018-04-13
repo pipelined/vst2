@@ -4,6 +4,7 @@ import (
 	"runtime"
 	"testing"
 
+	"github.com/dudk/phono/pipe"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -44,9 +45,7 @@ func init() {
 // Test plugin
 func TestPlugin(t *testing.T) {
 	library, err := Open(pluginPath)
-	if err != nil {
-		t.Fatalf("Failed to open library: %v\n", err)
-	}
+	assert.Nil(t, err)
 	defer library.Close()
 	assert.NotNil(t, library.entryPoint)
 	assert.NotNil(t, library.library)
@@ -54,9 +53,7 @@ func TestPlugin(t *testing.T) {
 	assert.NotNil(t, library.Path)
 
 	plugin, err := library.Open()
-	if err != nil {
-		t.Fatalf("Failed to open plugin: %v\n", err)
-	}
+	assert.Nil(t, err)
 	defer plugin.Close()
 	assert.Equal(t, len(plugins), 1)
 	assert.NotNil(t, plugin.effect)
@@ -98,6 +95,14 @@ func TestPlugin(t *testing.T) {
 			assert.Equal(t, true, zeroesProportionThreshold >= zp, "Too many zeroed samples in channel %v. Expected: %v%% got: %.4f%% zeroes count: %v zeroes positions: %v", c, zeroesProportionThreshold, zp, zc, zpos)
 		}
 	}
+}
+
+// Test Processor
+func TestProcessor(t *testing.T) {
+	// Test if processor still satisfy the interface
+	p := &Processor{}
+	pipe := pipe.New(pipe.WithProcessors(p))
+	assert.NotNil(t, pipe)
 }
 
 // count zeroes proportion in float64 slice

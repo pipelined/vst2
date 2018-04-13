@@ -79,6 +79,12 @@ func (p *Processor) Process() phono.ProcessFunc {
 	}
 }
 
+// Validate the processor
+func (p *Processor) Validate() error {
+	//todo
+	return nil
+}
+
 // // readCurrentPosition reads a position with read lock
 // func (p *Processor) readCurrentPosition() phono.SamplePosition {
 // 	return p.currentPosition

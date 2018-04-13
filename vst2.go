@@ -16,6 +16,8 @@ import (
 	"path/filepath"
 	"sync"
 	"unsafe"
+
+	"github.com/dudk/phono"
 )
 
 // Plugin type provides interface
@@ -205,14 +207,14 @@ func (p *Plugin) SetCallback(c HostCallbackFunc) {
 }
 
 // SetSpeakerArrangement craetes and passes VstSpeakerArrangement structures to plugin
-func (p *Plugin) SetSpeakerArrangement(numChannels int) {
+func (p *Plugin) SetSpeakerArrangement(numChannels phono.NumChannels) {
 	in := newSpeakerArrangement(numChannels)
 	out := newSpeakerArrangement(numChannels)
 	inp := uintptr(unsafe.Pointer(in))
 	p.Dispatch(EffSetSpeakerArrangement, 0, int64(inp), unsafe.Pointer(out), 0.0)
 }
 
-func newSpeakerArrangement(numChannels int) *speakerArrangement {
+func newSpeakerArrangement(numChannels phono.NumChannels) *speakerArrangement {
 	sa := speakerArrangement{}
 	sa.numChannels = C.int(numChannels)
 	switch numChannels {
@@ -238,7 +240,7 @@ func newSpeakerArrangement(numChannels int) *speakerArrangement {
 		sa._type = C.kSpeakerArrUserDefined
 	}
 
-	for i := 0; i < numChannels; i++ {
+	for i := 0; i < int(numChannels); i++ {
 		sa.speakers[i].azimuth = 0.0
 		sa.speakers[i].elevation = 0.0
 		sa.speakers[i].radius = 0.0
@@ -250,7 +252,14 @@ func newSpeakerArrangement(numChannels int) *speakerArrangement {
 }
 
 // SetTimeInfo sets new time info and returns pointer to it
-func (p *Plugin) SetTimeInfo(sampleRate int, samplePos int64, tempo int, timeSigNum int, timeSigDenom int, nanoSeconds int64, ppqPos float64, barPos float64) int64 {
+func (p *Plugin) SetTimeInfo(
+	sampleRate phono.SampleRate,
+	samplePos phono.SamplePosition,
+	tempo phono.Tempo,
+	timeSig phono.TimeSignature,
+	nanoSeconds int64,
+	ppqPos float64,
+	barPos float64) int64 {
 	// sample position
 	p.timeInfo.sampleRate = C.double(sampleRate)
 	p.timeInfo.samplePos = C.double(samplePos)
@@ -266,8 +275,8 @@ func (p *Plugin) SetTimeInfo(sampleRate int, samplePos int64, tempo int, timeSig
 	p.timeInfo.flags |= C.kVstTempoValid
 
 	// time signature
-	p.timeInfo.timeSigNumerator = C.int(timeSigNum)
-	p.timeInfo.timeSigDenominator = C.int(timeSigDenom)
+	p.timeInfo.timeSigNumerator = C.int(timeSig.NotesPerBar)
+	p.timeInfo.timeSigDenominator = C.int(timeSig.NoteValue)
 	p.timeInfo.flags |= C.kVstTimeSigValid
 
 	// ppq

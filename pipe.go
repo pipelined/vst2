@@ -17,8 +17,14 @@ import (
 type Processor struct {
 	plugin *Plugin
 
+	bufferSize    phono.BufferSize
+	numChannels   phono.NumChannels
+	sampleRate    phono.SampleRate
+	tempo         phono.Tempo
+	timeSignature phono.TimeSignature
+
 	// possibly mutex is required
-	pulse           phono.Pulse
+	// pulse           phono.Pulse
 	currentPosition phono.SamplePosition
 }
 
@@ -31,8 +37,8 @@ func NewProcessor(plugin *Plugin) *Processor {
 }
 
 // Process implements processor.Processor
-func (p *Processor) Process(pulse phono.Pulse) phono.ProcessFunc {
-	p.pulse = pulse
+func (p *Processor) Process() phono.ProcessFunc {
+	// p.pulse = pulse
 	p.plugin.SetCallback(p.callback())
 	return func(ctx context.Context, in <-chan phono.Message) (<-chan phono.Message, <-chan error, error) {
 		errc := make(chan error, 1)
@@ -40,9 +46,9 @@ func (p *Processor) Process(pulse phono.Pulse) phono.ProcessFunc {
 		go func() {
 			defer close(out)
 			defer close(errc)
-			pulse := p.pulse
-			p.plugin.SetBufferSize(pulse.BufferSize())
-			p.plugin.SetSampleRate(pulse.SampleRate())
+			// pulse := p.pulse
+			p.plugin.SetBufferSize(p.bufferSize)
+			p.plugin.SetSampleRate(p.sampleRate)
 			p.plugin.SetSpeakerArrangement(2)
 			p.plugin.Resume()
 			defer p.plugin.Suspend()
@@ -54,15 +60,13 @@ func (p *Processor) Process(pulse phono.Pulse) phono.ProcessFunc {
 						in = nil
 					} else {
 						// handle new pulse
-						pulse = m.Pulse()
-						if pulse != nil {
-							p.pulse = pulse
-						}
-						samples := m.Samples()
-						processed := p.plugin.Process(samples)
-						m.SetSamples(processed)
+						// pulse = m.Pulse()
+						// if pulse != nil {
+						// 	p.pulse = pulse
+						// }
+						m.Samples = p.plugin.Process(m.Samples)
 						// calculate new position and advance it after processing is done
-						position += phono.SamplePosition(m.BufferSize())
+						position += phono.SamplePosition(p.bufferSize)
 						p.currentPosition = position
 						out <- m
 					}
@@ -129,12 +133,12 @@ func (p *Plugin) Suspend() {
 }
 
 // SetBufferSize sets a buffer size
-func (p *Plugin) SetBufferSize(bufferSize int) {
+func (p *Plugin) SetBufferSize(bufferSize phono.BufferSize) {
 	p.Dispatch(EffSetBlockSize, 0, int64(bufferSize), nil, 0.0)
 }
 
 // SetSampleRate sets a sample rate for plugin
-func (p *Plugin) SetSampleRate(sampleRate int) {
+func (p *Plugin) SetSampleRate(sampleRate phono.SampleRate) {
 	p.Dispatch(EffSetSampleRate, 0, 0, nil, float64(sampleRate))
 }
 
@@ -175,7 +179,6 @@ func (p *Plugin) Process(in [][]float64) [][]float64 {
 // wraped callback with session
 func (p *Processor) callback() HostCallbackFunc {
 	return func(plugin *Plugin, opcode MasterOpcode, index int64, value int64, ptr unsafe.Pointer, opt float64) int {
-		pulse := p.pulse
 		switch opcode {
 		case AudioMasterIdle:
 			log.Printf("AudioMasterIdle")
@@ -184,25 +187,25 @@ func (p *Processor) callback() HostCallbackFunc {
 		case AudioMasterGetCurrentProcessLevel:
 			//TODO: return C.kVstProcessLevel
 		case AudioMasterGetSampleRate:
-			return pulse.SampleRate()
+			return int(p.sampleRate)
 		case AudioMasterGetBlockSize:
-			return pulse.BufferSize()
+			return int(p.bufferSize)
 		case AudioMasterGetTime:
 			nanoseconds := time.Now().UnixNano()
-			notesPerMeasure, notesValue := pulse.TimeSignature()
+			notesPerMeasure := p.timeSignature.NotesPerBar
 			//TODO: make this dynamic (handle time signature changes)
 			// samples position
 			samplePos := p.currentPosition
 			// todo tempo
-			tempo := pulse.Tempo()
+			tempo := p.tempo
 
-			samplesPerBeat := (60.0 / float64(tempo)) * float64(pulse.SampleRate())
+			samplesPerBeat := (60.0 / float64(tempo)) * float64(p.sampleRate)
 			// todo: ppqPos
 			ppqPos := float64(samplePos)/samplesPerBeat + 1.0
 			// todo: barPos
 			barPos := math.Floor(ppqPos / float64(notesPerMeasure))
 
-			return int(plugin.SetTimeInfo(pulse.SampleRate(), int64(samplePos), tempo, notesPerMeasure, notesValue, nanoseconds, ppqPos, barPos))
+			return int(plugin.SetTimeInfo(p.sampleRate, samplePos, tempo, p.timeSignature, nanoseconds, ppqPos, barPos))
 		default:
 			// log.Printf("Plugin requested value of opcode %v\n", opcode)
 			break

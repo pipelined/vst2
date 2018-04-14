@@ -103,6 +103,8 @@ func TestProcessor(t *testing.T) {
 	p := &Processor{}
 	pipe := pipe.New(pipe.WithProcessors(p))
 	assert.NotNil(t, pipe)
+	err := p.Validate()
+	assert.NotNil(t, err)
 }
 
 // count zeroes proportion in float64 slice

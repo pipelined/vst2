@@ -2,6 +2,7 @@ package vst2
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
 	"math"
@@ -29,10 +30,13 @@ type Processor struct {
 }
 
 // NewProcessor creates new vst2 processor
-func NewProcessor(plugin *Plugin) *Processor {
+func NewProcessor(plugin *Plugin, bufferSize phono.BufferSize, sampleRate phono.SampleRate, numChannels phono.NumChannels) *Processor {
 	return &Processor{
 		plugin:          plugin,
 		currentPosition: 0,
+		bufferSize:      bufferSize,
+		sampleRate:      sampleRate,
+		numChannels:     numChannels,
 	}
 }
 
@@ -49,25 +53,21 @@ func (p *Processor) Process() phono.ProcessFunc {
 			// pulse := p.pulse
 			p.plugin.SetBufferSize(p.bufferSize)
 			p.plugin.SetSampleRate(p.sampleRate)
-			p.plugin.SetSpeakerArrangement(2)
+			p.plugin.SetSpeakerArrangement(p.numChannels)
 			p.plugin.Resume()
 			defer p.plugin.Suspend()
-			var position phono.SamplePosition
 			for in != nil {
 				select {
 				case m, ok := <-in:
 					if !ok {
 						in = nil
 					} else {
-						// handle new pulse
-						// pulse = m.Pulse()
-						// if pulse != nil {
-						// 	p.pulse = pulse
-						// }
+						if m.Options != nil {
+							m.Options.ApplyTo(p)
+						}
 						m.Samples = p.plugin.Process(m.Samples)
 						// calculate new position and advance it after processing is done
-						position += phono.SamplePosition(p.bufferSize)
-						p.currentPosition = position
+						p.currentPosition += phono.SamplePosition(p.bufferSize)
 						out <- m
 					}
 				case <-ctx.Done():
@@ -81,7 +81,17 @@ func (p *Processor) Process() phono.ProcessFunc {
 
 // Validate the processor
 func (p *Processor) Validate() error {
-	//todo
+	if p.bufferSize == 0 {
+		return errors.New("Buffer size is not defined")
+	}
+
+	if p.sampleRate == 0 {
+		return errors.New("Sample rate is not defined")
+	}
+
+	if p.numChannels == 0 {
+		return errors.New("Number of channels is not defined")
+	}
 	return nil
 }
 

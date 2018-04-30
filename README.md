@@ -12,3 +12,19 @@ To use this package:
 * aeffect.h
 * aeffectx.h
 * vstfxstore.h
+4. To build this package, you also need to change next lines in **aeffect.h**:
+```
+#ifdef  __cplusplus
+#define VST_INLINE inline
+#else
+#define VST_INLINE 
+#endif
+```
+to 
+```
+#ifdef  __cplusplus
+#define VST_INLINE inline
+#else
+#define VST_INLINE inline
+#endif
+```

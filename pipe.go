@@ -2,7 +2,6 @@ package vst2
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"log"
 	"math"
@@ -62,8 +61,8 @@ func (p *Processor) Process() phono.ProcessFunc {
 					if !ok {
 						in = nil
 					} else {
-						if m.Options != nil {
-							m.Options.ApplyTo(p)
+						if m.Params != nil {
+							m.Params.ApplyTo(p)
 						}
 						m.Samples = p.plugin.Process(m.Samples)
 						// calculate new position and advance it after processing is done
@@ -77,22 +76,6 @@ func (p *Processor) Process() phono.ProcessFunc {
 		}()
 		return out, errc, nil
 	}
-}
-
-// Validate the processor
-func (p *Processor) Validate() error {
-	if p.bufferSize == 0 {
-		return errors.New("Buffer size is not defined")
-	}
-
-	if p.sampleRate == 0 {
-		return errors.New("Sample rate is not defined")
-	}
-
-	if p.numChannels == 0 {
-		return errors.New("Number of channels is not defined")
-	}
-	return nil
 }
 
 // // readCurrentPosition reads a position with read lock

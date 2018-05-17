@@ -4,7 +4,6 @@ import (
 	"runtime"
 	"testing"
 
-	"github.com/dudk/phono/pipe"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -95,16 +94,6 @@ func TestPlugin(t *testing.T) {
 			assert.Equal(t, true, zeroesProportionThreshold >= zp, "Too many zeroed samples in channel %v. Expected: %v%% got: %.4f%% zeroes count: %v zeroes positions: %v", c, zeroesProportionThreshold, zp, zc, zpos)
 		}
 	}
-}
-
-// Test Processor
-func TestProcessor(t *testing.T) {
-	// Test if processor still satisfy the interface
-	p := &Processor{}
-	pipe := pipe.New(pipe.WithProcessors(p))
-	assert.NotNil(t, pipe)
-	err := p.Validate()
-	assert.NotNil(t, err)
 }
 
 // count zeroes proportion in float64 slice

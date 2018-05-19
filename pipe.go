@@ -43,9 +43,9 @@ func NewProcessor(plugin *Plugin, bufferSize phono.BufferSize, sampleRate phono.
 func (p *Processor) Process() phono.ProcessFunc {
 	// p.pulse = pulse
 	p.plugin.SetCallback(p.callback())
-	return func(ctx context.Context, in <-chan phono.Message) (<-chan phono.Message, <-chan error, error) {
+	return func(ctx context.Context, in <-chan *phono.Message) (<-chan *phono.Message, <-chan error, error) {
 		errc := make(chan error, 1)
-		out := make(chan phono.Message)
+		out := make(chan *phono.Message)
 		go func() {
 			defer close(out)
 			defer close(errc)

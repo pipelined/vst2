@@ -46,7 +46,6 @@ func (p *Processor) Process() phono.ProcessFunc {
 	return func(ctx context.Context, in <-chan *phono.Message) (<-chan *phono.Message, <-chan error, error) {
 		errc := make(chan error, 1)
 		out := make(chan *phono.Message)
-		var processed phono.Samples
 		go func() {
 			defer close(out)
 			defer close(errc)
@@ -65,8 +64,7 @@ func (p *Processor) Process() phono.ProcessFunc {
 						if m.Params != nil {
 							m.Params.ApplyTo(p)
 						}
-						processed = p.plugin.Process(*m.Samples)
-						m.Samples = &processed
+						m.Samples = p.plugin.Process(m.Samples)
 						// calculate new position and advance it after processing is done
 						p.currentPosition += phono.SamplePosition(p.bufferSize)
 						out <- m

@@ -20,6 +20,9 @@
 #  name = "github.com/x/y"
 #  version = "2.4.0"
 
+[[constraint]]
+  branch = "master"
+  name = "github.com/dudk/phono"
 
 [[constraint]]
   name = "github.com/stretchr/testify"

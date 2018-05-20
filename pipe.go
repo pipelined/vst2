@@ -64,7 +64,7 @@ func (p *Processor) Process() phono.ProcessFunc {
 						if m.Params != nil {
 							m.Params.ApplyTo(p)
 						}
-						p.plugin.Process(m.Samples)
+						*m.Samples = p.plugin.Process(*m.Samples)
 						// calculate new position and advance it after processing is done
 						p.currentPosition += phono.SamplePosition(p.bufferSize)
 						out <- m
@@ -150,14 +150,13 @@ func (p *Plugin) defaultCallback() HostCallbackFunc {
 
 // Process is a wrapper over ProcessFloat64 and ProcessFloat32
 // in case if plugin supports only ProcessFloat32, conversion is done
-func (p *Plugin) Process(samples *phono.Samples) {
-	var result phono.Samples
+func (p *Plugin) Process(samples phono.Samples) (result phono.Samples) {
 	if p.CanProcessFloat32() {
 
 		in32 := make([][]float32, samples.NumChannels())
-		for i := range *samples {
+		for i := range samples {
 			in32[i] = make([]float32, samples.BlockSize())
-			for j, v := range (*samples)[i] {
+			for j, v := range samples[i] {
 				in32[i][j] = float32(v)
 			}
 		}
@@ -172,9 +171,9 @@ func (p *Plugin) Process(samples *phono.Samples) {
 			}
 		}
 	} else {
-		result = p.ProcessFloat64([][]float64(*samples))
+		result = p.ProcessFloat64([][]float64(samples))
 	}
-	samples = &result
+	return
 }
 
 // wraped callback with session

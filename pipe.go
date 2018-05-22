@@ -1,7 +1,6 @@
 package vst2
 
 import (
-	"context"
 	"fmt"
 	"log"
 	"math"
@@ -41,15 +40,13 @@ func NewProcessor(plugin *Plugin, bufferSize phono.BufferSize, sampleRate phono.
 
 // Process implements processor.Processor
 func (p *Processor) Process() phono.ProcessFunc {
-	// p.pulse = pulse
 	p.plugin.SetCallback(p.callback())
-	return func(ctx context.Context, in <-chan *phono.Message) (<-chan *phono.Message, <-chan error, error) {
+	return func(in <-chan *phono.Message) (<-chan *phono.Message, <-chan error, error) {
 		errc := make(chan error, 1)
 		out := make(chan *phono.Message)
 		go func() {
 			defer close(out)
 			defer close(errc)
-			// pulse := p.pulse
 			p.plugin.SetBufferSize(p.bufferSize)
 			p.plugin.SetSampleRate(p.sampleRate)
 			p.plugin.SetSpeakerArrangement(p.numChannels)
@@ -59,18 +56,15 @@ func (p *Processor) Process() phono.ProcessFunc {
 				select {
 				case m, ok := <-in:
 					if !ok {
-						in = nil
-					} else {
-						if m.Params != nil {
-							m.Params.ApplyTo(p)
-						}
-						m.Samples = p.plugin.Process(m.Samples)
-						// calculate new position and advance it after processing is done
-						p.currentPosition += phono.SamplePosition(p.bufferSize)
-						out <- m
+						return
 					}
-				case <-ctx.Done():
-					return
+					if m.Params != nil {
+						m.Params.ApplyTo(p)
+					}
+					m.Samples = p.plugin.Process(m.Samples)
+					// calculate new position and advance it after processing is done
+					p.currentPosition += phono.SamplePosition(p.bufferSize)
+					out <- m
 				}
 			}
 		}()
@@ -155,7 +149,7 @@ func (p *Plugin) Process(samples phono.Samples) (result phono.Samples) {
 
 		in32 := make([][]float32, samples.NumChannels())
 		for i := range samples {
-			in32[i] = make([]float32, samples.BlockSize())
+			in32[i] = make([]float32, samples.BufferSize())
 			for j, v := range samples[i] {
 				in32[i][j] = float32(v)
 			}

@@ -61,7 +61,7 @@ func (p *Processor) Process() phono.ProcessFunc {
 					if m.Params != nil {
 						m.Params.ApplyTo(p)
 					}
-					m.Samples = p.plugin.Process(m.Samples)
+					m.Buffer = p.plugin.Process(m.Buffer)
 					// calculate new position and advance it after processing is done
 					p.currentPosition += phono.SamplePosition(p.bufferSize)
 					out <- m
@@ -144,20 +144,20 @@ func (p *Plugin) defaultCallback() HostCallbackFunc {
 
 // Process is a wrapper over ProcessFloat64 and ProcessFloat32
 // in case if plugin supports only ProcessFloat32, conversion is done
-func (p *Plugin) Process(samples phono.Samples) (result phono.Samples) {
+func (p *Plugin) Process(buffer phono.Buffer) (result phono.Buffer) {
 	if p.CanProcessFloat32() {
 
-		in32 := make([][]float32, samples.NumChannels())
-		for i := range samples {
-			in32[i] = make([]float32, samples.BufferSize())
-			for j, v := range samples[i] {
+		in32 := make([][]float32, buffer.NumChannels())
+		for i := range buffer {
+			in32[i] = make([]float32, buffer.Size())
+			for j, v := range buffer[i] {
 				in32[i][j] = float32(v)
 			}
 		}
 
 		out32 := p.ProcessFloat32(in32)
 
-		result = phono.Samples(make([][]float64, len(out32)))
+		result = phono.Buffer(make([][]float64, len(out32)))
 		for i := range out32 {
 			result[i] = make([]float64, len(out32[i]))
 			for j, v := range out32[i] {
@@ -165,7 +165,7 @@ func (p *Plugin) Process(samples phono.Samples) (result phono.Samples) {
 			}
 		}
 	} else {
-		result = p.ProcessFloat64([][]float64(samples))
+		result = p.ProcessFloat64([][]float64(buffer))
 	}
 	return
 }

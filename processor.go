@@ -145,6 +145,10 @@ func (p *Plugin) defaultCallback() HostCallbackFunc {
 // Process is a wrapper over ProcessFloat64 and ProcessFloat32
 // in case if plugin supports only ProcessFloat32, conversion is done
 func (p *Plugin) Process(buffer phono.Buffer) (result phono.Buffer) {
+	if buffer.NumChannels() == 0 {
+		return
+	}
+
 	if p.CanProcessFloat32() {
 
 		in32 := make([][]float32, buffer.NumChannels())

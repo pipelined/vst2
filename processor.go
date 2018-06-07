@@ -14,6 +14,7 @@ import (
 
 // Processor represents vst2 sound processor
 type Processor struct {
+	phono.UID
 	plugin *Plugin
 
 	bufferSize    phono.BufferSize

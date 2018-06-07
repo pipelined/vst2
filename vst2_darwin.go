@@ -25,6 +25,23 @@ import (
 	"unsafe"
 )
 
+const (
+	// Extension of Vst2 files
+	Extension = ".vst"
+)
+
+var (
+	// ScanPaths of Vst2 files
+	ScanPaths []string
+)
+
+func init() {
+	ScanPaths = []string{
+		"~/Library/Audio/Plug-Ins/VST",
+		"/Library/Audio/Plug-Ins/VST",
+	}
+}
+
 // Library used to instantiate new instances of plugin
 type Library struct {
 	entryPoint unsafe.Pointer

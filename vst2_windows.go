@@ -5,11 +5,33 @@ package vst2
 import "C"
 import (
 	"fmt"
+	"os"
 	"path/filepath"
 	"strings"
 	"syscall"
 	"unsafe"
 )
+
+const (
+	// Extension of Vst2 files
+	Extension = ".dll"
+)
+
+var (
+	// ScanPaths of Vst2 files
+	ScanPaths []string
+)
+
+func init() {
+	ScanPaths = []string{
+		"C:\\Program Files (x86)\\Steinberg\\VSTPlugins",
+		"C:\\Program Files\\Steinberg\\VSTPlugins ",
+	}
+	envVstPath := os.Getenv("VST_PATH")
+	if len(envVstPath) > 0 {
+		ScanPaths = append(paths, envVstPath)
+	}
+}
 
 // Library used to instantiate new instances of plugin
 type Library struct {

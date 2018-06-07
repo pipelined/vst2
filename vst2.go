@@ -68,6 +68,16 @@ func Open(path string) (*Library, error) {
 	return library, nil
 }
 
+// FileExtension returns default vst2 extension
+func FileExtension() string {
+	return Extension
+}
+
+// DefaultScanPaths returns a slice of default vst2 locations
+func DefaultScanPaths() (paths []string) {
+	return ScanPaths
+}
+
 // Open creates new instance of plugin
 func (l *Library) Open() (*Plugin, error) {
 	plugin := &Plugin{

@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"log"
 	"math"
-	"os"
-	"runtime"
 	"time"
 	"unsafe"
 
@@ -82,39 +80,6 @@ func (p *Processor) Process() phono.ProcessFunc {
 // func (p *Processor) setCurrentPosition(pos phono.SamplePosition) {
 // 	p.currentPosition = pos
 // }
-
-// DefaultScanPaths returns a slice of default vst2 locations
-func DefaultScanPaths() (paths []string) {
-	switch goos := runtime.GOOS; goos {
-	case "darwin":
-		paths = []string{
-			"~/Library/Audio/Plug-Ins/VST",
-			"/Library/Audio/Plug-Ins/VST",
-		}
-	case "windows":
-		paths = []string{
-			"C:\\Program Files (x86)\\Steinberg\\VSTPlugins",
-			"C:\\Program Files\\Steinberg\\VSTPlugins ",
-		}
-		envVstPath := os.Getenv("VST_PATH")
-		if len(envVstPath) > 0 {
-			paths = append(paths, envVstPath)
-		}
-	}
-	return
-}
-
-// FileExtension returns default vst2 extension
-func FileExtension() string {
-	switch os := runtime.GOOS; os {
-	case "darwin":
-		return ".vst"
-	case "windows":
-		return ".dll"
-	default:
-		return ".so"
-	}
-}
 
 // Resume starts the plugin
 func (p *Plugin) Resume() {

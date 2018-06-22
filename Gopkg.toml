@@ -19,6 +19,9 @@
 # [[override]]
 #  name = "github.com/x/y"
 #  version = "2.4.0"
+[[override]]
+  branch = "master"
+  name = "github.com/dudk/phono"
 
 [[constraint]]
   branch = "master"

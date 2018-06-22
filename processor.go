@@ -1,13 +1,15 @@
 package vst2
 
 import (
-	"fmt"
 	"log"
 	"math"
 	"time"
 	"unsafe"
 
+	"github.com/dudk/phono/pipe/runner"
+
 	"github.com/dudk/phono"
+	"github.com/dudk/phono/pipe"
 )
 
 // Processor represents vst2 sound processor
@@ -21,9 +23,7 @@ type Processor struct {
 	tempo         phono.Tempo
 	timeSignature phono.TimeSignature
 
-	// possibly mutex is required
-	// pulse           phono.Pulse
-	currentPosition phono.SamplePosition
+	currentPosition int64
 }
 
 // NewProcessor creates new vst2 processor
@@ -37,107 +37,30 @@ func NewProcessor(plugin *Plugin, bufferSize phono.BufferSize, sampleRate phono.
 	}
 }
 
-// Process implements processor.Processor
-func (p *Processor) Process() phono.ProcessFunc {
-	p.plugin.SetCallback(p.callback())
-	return func(in <-chan *phono.Message) (<-chan *phono.Message, <-chan error, error) {
-		errc := make(chan error, 1)
-		out := make(chan *phono.Message)
-		go func() {
-			defer close(out)
-			defer close(errc)
+// RunProcess returns configured processor runner
+func (p *Processor) RunProcess() pipe.ProcessRunner {
+	return &runner.Process{
+		Processor: p,
+		Before: func() error {
+			p.plugin.SetCallback(p.callback())
 			p.plugin.SetBufferSize(p.bufferSize)
 			p.plugin.SetSampleRate(p.sampleRate)
 			p.plugin.SetSpeakerArrangement(p.numChannels)
 			p.plugin.Resume()
-			defer p.plugin.Suspend()
-			for in != nil {
-				select {
-				case m, ok := <-in:
-					if !ok {
-						return
-					}
-					if m.Params != nil {
-						m.Params.ApplyTo(p)
-					}
-					m.Buffer = p.plugin.Process(m.Buffer)
-					// calculate new position and advance it after processing is done
-					p.currentPosition += phono.SamplePosition(p.bufferSize)
-					out <- m
-				}
-			}
-		}()
-		return out, errc, nil
+			return nil
+		},
+		After: func() error {
+			p.plugin.Suspend()
+			return nil
+		},
 	}
 }
 
-// // readCurrentPosition reads a position with read lock
-// func (p *Processor) readCurrentPosition() phono.SamplePosition {
-// 	return p.currentPosition
-// }
-
-// // setPosition sets the position through mutex
-// func (p *Processor) setCurrentPosition(pos phono.SamplePosition) {
-// 	p.currentPosition = pos
-// }
-
-// Resume starts the plugin
-func (p *Plugin) Resume() {
-	p.Dispatch(EffMainsChanged, 0, 1, nil, 0.0)
-}
-
-// Suspend stops the plugin
-func (p *Plugin) Suspend() {
-	p.Dispatch(EffMainsChanged, 0, 0, nil, 0.0)
-}
-
-// SetBufferSize sets a buffer size
-func (p *Plugin) SetBufferSize(bufferSize phono.BufferSize) {
-	p.Dispatch(EffSetBlockSize, 0, int64(bufferSize), nil, 0.0)
-}
-
-// SetSampleRate sets a sample rate for plugin
-func (p *Plugin) SetSampleRate(sampleRate phono.SampleRate) {
-	p.Dispatch(EffSetSampleRate, 0, 0, nil, float64(sampleRate))
-}
-
-func (p *Plugin) defaultCallback() HostCallbackFunc {
-	return func(plugin *Plugin, opcode MasterOpcode, index int64, value int64, ptr unsafe.Pointer, opt float64) int {
-		fmt.Printf("Call from default callback! Plugin name: %v\n", p.Name)
-		return 0
-	}
-}
-
-// Process is a wrapper over ProcessFloat64 and ProcessFloat32
-// in case if plugin supports only ProcessFloat32, conversion is done
-func (p *Plugin) Process(buffer phono.Buffer) (result phono.Buffer) {
-	if buffer.NumChannels() == 0 {
-		return
-	}
-
-	if p.CanProcessFloat32() {
-
-		in32 := make([][]float32, buffer.NumChannels())
-		for i := range buffer {
-			in32[i] = make([]float32, buffer.Size())
-			for j, v := range buffer[i] {
-				in32[i][j] = float32(v)
-			}
-		}
-
-		out32 := p.ProcessFloat32(in32)
-
-		result = phono.Buffer(make([][]float64, len(out32)))
-		for i := range out32 {
-			result[i] = make([]float64, len(out32[i]))
-			for j, v := range out32[i] {
-				result[i][j] = float64(v)
-			}
-		}
-	} else {
-		result = p.ProcessFloat64([][]float64(buffer))
-	}
-	return
+// Process buffer
+func (p *Processor) Process(buf phono.Buffer) (phono.Buffer, error) {
+	buf = p.plugin.Process(buf)
+	p.currentPosition += int64(p.bufferSize)
+	return buf, nil
 }
 
 // wraped callback with session

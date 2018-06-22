@@ -12,6 +12,7 @@ package vst2
 import "C"
 
 import (
+	"fmt"
 	"log"
 	"path/filepath"
 	"sync"
@@ -122,6 +123,38 @@ func (p *Plugin) CanProcessFloat64() bool {
 	return p.effect.flags&C.effFlagsCanDoubleReplacing == C.effFlagsCanDoubleReplacing
 }
 
+// Process is a wrapper over ProcessFloat64 and ProcessFloat32
+// in case if plugin supports only ProcessFloat32, conversion is done
+func (p *Plugin) Process(buffer phono.Buffer) (result phono.Buffer) {
+	if buffer.NumChannels() == 0 {
+		return
+	}
+
+	if p.CanProcessFloat32() {
+
+		in32 := make([][]float32, buffer.NumChannels())
+		for i := range buffer {
+			in32[i] = make([]float32, buffer.Size())
+			for j, v := range buffer[i] {
+				in32[i][j] = float32(v)
+			}
+		}
+
+		out32 := p.ProcessFloat32(in32)
+
+		result = phono.Buffer(make([][]float64, len(out32)))
+		for i := range out32 {
+			result[i] = make([]float64, len(out32[i]))
+			for j, v := range out32[i] {
+				result[i][j] = float64(v)
+			}
+		}
+	} else {
+		result = p.ProcessFloat64([][]float64(buffer))
+	}
+	return
+}
+
 // ProcessFloat64 audio with VST plugin
 func (p *Plugin) ProcessFloat64(in [][]float64) [][]float64 {
 	numChannels := len(in)
@@ -219,6 +252,33 @@ func (p *Plugin) SetSpeakerArrangement(numChannels phono.NumChannels) {
 	p.Dispatch(EffSetSpeakerArrangement, 0, int64(inp), unsafe.Pointer(out), 0.0)
 }
 
+// Resume starts the plugin
+func (p *Plugin) Resume() {
+	p.Dispatch(EffMainsChanged, 0, 1, nil, 0.0)
+}
+
+// Suspend stops the plugin
+func (p *Plugin) Suspend() {
+	p.Dispatch(EffMainsChanged, 0, 0, nil, 0.0)
+}
+
+// SetBufferSize sets a buffer size
+func (p *Plugin) SetBufferSize(bufferSize phono.BufferSize) {
+	p.Dispatch(EffSetBlockSize, 0, int64(bufferSize), nil, 0.0)
+}
+
+// SetSampleRate sets a sample rate for plugin
+func (p *Plugin) SetSampleRate(sampleRate phono.SampleRate) {
+	p.Dispatch(EffSetSampleRate, 0, 0, nil, float64(sampleRate))
+}
+
+func (p *Plugin) defaultCallback() HostCallbackFunc {
+	return func(plugin *Plugin, opcode MasterOpcode, index int64, value int64, ptr unsafe.Pointer, opt float64) int {
+		fmt.Printf("Call from default callback! Plugin name: %v\n", p.Name)
+		return 0
+	}
+}
+
 func newSpeakerArrangement(numChannels phono.NumChannels) *speakerArrangement {
 	sa := speakerArrangement{}
 	sa.numChannels = C.int(numChannels)
@@ -259,7 +319,7 @@ func newSpeakerArrangement(numChannels phono.NumChannels) *speakerArrangement {
 // SetTimeInfo sets new time info and returns pointer to it
 func (p *Plugin) SetTimeInfo(
 	sampleRate phono.SampleRate,
-	samplePos phono.SamplePosition,
+	samplePos int64,
 	tempo phono.Tempo,
 	timeSig phono.TimeSignature,
 	nanoSeconds int64,

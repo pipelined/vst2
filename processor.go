@@ -38,7 +38,7 @@ func NewProcessor(plugin *Plugin, bufferSize phono.BufferSize, sampleRate phono.
 }
 
 // RunProcess returns configured processor runner
-func (p *Processor) RunProcess() pipe.ProcessRunner {
+func (p *Processor) RunProcess(string) pipe.ProcessRunner {
 	return &runner.Process{
 		Processor: p,
 		Before: func() error {
@@ -57,10 +57,10 @@ func (p *Processor) RunProcess() pipe.ProcessRunner {
 }
 
 // Process buffer
-func (p *Processor) Process(buf phono.Buffer) (phono.Buffer, error) {
-	buf = p.plugin.Process(buf)
-	p.currentPosition += int64(p.bufferSize)
-	return buf, nil
+func (p *Processor) Process(m *phono.Message) (*phono.Message, error) {
+	m.Buffer = p.plugin.Process(m.Buffer)
+	p.currentPosition += int64(m.Buffer.Size())
+	return m, nil
 }
 
 // wraped callback with session

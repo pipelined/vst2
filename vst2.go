@@ -17,8 +17,6 @@ import (
 	"path/filepath"
 	"sync"
 	"unsafe"
-
-	"github.com/dudk/phono"
 )
 
 // Plugin type provides interface
@@ -37,6 +35,12 @@ type vstTimeInfo C.struct_VstTimeInfo
 
 // HostCallbackFunc used as callback from plugin
 type HostCallbackFunc func(*Plugin, MasterOpcode, int64, int64, unsafe.Pointer, float64) int
+
+// TimeSignature represents a time signature
+type TimeSignature struct {
+	NotesPerBar int // 3 in 3/4
+	NoteValue   int // 4 in 3/4
+}
 
 const (
 	vstMain string = "VSTPluginMain"
@@ -125,16 +129,16 @@ func (p *Plugin) CanProcessFloat64() bool {
 
 // Process is a wrapper over ProcessFloat64 and ProcessFloat32
 // in case if plugin supports only ProcessFloat32, conversion is done
-func (p *Plugin) Process(buffer phono.Buffer) (result phono.Buffer) {
-	if buffer.NumChannels() == 0 {
+func (p *Plugin) Process(buffer [][]float64) (result [][]float64) {
+	if buffer == nil || len(buffer) == 0 || buffer[0] == nil {
 		return
 	}
 
 	if p.CanProcessFloat32() {
 
-		in32 := make([][]float32, buffer.NumChannels())
+		in32 := make([][]float32, len(buffer))
 		for i := range buffer {
-			in32[i] = make([]float32, buffer.Size())
+			in32[i] = make([]float32, len(buffer[0]))
 			for j, v := range buffer[i] {
 				in32[i][j] = float32(v)
 			}
@@ -142,7 +146,7 @@ func (p *Plugin) Process(buffer phono.Buffer) (result phono.Buffer) {
 
 		out32 := p.ProcessFloat32(in32)
 
-		result = phono.Buffer(make([][]float64, len(out32)))
+		result = make([][]float64, len(out32))
 		for i := range out32 {
 			result[i] = make([]float64, len(out32[i]))
 			for j, v := range out32[i] {
@@ -245,7 +249,7 @@ func (p *Plugin) SetCallback(c HostCallbackFunc) {
 }
 
 // SetSpeakerArrangement craetes and passes VstSpeakerArrangement structures to plugin
-func (p *Plugin) SetSpeakerArrangement(numChannels phono.NumChannels) {
+func (p *Plugin) SetSpeakerArrangement(numChannels int) {
 	in := newSpeakerArrangement(numChannels)
 	out := newSpeakerArrangement(numChannels)
 	inp := uintptr(unsafe.Pointer(in))
@@ -263,12 +267,12 @@ func (p *Plugin) Suspend() {
 }
 
 // SetBufferSize sets a buffer size
-func (p *Plugin) SetBufferSize(bufferSize phono.BufferSize) {
+func (p *Plugin) SetBufferSize(bufferSize int) {
 	p.Dispatch(EffSetBlockSize, 0, int64(bufferSize), nil, 0.0)
 }
 
 // SetSampleRate sets a sample rate for plugin
-func (p *Plugin) SetSampleRate(sampleRate phono.SampleRate) {
+func (p *Plugin) SetSampleRate(sampleRate int) {
 	p.Dispatch(EffSetSampleRate, 0, 0, nil, float64(sampleRate))
 }
 
@@ -279,7 +283,7 @@ func (p *Plugin) defaultCallback() HostCallbackFunc {
 	}
 }
 
-func newSpeakerArrangement(numChannels phono.NumChannels) *speakerArrangement {
+func newSpeakerArrangement(numChannels int) *speakerArrangement {
 	sa := speakerArrangement{}
 	sa.numChannels = C.int(numChannels)
 	switch numChannels {
@@ -318,10 +322,10 @@ func newSpeakerArrangement(numChannels phono.NumChannels) *speakerArrangement {
 
 // SetTimeInfo sets new time info and returns pointer to it
 func (p *Plugin) SetTimeInfo(
-	sampleRate phono.SampleRate,
+	sampleRate int,
 	samplePos int64,
-	tempo phono.Tempo,
-	timeSig phono.TimeSignature,
+	tempo float32,
+	timeSig TimeSignature,
 	nanoSeconds int64,
 	ppqPos float64,
 	barPos float64) int64 {

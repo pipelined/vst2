@@ -55,12 +55,12 @@ func (l *Library) load() error {
 	cpath := C.CString(l.Path)
 	defer C.free(unsafe.Pointer(cpath))
 	//convert to CF string
-	cfpath := C.CFStringCreateWithCString(nil, cpath, C.kCFStringEncodingUTF8)
+	cfpath := C.CFStringCreateWithCString(0, cpath, C.kCFStringEncodingUTF8)
 	defer C.CFRelease(C.CFTypeRef(cfpath))
 
 	//get bundle url
 	bundleURL := C.CFURLCreateWithFileSystemPath(C.kCFAllocatorDefault, cfpath, C.kCFURLPOSIXPathStyle, C.true)
-	if bundleURL == nil {
+	if bundleURL == 0 {
 		return fmt.Errorf("Failed to create bundle url at %v", l.Path)
 	}
 	defer C.free(unsafe.Pointer(bundleURL))
@@ -73,7 +73,7 @@ func (l *Library) load() error {
 	cvstMain := C.CString(vstMain)
 	defer C.free(unsafe.Pointer(cvstMain))
 	//create CF string
-	cfvstMain := C.CFStringCreateWithCString(nil, cvstMain, C.kCFStringEncodingUTF8)
+	cfvstMain := C.CFStringCreateWithCString(0, cvstMain, C.kCFStringEncodingUTF8)
 	defer C.CFRelease(C.CFTypeRef(cfvstMain))
 
 	l.entryPoint = unsafe.Pointer(C.CFBundleGetFunctionPointerForName(bundle, cfvstMain))
@@ -100,7 +100,7 @@ func getBundleString(bundle C.CFBundleRef, str string) string {
 	cstring := C.CString(str)
 	defer C.free(unsafe.Pointer(cstring))
 	//convert to CF string
-	cfstring := C.CFStringCreateWithCString(nil, cstring, C.kCFStringEncodingUTF8)
+	cfstring := C.CFStringCreateWithCString(0, cstring, C.kCFStringEncodingUTF8)
 	defer C.CFRelease(C.CFTypeRef(cfstring))
 
 	bundleString := C.CFStringRef(C.CFBundleGetValueForInfoDictionaryKey(bundle, cfstring))

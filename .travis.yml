@@ -2,6 +2,11 @@ language: go
 go: 
  - "1.11.x"
 
+os: osx
+
+env:
+  - CGO_CFLAGS=-I/Users/dudk/C/vst2sdk/
+
 before_install:
   - >-
     openssl aes-256-cbc 
@@ -14,3 +19,5 @@ before_install:
   - eval $(ssh-agent -s)
   - ssh-add vstsdk_rsa
   - git clone ssh://git@github.com/dudk/vst2sdk.git
+  - pwd
+  - ls -a

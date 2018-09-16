@@ -5,7 +5,6 @@ go:
 os: osx
 
 env:
-  - CGO_CFLAGS=-I${GOPATH}/src/github.com/dudk/vst2/vst2sdk/
   - GO111MODULE=on
 
 addons:
@@ -25,3 +24,5 @@ before_install:
   - eval $(ssh-agent -s)
   - ssh-add vstsdk_rsa
   - git clone ssh://git@github.com/dudk/vst2sdk.git
+
+script: env CGO_CFLAGS=-I$(pwd)/vst2sdk go test ./...   

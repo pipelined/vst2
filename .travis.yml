@@ -5,7 +5,7 @@ go:
 os: osx
 
 env:
-  - CGO_CFLAGS=-I/Users/dudk/C/vst2sdk/
+  - CGO_CFLAGS=-Ivst2sdk/
 
 addons:
   ssh_known_hosts:

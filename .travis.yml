@@ -4,6 +4,8 @@ go:
 
 os: osx
 
+install: true
+
 env:
   - GO111MODULE=on
 

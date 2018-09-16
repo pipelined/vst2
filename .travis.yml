@@ -5,7 +5,7 @@ go:
 os: osx
 
 env:
-  - CGO_CFLAGS=-I${TRAVIS_BUILD_DIR}/vst2sdk/
+  - CGO_CFLAGS=-I${GOPATH}/src/github.com/dudk/vst2/vst2sdk/
   - GO111MODULE=on
 
 addons:

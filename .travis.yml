@@ -19,7 +19,6 @@ before_install:
   - eval $(ssh-agent -s)
   - ssh-add vstsdk_rsa
   # - ssh -o StrictHostKeyChecking=no git@github.com
-  # - git clone ssh://git@github.com/dudk/vst2sdk.git
-  - git clone https://github.com/dudk/vst2sdk.git
+  - git clone ssh://git@github.com/dudk/vst2sdk.git
   - pwd
   - ls -a

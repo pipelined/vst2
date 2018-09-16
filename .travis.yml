@@ -2,3 +2,15 @@ language: go
 go: 
  - "1.11.x"
 
+before_install:
+  - >-
+    openssl aes-256-cbc 
+    -K $encrypted_87b4f940d6a2_key 
+    -iv $encrypted_87b4f940d6a2_iv 
+    -in vstsdk_rsa.enc 
+    -out vstsdk_rsa 
+    -d
+  - chmod 600 vstsdk_rsa
+  - eval $(ssh-agent -s)
+  - ssh-add vstsdk_rsa
+  - git clone ssh://git@github.com/dudk/vst2sdk.git

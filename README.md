@@ -1,6 +1,6 @@
 # Go bindings for VST2 SDK
 
-[![Build Status](https://travis-ci.org/dudk/vst2.svg?branch=master)](https://travis-ci.org/dudk/vst2)
+[![Build Status](https://travis-ci.org/pipelined/vst2.svg?branch=master)](https://travis-ci.org/pipelined/vst2)
 
 ## Dependencies 
 

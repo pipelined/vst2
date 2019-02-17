@@ -9,6 +9,7 @@ install: true
 env:
   - GO111MODULE=on
   - CODECOV_TOKEN="6ac7ddfb-dfa8-4ac5-8d75-527a81eed7f3"
+  - CGO_CFLAGS=-I$(pwd)/vst2sdk
 
 addons:
   ssh_known_hosts:
@@ -28,7 +29,7 @@ before_install:
   - ssh-add vstsdk_rsa
   - git clone ssh://git@github.com/dudk/vst2sdk.git
 
-script: env CGO_CFLAGS=-I$(pwd)/vst2sdk go test ./...   
+script: go test ./...   
 
 after_success:
   - bash <(curl -s https://codecov.io/bash)

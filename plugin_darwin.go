@@ -63,7 +63,7 @@ func (l *Library) load() error {
 	if bundleURL == 0 {
 		return fmt.Errorf("Failed to create bundle url at %v", l.Path)
 	}
-	defer C.free(unsafe.Pointer(bundleURL))
+	defer C.CFRelease(C.CFTypeRef(bundleURL))
 	//open bundle and release it only if it failed
 	bundle := C.CFBundleCreate(C.kCFAllocatorDefault, bundleURL)
 	l.library = uintptr(bundle)

@@ -380,7 +380,7 @@ func hostCallback(effect *C.AEffect, opcode int64, index int64, value int64, ptr
 	return plugin.callback(plugin, MasterOpcode(opcode), index, value, ptr, opt)
 }
 
-// DefaultHostCallback is a default callback, just prints incoming opcodes should be overriden with SetHostCallback
+// DefaultHostCallback is a default callback, just prints incoming opcodes should be overridden with SetHostCallback
 func DefaultHostCallback(plugin *Plugin, opcode MasterOpcode, index int64, value int64, ptr unsafe.Pointer, opt float64) int {
 	switch opcode {
 	case AudioMasterVersion:

@@ -23,16 +23,19 @@ type Processor struct {
 }
 
 // Process returns processor function with default settings initialized.
-func (p *Processor) Process(pipeID string, sampleRate, numChannels, bufferSize int) (func([][]float64) ([][]float64, error), error) {
-	p.bufferSize = bufferSize
+func (p *Processor) Process(pipeID string, sampleRate, numChannels int) (func([][]float64) ([][]float64, error), error) {
 	p.sampleRate = sampleRate
 	p.numChannels = numChannels
 	p.Plugin.SetCallback(p.callback())
-	p.Plugin.SetBufferSize(int(p.bufferSize))
-	p.Plugin.SetSampleRate(int(p.sampleRate))
-	p.Plugin.SetSpeakerArrangement(int(p.numChannels))
+	p.Plugin.SetSampleRate(p.sampleRate)
+	p.Plugin.SetSpeakerArrangement(p.numChannels)
 	p.Plugin.Resume()
+	var currentSize int
 	return func(b [][]float64) ([][]float64, error) {
+		if bufferSize := signal.Float64(b).Size(); currentSize != bufferSize {
+			p.Plugin.SetBufferSize(p.bufferSize)
+			currentSize = bufferSize
+		}
 		b = p.Plugin.Process(b)
 		p.currentPosition += int64(signal.Float64(b).Size())
 		return b, nil

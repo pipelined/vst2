@@ -11,7 +11,7 @@ import (
 
 // Processor represents vst2 sound processor
 type Processor struct {
-	plugin *Plugin
+	Plugin *Plugin
 
 	bufferSize    int
 	numChannels   int
@@ -22,26 +22,18 @@ type Processor struct {
 	currentPosition int64
 }
 
-// NewProcessor creates new vst2 processor.
-func NewProcessor(plugin *Plugin) *Processor {
-	return &Processor{
-		plugin:          plugin,
-		currentPosition: 0,
-	}
-}
-
 // Process returns processor function with default settings initialized.
 func (p *Processor) Process(pipeID string, sampleRate, numChannels, bufferSize int) (func([][]float64) ([][]float64, error), error) {
 	p.bufferSize = bufferSize
 	p.sampleRate = sampleRate
 	p.numChannels = numChannels
-	p.plugin.SetCallback(p.callback())
-	p.plugin.SetBufferSize(int(p.bufferSize))
-	p.plugin.SetSampleRate(int(p.sampleRate))
-	p.plugin.SetSpeakerArrangement(int(p.numChannels))
-	p.plugin.Resume()
+	p.Plugin.SetCallback(p.callback())
+	p.Plugin.SetBufferSize(int(p.bufferSize))
+	p.Plugin.SetSampleRate(int(p.sampleRate))
+	p.Plugin.SetSpeakerArrangement(int(p.numChannels))
+	p.Plugin.Resume()
 	return func(b [][]float64) ([][]float64, error) {
-		b = p.plugin.Process(b)
+		b = p.Plugin.Process(b)
 		p.currentPosition += int64(signal.Float64(b).Size())
 		return b, nil
 	}, nil
@@ -49,7 +41,7 @@ func (p *Processor) Process(pipeID string, sampleRate, numChannels, bufferSize i
 
 // Flush suspends plugin.
 func (p *Processor) Flush(string) error {
-	p.plugin.Suspend()
+	p.Plugin.Suspend()
 	return nil
 }
 

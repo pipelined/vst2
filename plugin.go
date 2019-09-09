@@ -6,8 +6,6 @@ package vst2
 #include <stdlib.h>
 #include <stdint.h>
 #include "vst2.h"
-#include "aeffect.h"
-#include "aeffectx.h"
 */
 import "C"
 

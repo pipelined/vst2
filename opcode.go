@@ -1,84 +1,116 @@
 package vst2
 
-/*
-#include "aeffectx.h"
-*/
-import "C"
-
 import (
 	"fmt"
 )
 
-// PluginOpcode used to wrap C opcodes values
+// PluginOpcode used for audio master callback opcodes.
+// They are sent when host communicates with plugin.
+// It relfects AEffectOpcodes and AEffectXOpcodes opcodes values.
 type PluginOpcode uint64
 
-//Constants for audio master callback opcodes
-//Host -> Plugin
 const (
-	//AEffectOpcodes opcodes
-	EffOpen            = PluginOpcode(C.effOpen)
-	EffClose           = PluginOpcode(C.effClose)
-	EffSetProgram      = PluginOpcode(C.effSetProgram)
-	EffGetProgram      = PluginOpcode(C.effGetProgram)
-	EffSetProgramName  = PluginOpcode(C.effSetProgramName)
-	EffGetProgramName  = PluginOpcode(C.effGetProgramName)
-	EffGetParamLabel   = PluginOpcode(C.effGetParamLabel)
-	EffGetParamDisplay = PluginOpcode(C.effGetParamDisplay)
-	EffGetParamName    = PluginOpcode(C.effGetParamName)
-	EffSetSampleRate   = PluginOpcode(C.effSetSampleRate)
-	EffSetBlockSize    = PluginOpcode(C.effSetBlockSize)
-	EffMainsChanged    = PluginOpcode(C.effMainsChanged)
-	EffEditGetRect     = PluginOpcode(C.effEditGetRect)
-	EffEditOpen        = PluginOpcode(C.effEditOpen)
-	EffEditClose       = PluginOpcode(C.effEditClose)
-	EffEditIdle        = PluginOpcode(C.effEditIdle)
-	EffGetChunk        = PluginOpcode(C.effGetChunk)
-	EffSetChunk        = PluginOpcode(C.effSetChunk)
+	EffOpen PluginOpcode = iota
+	EffClose
+	EffSetProgram
+	EffGetProgram
+	EffSetProgramName
+	EffGetProgramName
+	EffGetParamLabel
+	EffGetParamDisplay
+	EffGetParamName
+	// EffGetVu is deprecated in VST v2.4
+	EffGetVu
+	EffSetSampleRate
+	EffSetBlockSize
+	EffMainsChanged
+	EffEditGetRect
+	EffEditOpen
+	EffEditClose
+	// EffEditDraw is deprecated in VST v2.4
+	EffEditDraw
+	// EffEditMouse is deprecated in VST v2.4
+	EffEditMouse
+	// EffEditKey is deprecated in VST v2.4
+	EffEditKey
+	EffEditIdle
+	// EffEditTop is deprecated in VST v2.4
+	EffEditTop
+	// EffEditSleep is deprecated in VST v2.4
+	EffEditSleep
+	// EffIdentify is deprecated in VST v2.4
+	EffIdentify
+	EffGetChunk
+	EffSetChunk
 
-	//AEffectXOpcodes opcodes
-	EffProcessEvents            = PluginOpcode(C.effProcessEvents)
-	EffCanBeAutomated           = PluginOpcode(C.effCanBeAutomated)
-	EffString2Parameter         = PluginOpcode(C.effString2Parameter)
-	EffGetProgramNameIndexed    = PluginOpcode(C.effGetProgramNameIndexed)
-	EffGetInputProperties       = PluginOpcode(C.effGetInputProperties)
-	EffGetOutputProperties      = PluginOpcode(C.effGetOutputProperties)
-	EffGetPlugCategory          = PluginOpcode(C.effGetPlugCategory)
-	EffOfflineNotify            = PluginOpcode(C.effOfflineNotify)
-	EffOfflinePrepare           = PluginOpcode(C.effOfflinePrepare)
-	EffOfflineRun               = PluginOpcode(C.effOfflineRun)
-	EffProcessVarIo             = PluginOpcode(C.effProcessVarIo)
-	EffSetSpeakerArrangement    = PluginOpcode(C.effSetSpeakerArrangement)
-	EffSetBypass                = PluginOpcode(C.effSetBypass)
-	EffGetEffectName            = PluginOpcode(C.effGetEffectName)
-	EffGetVendorString          = PluginOpcode(C.effGetVendorString)
-	EffGetProductString         = PluginOpcode(C.effGetProductString)
-	EffGetVendorVersion         = PluginOpcode(C.effGetVendorVersion)
-	EffVendorSpecific           = PluginOpcode(C.effVendorSpecific)
-	EffCanDo                    = PluginOpcode(C.effCanDo)
-	EffGetTailSize              = PluginOpcode(C.effGetTailSize)
-	EffGetParameterProperties   = PluginOpcode(C.effGetParameterProperties)
-	EffGetVstVersion            = PluginOpcode(C.effGetVstVersion)
-	EffEditKeyDown              = PluginOpcode(C.effEditKeyDown)
-	EffEditKeyUp                = PluginOpcode(C.effEditKeyUp)
-	EffSetEditKnobMode          = PluginOpcode(C.effSetEditKnobMode)
-	EffGetMidiProgramName       = PluginOpcode(C.effGetMidiProgramName)
-	EffGetCurrentMidiProgram    = PluginOpcode(C.effGetCurrentMidiProgram)
-	EffGetMidiProgramCategory   = PluginOpcode(C.effGetMidiProgramCategory)
-	EffHasMidiProgramsChanged   = PluginOpcode(C.effHasMidiProgramsChanged)
-	EffGetMidiKeyName           = PluginOpcode(C.effGetMidiKeyName)
-	EffBeginSetProgram          = PluginOpcode(C.effBeginSetProgram)
-	EffEndSetProgram            = PluginOpcode(C.effEndSetProgram)
-	EffGetSpeakerArrangement    = PluginOpcode(C.effGetSpeakerArrangement)
-	EffShellGetNextPlugin       = PluginOpcode(C.effShellGetNextPlugin)
-	EffStartProcess             = PluginOpcode(C.effStartProcess)
-	EffStopProcess              = PluginOpcode(C.effStopProcess)
-	EffSetTotalSampleToProcess  = PluginOpcode(C.effSetTotalSampleToProcess)
-	EffSetPanLaw                = PluginOpcode(C.effSetPanLaw)
-	EffBeginLoadBank            = PluginOpcode(C.effBeginLoadBank)
-	EffBeginLoadProgram         = PluginOpcode(C.effBeginLoadProgram)
-	EffSetProcessPrecision      = PluginOpcode(C.effSetProcessPrecision)
-	EffGetNumMidiInputChannels  = PluginOpcode(C.effGetNumMidiInputChannels)
-	EffGetNumMidiOutputChannels = PluginOpcode(C.effGetNumMidiOutputChannels)
+	//AEffectXOpcodes opcode
+	EffProcessEvents
+	EffCanBeAutomated
+	EffString2Parameter
+	// EffGetNumProgramCategories is deprecated in VST v2.4
+	EffGetNumProgramCategories
+	EffGetProgramNameIndexed
+	// EffCopyProgram is deprecated in VST v2.4
+	EffCopyProgram
+	// EffConnectInput is deprecated in VST v2.4
+	EffConnectInput
+	// EffConnectOutput is deprecated in VST v2.4
+	EffConnectOutput
+	EffGetInputProperties
+	EffGetOutputProperties
+	EffGetPlugCategory
+	// EffGetCurrentPosition is deprecated in VST v2.4
+	EffGetCurrentPosition
+	// EffGetDestinationBuffer is deprecated in VST v2.4
+	EffGetDestinationBuffer
+	EffOfflineNotify
+	EffOfflinePrepare
+	EffOfflineRun
+	EffProcessVarIo
+	EffSetSpeakerArrangement
+	// EffSetBlockSizeAndSampleRate is deprecated in VST v2.4
+	EffSetBlockSizeAndSampleRate
+	EffSetBypass
+	EffGetEffectName
+	// EffGetErrorText is deprecated in VST v2.4
+	EffGetErrorText
+	EffGetVendorString
+	EffGetProductString
+	EffGetVendorVersion
+	EffVendorSpecific
+	EffCanDo
+	EffGetTailSize
+	// EffIdle is deprecated in VST v2.4
+	EffIdle
+	// EffGetIcon is deprecated in VST v2.4
+	EffGetIcon
+	// EffSetViewPosition is deprecated in VST v2.4
+	EffSetViewPosition
+	EffGetParameterProperties
+	// EffKeysRequired is deprecated in VST v2.4
+	EffKeysRequired
+	EffGetVstVersion
+	EffEditKeyDown
+	EffEditKeyUp
+	EffSetEditKnobMode
+	EffGetMidiProgramName
+	EffGetCurrentMidiProgram
+	EffGetMidiProgramCategory
+	EffHasMidiProgramsChanged
+	EffGetMidiKeyName
+	EffBeginSetProgram
+	EffEndSetProgram
+	EffGetSpeakerArrangement
+	EffShellGetNextPlugin
+	EffStartProcess
+	EffStopProcess
+	EffSetTotalSampleToProcess
+	EffSetPanLaw
+	EffBeginLoadBank
+	EffBeginLoadProgram
+	EffSetProcessPrecision
+	EffGetNumMidiInputChannels
+	EffGetNumMidiOutputChannels
 )
 
 // MasterOpcode used to wrap C opcodes values
@@ -88,39 +120,75 @@ type MasterOpcode uint64
 // Plugin -> Host
 const (
 	// AudioMasterOpcodes opcodes
-	AudioMasterAutomate  = MasterOpcode(C.audioMasterAutomate)
-	AudioMasterVersion   = MasterOpcode(C.audioMasterVersion)
-	AudioMasterCurrentID = MasterOpcode(C.audioMasterCurrentId)
-	AudioMasterIdle      = MasterOpcode(C.audioMasterIdle)
+	AudioMasterAutomate MasterOpcode = iota
+	AudioMasterVersion
+	AudioMasterCurrentID
+	AudioMasterIdle
+	// AudioMasterPinConnected is deprecated in VST v2.4
+	AudioMasterPinConnected
 
+	_
 	// AudioMasterOpcodesX opcodes
-	AudioMasterGetTime                   = MasterOpcode(C.audioMasterGetTime)
-	AudioMasterProcessEvents             = MasterOpcode(C.audioMasterProcessEvents)
-	AudioMasterIOChanged                 = MasterOpcode(C.audioMasterIOChanged)
-	AudioMasterSizeWindow                = MasterOpcode(C.audioMasterSizeWindow)
-	AudioMasterGetSampleRate             = MasterOpcode(C.audioMasterGetSampleRate)
-	AudioMasterGetBlockSize              = MasterOpcode(C.audioMasterGetBlockSize)
-	AudioMasterGetInputLatency           = MasterOpcode(C.audioMasterGetInputLatency)
-	AudioMasterGetOutputLatency          = MasterOpcode(C.audioMasterGetOutputLatency)
-	AudioMasterGetCurrentProcessLevel    = MasterOpcode(C.audioMasterGetCurrentProcessLevel)
-	AudioMasterGetAutomationState        = MasterOpcode(C.audioMasterGetAutomationState)
-	AudioMasterOfflineStart              = MasterOpcode(C.audioMasterOfflineStart)
-	AudioMasterOfflineRead               = MasterOpcode(C.audioMasterOfflineRead)
-	AudioMasterOfflineWrite              = MasterOpcode(C.audioMasterOfflineWrite)
-	AudioMasterOfflineGetCurrentPass     = MasterOpcode(C.audioMasterOfflineGetCurrentPass)
-	AudioMasterOfflineGetCurrentMetaPass = MasterOpcode(C.audioMasterOfflineGetCurrentMetaPass)
-	AudioMasterGetVendorString           = MasterOpcode(C.audioMasterGetVendorString)
-	AudioMasterGetProductString          = MasterOpcode(C.audioMasterGetProductString)
-	AudioMasterGetVendorVersion          = MasterOpcode(C.audioMasterGetVendorVersion)
-	AudioMasterVendorSpecific            = MasterOpcode(C.audioMasterVendorSpecific)
-	AudioMasterCanDo                     = MasterOpcode(C.audioMasterCanDo)
-	AudioMasterGetLanguage               = MasterOpcode(C.audioMasterGetLanguage)
-	AudioMasterGetDirectory              = MasterOpcode(C.audioMasterGetDirectory)
-	AudioMasterUpdateDisplay             = MasterOpcode(C.audioMasterUpdateDisplay)
-	AudioMasterBeginEdit                 = MasterOpcode(C.audioMasterBeginEdit)
-	AudioMasterEndEdit                   = MasterOpcode(C.audioMasterEndEdit)
-	AudioMasterOpenFileSelector          = MasterOpcode(C.audioMasterOpenFileSelector)
-	AudioMasterCloseFileSelector         = MasterOpcode(C.audioMasterCloseFileSelector)
+	AudioMasterWantMidi
+	AudioMasterGetTime
+	AudioMasterProcessEvents
+	// AudioMasterSetTime is deprecated in VST v2.4
+	AudioMasterSetTime
+	// AudioMasterTempoAt is deprecated in VST v2.4
+	AudioMasterTempoAt
+	// AudioMasterGetNumAutomatableParameters is deprecated in VST v2.4
+	AudioMasterGetNumAutomatableParameters
+	// AudioMasterGetParameterQuantization is deprecated in VST v2.4
+	AudioMasterGetParameterQuantization
+	AudioMasterIOChanged
+	// AudioMasterNeedIdle is deprecated in VST v2.4
+	AudioMasterNeedIdle
+	AudioMasterSizeWindow
+	AudioMasterGetSampleRate
+	AudioMasterGetBlockSize
+	AudioMasterGetInputLatency
+	AudioMasterGetOutputLatency
+	// AudioMasterGetPreviousPlug is deprecated in VST v2.4
+	AudioMasterGetPreviousPlug
+	// AudioMasterGetNextPlug is deprecated in VST v2.4
+	AudioMasterGetNextPlug
+	// AudioMasterWillReplaceOrAccumulate is deprecated in VST v2.4
+	AudioMasterWillReplaceOrAccumulate
+	AudioMasterGetCurrentProcessLevel
+	AudioMasterGetAutomationState
+	AudioMasterOfflineStart
+	AudioMasterOfflineRead
+	AudioMasterOfflineWrite
+	AudioMasterOfflineGetCurrentPass
+	AudioMasterOfflineGetCurrentMetaPass
+	// AudioMasterSetOutputSampleRate is deprecated in VST v2.4
+	AudioMasterSetOutputSampleRate
+	// AudioMasterGetOutputSpeakerArrangement is deprecated in VST v2.4
+	AudioMasterGetOutputSpeakerArrangement
+	AudioMasterGetVendorString
+	AudioMasterGetProductString
+	AudioMasterGetVendorVersion
+	AudioMasterVendorSpecific
+	// AudioMasterSetIcon is deprecated in VST v2.4
+	AudioMasterSetIcon
+	AudioMasterCanDo
+	AudioMasterGetLanguage
+	// AudioMasterOpenWindow is deprecated in VST v2.4
+	AudioMasterOpenWindow
+	// AudioMasterCloseWindow is deprecated in VST v2.4
+	AudioMasterCloseWindow
+	AudioMasterGetDirectory
+	AudioMasterUpdateDisplay
+	AudioMasterBeginEdit
+	AudioMasterEndEdit
+	AudioMasterOpenFileSelector
+	AudioMasterCloseFileSelector
+	// AudioMasterEditFile is deprecated in VST v2.4
+	AudioMasterEditFile
+	// AudioMasterGetChunkFile is deprecated in VST v2.4
+	AudioMasterGetChunkFile
+	// AudioMasterGetInputSpeakerArrangement is deprecated in VST v2.4
+	AudioMasterGetInputSpeakerArrangement
 )
 
 func (p MasterOpcode) String() string {
@@ -134,7 +202,8 @@ func (p MasterOpcode) String() string {
 		return "AudioMasterCurrentID"
 	case AudioMasterIdle:
 		return "AudioMasterIdle"
-
+	case AudioMasterWantMidi:
+		return "AudioMasterWantMidi"
 	case AudioMasterGetTime:
 		return "AudioMasterGetTime"
 	case AudioMasterProcessEvents:

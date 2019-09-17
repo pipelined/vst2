@@ -81,7 +81,7 @@ func (l *Library) load() error {
 		l.Close()
 		return fmt.Errorf("Failed to find entry point in bundle %v", l.Path)
 	}
-	l.Name = getBundleString(bundle, "CFBundleName")
+	// l.Name = getBundleString(bundle, "CFBundleName")
 
 	return nil
 }

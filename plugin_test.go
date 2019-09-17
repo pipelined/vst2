@@ -1,8 +1,10 @@
 package vst2
 
 import (
+	"fmt"
 	"runtime"
 	"testing"
+	"unsafe"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -68,6 +70,13 @@ func TestPlugin(t *testing.T) {
 	plugin.Dispatch(EffSetBlockSize, 0, blocksize, nil, 0.0)
 	plugin.Dispatch(EffMainsChanged, 0, 1, nil, 0.0)
 	plugin.SetSpeakerArrangement(2)
+
+	var name [32]uint8
+	plugin.Dispatch(EffGetEffectName, 0, 0, unsafe.Pointer(&name), 0.0)
+	for _, c := range name {
+		fmt.Printf("%c", rune(c))
+	}
+	fmt.Println("")
 
 	if plugin.CanProcessFloat64() {
 		assert.Equal(t, false, plugin.CanProcessFloat32())

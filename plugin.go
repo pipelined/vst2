@@ -35,9 +35,11 @@ type vstTimeInfo C.struct_VstTimeInfo
 type HostCallbackFunc func(*Plugin, MasterOpcode, int64, int64, unsafe.Pointer, float64) int
 
 // TimeSignature represents a time signature
+// NotesPerBar is 3 in 3/4.
+// NoteValue  is 4 in 3/4.
 type TimeSignature struct {
-	NotesPerBar int // 3 in 3/4
-	NoteValue   int // 4 in 3/4
+	NotesPerBar int
+	NoteValue   int
 }
 
 const (

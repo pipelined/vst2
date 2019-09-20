@@ -1,5 +1,5 @@
 //go:generate stringer -type=EffectOpcode,HostOpcode -output=opcode_string.go
-package sdk
+package api
 
 const (
 	maxProgNameLen   = 24 ///< used for #effGetProgramName, #effSetProgramName, #effGetProgramNameIndexed

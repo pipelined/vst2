@@ -1,8 +1,7 @@
-package vst2
+package api
 
 //#cgo darwin LDFLAGS: -framework CoreFoundation
 //#include <CoreFoundation/CoreFoundation.h>
-//#include "vst2.h"
 /*
 char * MYCFStringCopyUTF8String(CFStringRef aString) {
 	if (aString == NULL) {
@@ -25,34 +24,13 @@ import (
 	"unsafe"
 )
 
-const (
-	// Extension of Vst2 files
-	Extension = ".vst"
-)
-
-var (
-	// ScanPaths of Vst2 files
-	ScanPaths []string
-)
-
-func init() {
-	ScanPaths = []string{
-		"~/Library/Audio/Plug-Ins/VST",
-		"/Library/Audio/Plug-Ins/VST",
-	}
+type handle struct {
+	bundle uintptr
 }
 
-// Library used to instantiate new instances of plugin
-type Library struct {
-	entryPoint unsafe.Pointer
-	library    uintptr
-	Name       string
-	Path       string
-}
-
-func (l *Library) load() error {
+func Open(path string) (EntryPoint, error) {
 	//create C string
-	cpath := C.CString(l.Path)
+	cpath := C.CString(path)
 	defer C.free(unsafe.Pointer(cpath))
 	//convert to CF string
 	cfpath := C.CFStringCreateWithCString(0, cpath, C.kCFStringEncodingUTF8)
@@ -61,36 +39,38 @@ func (l *Library) load() error {
 	//get bundle url
 	bundleURL := C.CFURLCreateWithFileSystemPath(C.kCFAllocatorDefault, cfpath, C.kCFURLPOSIXPathStyle, C.true)
 	if bundleURL == 0 {
-		return fmt.Errorf("Failed to create bundle url at %v", l.Path)
+		return EntryPoint{}, fmt.Errorf("Failed to create bundle url at %v", path)
 	}
 	defer C.CFRelease(C.CFTypeRef(bundleURL))
 	//open bundle and release it only if it failed
 	bundle := C.CFBundleCreate(C.kCFAllocatorDefault, bundleURL)
-	l.library = uintptr(bundle)
+	// library = uintptr(bundle)
 	//bundle ref should be released in the end of program with plugin.unload call
 
 	//create C string
-	cvstMain := C.CString(vstMain)
+	cvstMain := C.CString(main)
 	defer C.free(unsafe.Pointer(cvstMain))
 	//create CF string
 	cfvstMain := C.CFStringCreateWithCString(0, cvstMain, C.kCFStringEncodingUTF8)
 	defer C.CFRelease(C.CFTypeRef(cfvstMain))
 
-	l.entryPoint = unsafe.Pointer(C.CFBundleGetFunctionPointerForName(bundle, cfvstMain))
-	if l.entryPoint == nil {
-		l.Close()
-		return fmt.Errorf("Failed to find entry point in bundle %v", l.Path)
+	entryPoint := unsafe.Pointer(C.CFBundleGetFunctionPointerForName(bundle, cfvstMain))
+	if entryPoint == nil {
+		C.CFRelease(C.CFTypeRef(C.CFBundleRef(bundle)))
+		return EntryPoint{}, fmt.Errorf("Failed to find entry point in bundle %v", path)
 	}
-	// l.Name = getBundleString(bundle, "CFBundleName")
 
-	return nil
+	return EntryPoint{
+		main: effectMain(entryPoint),
+		handle: handle{
+			bundle: uintptr(bundle),
+		},
+	}, nil
 }
 
-//Close cleans up library refs
-//TODO: exceptions handling
-func (l *Library) Close() error {
-	C.CFRelease(C.CFTypeRef(C.CFBundleRef(l.library)))
-	l.library = 0
+// close cleans up bundle reference.
+func (h handle) close() error {
+	C.CFRelease(C.CFTypeRef(C.CFBundleRef(h.bundle)))
 	return nil
 }
 

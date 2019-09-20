@@ -1,22 +1,24 @@
 package vst2
 
 import (
-	"log"
+	"fmt"
 	"math"
 	"time"
 	"unsafe"
 
 	"github.com/pipelined/signal"
+	"github.com/pipelined/vst2/api"
 )
 
 // Processor represents vst2 sound processor
 type Processor struct {
+	*Vst
 	Plugin *Plugin
 
 	bufferSize    int
 	numChannels   int
 	sampleRate    int
-	tempo         float32
+	tempo         float64
 	timeSignature TimeSignature
 
 	currentPosition int64
@@ -26,7 +28,13 @@ type Processor struct {
 func (p *Processor) Process(pipeID string, sampleRate, numChannels int) (func([][]float64) ([][]float64, error), error) {
 	p.sampleRate = sampleRate
 	p.numChannels = numChannels
-	p.Plugin.SetCallback(p.callback())
+	plugin, err := p.Vst.Open(p.callback())
+	if err != nil {
+		return nil, err
+	}
+	p.Plugin = plugin
+
+	// p.Plugin.SetCallback(p.callback())
 	p.Plugin.SetSampleRate(p.sampleRate)
 	p.Plugin.SetSpeakerArrangement(p.numChannels)
 	p.Plugin.Resume()
@@ -49,20 +57,19 @@ func (p *Processor) Flush(string) error {
 }
 
 // wraped callback with session.
-func (p *Processor) callback() HostCallbackFunc {
-	return func(plugin *Plugin, opcode MasterOpcode, index int64, value int64, ptr unsafe.Pointer, opt float64) int {
+func (p *Processor) callback() api.HostCallbackFunc {
+	return func(opcode api.HostOpcode, index int64, value int64, ptr unsafe.Pointer, opt float64) int {
+		fmt.Printf("Callback: %v\n", opcode)
 		switch opcode {
-		case AudioMasterIdle:
-			log.Printf("AudioMasterIdle")
-			plugin.Dispatch(EffEditIdle, 0, 0, nil, 0)
-
-		case AudioMasterGetCurrentProcessLevel:
-			//TODO: return C.kVstProcessLevel
-		case AudioMasterGetSampleRate:
+		case api.HostIdle:
+			p.Plugin.e.Dispatch(api.EffEditIdle, 0, 0, nil, 0)
+		case api.HostGetCurrentProcessLevel:
+			return int(api.ProcessLevelRealtime)
+		case api.HostGetSampleRate:
 			return int(p.sampleRate)
-		case AudioMasterGetBlockSize:
+		case api.HostGetBlockSize:
 			return int(p.bufferSize)
-		case AudioMasterGetTime:
+		case api.HostGetTime:
 			nanoseconds := time.Now().UnixNano()
 			notesPerMeasure := p.timeSignature.NotesPerBar
 			//TODO: make this dynamic (handle time signature changes)
@@ -77,7 +84,7 @@ func (p *Processor) callback() HostCallbackFunc {
 			// todo: barPos
 			barPos := math.Floor(ppqPos / float64(notesPerMeasure))
 
-			return int(plugin.SetTimeInfo(int(p.sampleRate), samplePos, float32(tempo), p.timeSignature, nanoseconds, ppqPos, barPos))
+			return int(p.Plugin.SetTimeInfo(int(p.sampleRate), samplePos, tempo, p.timeSignature, float64(nanoseconds), ppqPos, barPos))
 		default:
 			// log.Printf("Plugin requested value of opcode %v\n", opcode)
 			break

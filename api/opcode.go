@@ -9,7 +9,7 @@ const (
 	maxEffectNameLen = 32 ///< used for #effGetEffectName
 )
 
-// EffectOpcode is sent by host in dispatch call to plugin.
+// EffectOpcode is sent by host in dispatch call to effect.
 // It relfects AEffectOpcodes and AEffectXOpcodes opcodes values.
 type EffectOpcode uint64
 
@@ -23,7 +23,7 @@ const (
 	// [value]: new program number.
 	EffSetProgram
 	// EffGetProgram passed to get program.
-	// [return value]: current program number.
+	// [return]: current program number.
 	EffGetProgram
 	// EffSetProgramName passed to set new program name.
 	// [ptr]: *[maxProgNameLen]uint8 buffer with new program name.
@@ -45,7 +45,7 @@ const (
 	// [ptr]: *[maxParamStrLen]uint8 buffer for parameter label.
 	EffGetParamName
 
-	// effGetVu is deprecated in VST v2.4
+	// deprecated in VST v2.4
 	effGetVu
 
 	// EffSetSampleRate passed to set new sample rate.
@@ -67,27 +67,27 @@ const (
 	// EffEditClose passed to close editor window.
 	EffEditClose
 
-	// effEditDraw is deprecated in VST v2.4
+	// deprecated in VST v2.4
 	effEditDraw
-	// effEditMouse is deprecated in VST v2.4
+	// deprecated in VST v2.4
 	effEditMouse
-	// effEditKey is deprecated in VST v2.4
+	// deprecated in VST v2.4
 	effEditKey
 
 	// EffEditIdle passed to notify effect that host goes idle.
 	EffEditIdle
 
-	// effEditTop is deprecated in VST v2.4
+	// deprecated in VST v2.4
 	effEditTop
-	// effEditSleep is deprecated in VST v2.4
+	// deprecated in VST v2.4
 	effEditSleep
-	// effIdentify is deprecated in VST v2.4
+	// deprecated in VST v2.4
 	effIdentify
 
 	// EffGetChunk passed to get chunk data.
 	// [ptr]: pointer for chunk data address (void**) uint8.
 	// [index]: 0 for bank, 1 for program.
-	// [return value]: length of data.
+	// [return]: length of data.
 	EffGetChunk
 	// EffSetChunk passed to set chunk data.
 	// [ptr]: pointer for chunk data address (void*).
@@ -100,47 +100,47 @@ const (
 	EffProcessEvents
 	// EffCanBeAutomated passed to check if parameter could be automated.
 	// [index]: parameter index.
-	// [return value]: 1 for true, 0 for false.
+	// [return]: 1 for true, 0 for false.
 	EffCanBeAutomated
 	// EffString2Parameter passed to convert parameter value to string: "mono" to "1".
 	// [index]: parameter index.
 	// [ptr]: parameter string.
-	// [return value]: true for success.
+	// [return]: true for success.
 	EffString2Parameter
 
-	// effGetNumProgramCategories is deprecated in VST v2.4
+	// deprecated in VST v2.4
 	effGetNumProgramCategories
 
 	// EffGetProgramNameIndexed passed to get program name by index.
 	// [index]: program index.
 	// [ptr]: *[maxProgNameLen]uint8 buffer for program name.
-	// [return value]: true for success.
+	// [return]: true for success.
 	EffGetProgramNameIndexed
 
-	// effCopyProgram is deprecated in VST v2.4
+	// deprecated in VST v2.4
 	effCopyProgram
-	// effConnectInput is deprecated in VST v2.4
+	// deprecated in VST v2.4
 	effConnectInput
-	// effConnectOutput is deprecated in VST v2.4
+	// deprecated in VST v2.4
 	effConnectOutput
 
 	// EffGetInputProperties passed to check if certain input configuration is supported.
 	// [index]: input index.
 	// [ptr]: #VstPinProperties*.
-	// [return value]: 1 if supported.
+	// [return]: 1 if supported.
 	EffGetInputProperties
 	// EffGetOutputProperties passed to check if certain output configuration is supported.
 	// [index]: output index.
 	// [ptr]: #VstPinProperties*.
-	// [return value]: 1 if supported.
+	// [return]: 1 if supported.
 	EffGetOutputProperties
 	// EffGetPlugCategory passed to get plugin's category.
-	// [return value]: VstPlugCategory value.
+	// [return]: VstPlugCategory value.
 	EffGetPlugCategory
 
-	// effGetCurrentPosition is deprecated in VST v2.4
+	// deprecated in VST v2.4
 	effGetCurrentPosition
-	// effGetDestinationBuffer is deprecated in VST v2.4
+	// deprecated in VST v2.4
 	effGetDestinationBuffer
 
 	// EffOfflineNotify passed to notify about offline file processing.
@@ -165,126 +165,308 @@ const (
 	// [ptr]: output #VstSpeakerArrangement*.
 	EffSetSpeakerArrangement
 
-	// effSetBlockSizeAndSampleRate is deprecated in VST v2.4
+	// deprecated in VST v2.4
 	effSetBlockSizeAndSampleRate
 
+	// EffSetBypass passed to make effect bypassed.
+	// [value]: 1 is bypass, 0 is no bypass.
 	EffSetBypass
+	// EffGetEffectName passed to get a name of the effect.
+	// [ptr]: *[maxEffectNameLen]uint8 buffer for effect name.
 	EffGetEffectName
-	// effGetErrorText is deprecated in VST v2.4
+
+	// deprecated in VST v2.4
 	effGetErrorText
+
+	// EffGetVendorString passed to get vendor string.
+	// *[maxVendorStrLen]uint8 buffer for effect vendor string.
 	EffGetVendorString
+	// EffGetProductString passed to get product string.
+	// *[maxProductStrLen]uint8 buffer for effect product string.
 	EffGetProductString
+	// EffGetVendorVersion passed to get vendor-specific version.
+	// [return]: vendor-specific version.
 	EffGetVendorVersion
+	// EffVendorSpecific passed to get vendor-specific string.
+	// No definition, vendor specific handling.
 	EffVendorSpecific
+	// EffCanDo passed to check capabilities of effect.
+	// [ptr]: "can do" string
+	// [return]: 0 is don't know, -1 is no, 1 is yes.
 	EffCanDo
+
+	// EffGetTailSize passed to check if "tail" data is expected.
+	// [return]: tail size (e.g. reverb time). 0 is defualt, 1 means no tail.
 	EffGetTailSize
-	// effIdle is deprecated in VST v2.4
+
+	// deprecated in VST v2.4
 	effIdle
-	// effGetIcon is deprecated in VST v2.4
+	// deprecated in VST v2.4
 	effGetIcon
-	// effSetViewPosition is deprecated in VST v2.4
+	// deprecated in VST v2.4
 	effSetViewPosition
+
+	// EffGetParameterProperties passed to get parameter's properties.
+	// [index]: parameter index.
+	// [ptr]: *ParameterProperties.
+	// [return]: 1 if supported
 	EffGetParameterProperties
-	// effKeysRequired is deprecated in VST v2.4
+
+	// deprecated in VST v2.4
 	effKeysRequired
+
+	// EffGetVstVersion passed to get VST version of effect.
+	// [return]: VST version, 2400 for VST 2.4.
 	EffGetVstVersion
+
+	// EffEditKeyDown passed when key is pressed.
+	// [index]: ASCII character.
+	// [value]: virtual key.
+	// [opt]: modifiers.
+	// [return]: 1 if key used.
 	EffEditKeyDown
+	// EffEditKeyUp passed when key is released.
+	// [index]: ASCII character.
+	// [value]: virtual key.
+	// [opt]: modifiers.
+	// [return]: 1 if key used.
 	EffEditKeyUp
+	// EffSetEditKnobMode passed to set knob Mode.
+	// [value]: knob mode 0 is circular, 1 is circular relative, 2 is linear.
 	EffSetEditKnobMode
+
+	// EffGetMidiProgramName passed to get a name of used MIDI program.
+	// [index]: MIDI channel.
+	// [ptr]: *MidiProgramName.
+	// [return]: number of used programs, 0 if unsupported.
 	EffGetMidiProgramName
+	// EffGetCurrentMidiProgram passed to get a name of current MIDI program.
+	// [index]: MIDI channel.
+	// [ptr]: *MidiProgramName.
+	// [return]: index of current program .
 	EffGetCurrentMidiProgram
+	// EffGetMidiProgramCategory passed to get a category of MIDI program.
+	// [index]: MIDI channel.
+	// [ptr]: *MidiProgramCategory.
+	// [return]: number of used categories, 0 if unsupported.
 	EffGetMidiProgramCategory
+	// EffHasMidiProgramsChanged passed to check if MIDI program has changed.
+	// [index]: MIDI channel.
+	// [return]: 1 if the MidiProgramNames or MidiKeyNames have changed.
 	EffHasMidiProgramsChanged
+	// EffGetMidiKeyName passed to
+	// [index]: MIDI channel.
+	// [ptr]: *MidiKeyName.
+	// [return]: true if supported, false otherwise.
 	EffGetMidiKeyName
+
+	// EffBeginSetProgram passed before preset is loaded.
 	EffBeginSetProgram
+	// EffEndSetProgram passed after preset is loaded.
 	EffEndSetProgram
+
+	// EffGetSpeakerArrangement passed to get a speaker configuration of plugin.
+	// [value]: input *SpeakerArrangement.
+	// [ptr]: output *SpeakerArrangement.
 	EffGetSpeakerArrangement
+	// EffShellGetNextPlugin passed to get unique id of next plugin.
+	// [ptr]: *[maxProductStrLen]uint8 buffer for plug-in name.
+	// [return]: next plugin's unique ID.
 	EffShellGetNextPlugin
+
+	// EffStartProcess passed to indicate that the process call might be interrupted.
 	EffStartProcess
+	// EffStopProcess passed to indicate that process call is stopped.
 	EffStopProcess
+	// EffSetTotalSampleToProcess passed to identify a number of samples to process.
+	// [value]: number of samples to process. Called in offline mode before processing.
 	EffSetTotalSampleToProcess
+	// EffSetPanLaw passed to set pan law type and gain values.
+	// [value]: PanLawType value.
+	// [opt]: gain value.
 	EffSetPanLaw
+
+	// EffBeginLoadBank is passed when VST bank loaded.
+	// [ptr]: *PatchChunkInfo.
+	// [return]: -1 is bank can't be loaded, 1 is bank can be loaded, 0 is unsupported.
 	EffBeginLoadBank
+	// EffBeginLoadProgram is passed when VST preset loaded.
+	// [ptr]: *PatchChunkInfo.
+	// [return]: -1 is bank can't be loaded, 1 is bank can be loaded, 0 is unsupported.
 	EffBeginLoadProgram
+
+	// EffSetProcessPrecision passed to set processing precision.
+	// [value]: 0 if 32 bit, anything else if 64 bit.
 	EffSetProcessPrecision
+
+	// EffGetNumMidiInputChannels passed to get a number of used MIDI inputs.
+	// [return]: number of used MIDI input channels (1-15).
 	EffGetNumMidiInputChannels
+	// EffGetNumMidiOutputChannels passed to get a number of used MIDI outputs.
+	// [return]: number of used MIDI output channels (1-15).
 	EffGetNumMidiOutputChannels
 )
 
-// HostOpcode used to wrap C opcodes values
+// HostOpcode is sent by plugin in dispatch call to host.
+// It relfects AudioMasterOpcodes and AudioMasterOpcodesX opcodes values.
 type HostOpcode uint64
 
-// Constants for audio master callback opcodes
-// Plugin -> Host
 const (
-	// hostOpcodes opcodes
-	hostAutomate HostOpcode = iota
+	// HostAutomate passed to when parameter value is automated.
+	// [index]: parameter index.
+	// [opt]: parameter value.
+	HostAutomate HostOpcode = iota
+	// HostVersion passed to get VST version of host.
+	// [return]: host VST version (for example 2400 for VST 2.4).
 	HostVersion
+	// HostCurrentID passed when unique ID is requested.
+	// [return]: current unique identifier on shell plug-in.
 	HostCurrentID
+	// HostIdle passed to indicate that plugin does some modal action.
 	HostIdle
-	// hostPinConnected is deprecated in VST v2.4
-	hostPinConnected
 
+	// deprecated in VST v2.4
+	hostPinConnected
 	_
-	// hostOpcodesX opcodes
+	// deprecated in VST v2.4
 	hostWantMidi
+
+	// HostGetTime passed when plugin needs time info.
+	// [return]: *TimeInfo or null if not supported.
+	// [value]: request mask.
 	HostGetTime
+	// HostProcessEvents passed when plugin has MIDI events to process.
+	// [ptr]: *Events the events to be processed.
+	// [return]: 1 if supported and processed.
 	HostProcessEvents
-	// hostSetTime is deprecated in VST v2.4
+
+	// deprecated in VST v2.4
 	hostSetTime
-	// hostTempoAt is deprecated in VST v2.4
+	// deprecated in VST v2.4
 	hostTempoAt
-	// hostGetNumAutomatableParameters is deprecated in VST v2.4
+	// deprecated in VST v2.4
 	hostGetNumAutomatableParameters
-	// hostGetParameterQuantization is deprecated in VST v2.4
+	// deprecated in VST v2.4
 	hostGetParameterQuantization
+
+	// HostIOChanged passed when plugin's IO setup has changed.
+	// [return]: 1 if supported.
 	HostIOChanged
-	// hostNeedIdle is deprecated in VST v2.4
+
+	// deprecated in VST v2.4
 	hostNeedIdle
+
+	// HostSizeWindow passed when host needs to resize plugin window.
+	// [index]: new width.
+	// [value]: new height.
 	HostSizeWindow
+	// HostGetSampleRate passed when plugin needs sample rate.
+	// [return]: current sample rate.
 	HostGetSampleRate
+	// HostGetBlockSize passed when plugin needs buffer size.
+	// [return]: current buffer size.
 	HostGetBlockSize
+	// HostGetInputLatency passed when plugin needs input latency.
+	// [return]: input latency in samples.
 	HostGetInputLatency
+	// HostGetOutputLatency passed when plugin needs output latency.
+	// [return]: output latency in samples.
 	HostGetOutputLatency
-	// hostGetPreviousPlug is deprecated in VST v2.4
+
+	// deprecated in VST v2.4
 	hostGetPreviousPlug
-	// hostGetNextPlug is deprecated in VST v2.4
+	// deprecated in VST v2.4
 	hostGetNextPlug
-	// hostWillReplaceOrAccumulate is deprecated in VST v2.4
+	// deprecated in VST v2.4
 	hostWillReplaceOrAccumulate
+
+	// HostGetCurrentProcessLevel passed to get current process level.
+	// [return]: ProcessLevel value.
 	HostGetCurrentProcessLevel
+	// HostGetAutomationState passed to get current automation state.
+	// [return]: AutomationState value.
 	HostGetAutomationState
+
+	// HostOfflineStart is sent when plugin is ready for offline processing.
+	// [index]: number of new audio files.
+	// [value]: number of audio files.
+	// [ptr]: *AudioFile the host audio files. Flags can be updated from plugin.
 	HostOfflineStart
+	// HostOfflineRead is sent when plugin reads the data.
+	// [index]: boolean - if this value is true then the host will read the original
+	//	file's samples, but if it is false it will read the samples which the plugin
+	//	has written via HostOfflineWrite.
+	// [value]: see OfflineOption
+	// [ptr]: *OfflineTask describing the task.
+	// [return]: 1 on success.
 	HostOfflineRead
+	// HostOfflineWrite is sent when plugin writes the data.
+	// [value]: see OfflineOption
+	// [ptr]: *OfflineTask describing the task.
 	HostOfflineWrite
+	// HostOfflineGetCurrentPass is unknown.
 	HostOfflineGetCurrentPass
+	// HostOfflineGetCurrentMetaPass is unknown.
 	HostOfflineGetCurrentMetaPass
-	// hostSetOutputSampleRate is deprecated in VST v2.4
+
+	// deprecated in VST v2.4
 	hostSetOutputSampleRate
-	// hostGetOutputSpeakerArrangement is deprecated in VST v2.4
+	// deprecated in VST v2.4
 	hostGetOutputSpeakerArrangement
+
+	// HostGetVendorString is sent to get host vendor string.
+	// [ptr]: *[maxVendorStrLen]uint8 buffer for host vendor name.
 	HostGetVendorString
+	// HostGetProductString is sent to get host product string.
+	// [ptr]: *[maxProductStrLen]uint8 buffer for host product name.
 	HostGetProductString
+	// HostGetVendorVersion is sent to get host version.
+	// [return]: vendor-specific version.
 	HostGetVendorVersion
+	// HostVendorSpecific is sent vendor-specific handling.
 	HostVendorSpecific
-	// hostSetIcon is deprecated in VST v2.4
+
+	// deprecated in VST v2.4
 	hostSetIcon
+
+	// HostCanDo passed to check capabilities of host.
+	// [ptr]: "can do" string
+	// [return]: 0 is don't know, -1 is no, 1 is yes.
 	HostCanDo
+	// HostGetLanguage passed to get a language of the host.
+	// [return]: HostLanguage value.
 	HostGetLanguage
-	// hostOpenWindow is deprecated in VST v2.4
+
+	// deprecated in VST v2.4
 	hostOpenWindow
-	// hostCloseWindow is deprecated in VST v2.4
+	// deprecated in VST v2.4
 	hostCloseWindow
+
+	// HostGetDirectory passed to get the current directory.
+	// [return]: *[]uint8 with path.
 	HostGetDirectory
+	// HostUpdateDisplay passed to request host screen refresh.
 	HostUpdateDisplay
+	// HostBeginEdit passed to notify host that it should capture parameter changes.
+	// [index]: index of the control.
+	// [return]: true on success.
 	HostBeginEdit
+	// HostEndEdit passed to notify that control is no longer being changed.
+	// [index]: index of the control.
+	// [return]: true on success.
 	HostEndEdit
+	// HostOpenFileSelector passed to open the host file selector.
+	// [ptr]: *FileSelect.
+	// [return]: true on success.
 	HostOpenFileSelector
+	// HostCloseFileSelector passed to close the host file selector.
+	// [ptr]: *FileSelect.
 	HostCloseFileSelector
-	// hostEditFile is deprecated in VST v2.4
+
+	// deprecated in VST v2.4
 	hostEditFile
-	// hostGetChunkFile is deprecated in VST v2.4
+	// deprecated in VST v2.4
 	hostGetChunkFile
-	// hostGetInputSpeakerArrangement is deprecated in VST v2.4
+	// deprecated in VST v2.4
 	hostGetInputSpeakerArrangement
 )

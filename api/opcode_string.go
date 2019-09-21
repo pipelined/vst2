@@ -104,7 +104,7 @@ func _() {
 	// An "invalid array index" compiler error signifies that the constant values have changed.
 	// Re-run the stringer command to generate them again.
 	var x [1]struct{}
-	_ = x[hostAutomate-0]
+	_ = x[HostAutomate-0]
 	_ = x[HostVersion-1]
 	_ = x[HostCurrentID-2]
 	_ = x[HostIdle-3]
@@ -156,7 +156,7 @@ func _() {
 }
 
 const (
-	_HostOpcode_name_0 = "hostAutomateHostVersionHostCurrentIDHostIdlehostPinConnected"
+	_HostOpcode_name_0 = "HostAutomateHostVersionHostCurrentIDHostIdlehostPinConnected"
 	_HostOpcode_name_1 = "hostWantMidiHostGetTimeHostProcessEventshostSetTimehostTempoAthostGetNumAutomatableParametershostGetParameterQuantizationHostIOChangedhostNeedIdleHostSizeWindowHostGetSampleRateHostGetBlockSizeHostGetInputLatencyHostGetOutputLatencyhostGetPreviousPlughostGetNextPlughostWillReplaceOrAccumulateHostGetCurrentProcessLevelHostGetAutomationStateHostOfflineStartHostOfflineReadHostOfflineWriteHostOfflineGetCurrentPassHostOfflineGetCurrentMetaPasshostSetOutputSampleRatehostGetOutputSpeakerArrangementHostGetVendorStringHostGetProductStringHostGetVendorVersionHostVendorSpecifichostSetIconHostCanDoHostGetLanguagehostOpenWindowhostCloseWindowHostGetDirectoryHostUpdateDisplayHostBeginEditHostEndEditHostOpenFileSelectorHostCloseFileSelectorhostEditFilehostGetChunkFilehostGetInputSpeakerArrangement"
 )
 

@@ -140,41 +140,34 @@ func (p *Plugin) SetSampleRate(sampleRate int) {
 	p.e.Dispatch(api.EffSetSampleRate, 0, 0, nil, float64(sampleRate))
 }
 
-func (p *Plugin) defaultCallback() api.HostCallbackFunc {
-	return func(opcode api.HostOpcode, index int64, value int64, ptr unsafe.Pointer, opt float64) int {
-		fmt.Printf("Call from default callback! Plugin name: %v\n", p.Name)
-		return 0
-	}
-}
-
 func newSpeakerArrangement(numChannels int) *api.SpeakerArrangement {
 	sa := api.SpeakerArrangement{}
 	sa.NumChannels = int32(numChannels)
 	switch numChannels {
 	case 0:
-		sa.SpeakerArrangementType = api.SpeakerArrEmpty
+		sa.Type = api.SpeakerArrEmpty
 	case 1:
-		sa.SpeakerArrangementType = api.SpeakerArrMono
+		sa.Type = api.SpeakerArrMono
 	case 2:
-		sa.SpeakerArrangementType = api.SpeakerArrStereo
+		sa.Type = api.SpeakerArrStereo
 	case 3:
-		sa.SpeakerArrangementType = api.SpeakerArr30Music
+		sa.Type = api.SpeakerArr30Music
 	case 4:
-		sa.SpeakerArrangementType = api.SpeakerArr40Music
+		sa.Type = api.SpeakerArr40Music
 	case 5:
-		sa.SpeakerArrangementType = api.SpeakerArr50
+		sa.Type = api.SpeakerArr50
 	case 6:
-		sa.SpeakerArrangementType = api.SpeakerArr60Music
+		sa.Type = api.SpeakerArr60Music
 	case 7:
-		sa.SpeakerArrangementType = api.SpeakerArr70Music
+		sa.Type = api.SpeakerArr70Music
 	case 8:
-		sa.SpeakerArrangementType = api.SpeakerArr80Music
+		sa.Type = api.SpeakerArr80Music
 	default:
-		sa.SpeakerArrangementType = api.SpeakerArrUserDefined
+		sa.Type = api.SpeakerArrUserDefined
 	}
 
 	for i := 0; i < int(numChannels); i++ {
-		sa.Speakers[i].SpeakerType = api.SpeakerUndefined
+		sa.Speakers[i].Type = api.SpeakerUndefined
 	}
 	return &sa
 }
@@ -220,7 +213,7 @@ func (p *Plugin) SetTimeInfo(
 
 // DefaultHostCallback is a default callback, just prints incoming opcodes should be overridden with SetHostCallback
 func DefaultHostCallback(print bool) api.HostCallbackFunc {
-	return func(opcode api.HostOpcode, index int64, value int64, ptr unsafe.Pointer, opt float64) int {
+	return func(e *api.Effect, opcode api.HostOpcode, index int64, value int64, ptr unsafe.Pointer, opt float64) int {
 		fmt.Printf("Callback called with opcode: %v\n", opcode)
 		switch opcode {
 		case api.HostVersion:

@@ -1,14 +1,6 @@
 //go:generate stringer -type=EffectOpcode,HostOpcode -output=opcode_string.go
 package api
 
-const (
-	maxProgNameLen   = 24 ///< used for #effGetProgramName, #effSetProgramName, #effGetProgramNameIndexed
-	maxParamStrLen   = 8  ///< used for #effGetParamLabel, #effGetParamDisplay, #effGetParamName
-	maxVendorStrLen  = 64 ///< used for #effGetVendorString, #audioMasterGetVendorString
-	maxProductStrLen = 64 ///< used for #effGetProductString, #audioMasterGetProductString
-	maxEffectNameLen = 32 ///< used for #effGetEffectName
-)
-
 // EffectOpcode is sent by host in dispatch call to effect.
 // It relfects AEffectOpcodes and AEffectXOpcodes opcodes values.
 type EffectOpcode uint64
@@ -96,7 +88,7 @@ const (
 	EffSetChunk
 
 	// EffProcessEvents passed to communicate events.
-	// [ptr]: #VstEvents*
+	// [ptr]: *Events.
 	EffProcessEvents
 	// EffCanBeAutomated passed to check if parameter could be automated.
 	// [index]: parameter index.
@@ -126,12 +118,12 @@ const (
 
 	// EffGetInputProperties passed to check if certain input configuration is supported.
 	// [index]: input index.
-	// [ptr]: #VstPinProperties*.
+	// [ptr]: *PinProperties.
 	// [return]: 1 if supported.
 	EffGetInputProperties
 	// EffGetOutputProperties passed to check if certain output configuration is supported.
 	// [index]: output index.
-	// [ptr]: #VstPinProperties*.
+	// [ptr]: *PinProperties.
 	// [return]: 1 if supported.
 	EffGetOutputProperties
 	// EffGetPlugCategory passed to get plugin's category.
@@ -144,25 +136,25 @@ const (
 	effGetDestinationBuffer
 
 	// EffOfflineNotify passed to notify about offline file processing.
-	// [ptr]: #VstAudioFile array.
+	// [ptr]: []AudioFile.
 	// [value]: count.
 	// [index]: start flag.
 	EffOfflineNotify
 	// EffOfflinePrepare passed to trigger offline processing preparation.
-	// [ptr]: #VstOfflineTask array.
+	// [ptr]: []OfflineTask.
 	// [value]: count.
 	EffOfflinePrepare
 	// EffOfflineRun passed to trigger offline processing execution.
-	// [ptr]: #VstOfflineTask array.
+	// [ptr]: []OfflineTask.
 	// [value]: count.
 	EffOfflineRun
 
 	// EffProcessVarIo passed to provide variable I/O processing (offline e.g. timestretching).
-	// [ptr]: #VstVariableIo*.
+	// [ptr]: *VariableIo.
 	EffProcessVarIo
 	// EffSetSpeakerArrangement passed to set speakers configuration.
-	// [value]: input #VstSpeakerArrangement*.
-	// [ptr]: output #VstSpeakerArrangement*.
+	// [value]: input *SpeakerArrangement.
+	// [ptr]: output *SpeakerArrangement.
 	EffSetSpeakerArrangement
 
 	// deprecated in VST v2.4

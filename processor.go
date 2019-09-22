@@ -58,7 +58,7 @@ func (p *Processor) Flush(string) error {
 
 // wraped callback with session.
 func (p *Processor) callback() api.HostCallbackFunc {
-	return func(opcode api.HostOpcode, index int64, value int64, ptr unsafe.Pointer, opt float64) int {
+	return func(e *api.Effect, opcode api.HostOpcode, index int64, value int64, ptr unsafe.Pointer, opt float64) int {
 		fmt.Printf("Callback: %v\n", opcode)
 		switch opcode {
 		case api.HostIdle:

@@ -31,7 +31,7 @@ type (
 	Effect C.Effect
 
 	// HostCallbackFunc used as callback from plugin
-	HostCallbackFunc func(HostOpcode, int64, int64, unsafe.Pointer, float64) int
+	HostCallbackFunc func(*Effect, HostOpcode, int64, int64, unsafe.Pointer, float64) int
 
 	effectMain C.vstPluginFuncPtr
 )
@@ -50,14 +50,14 @@ func Load(m EntryPoint, c HostCallbackFunc) *Effect {
 
 //export hostCallback
 // calls real callback
-func hostCallback(e *C.Effect, opcode int64, index int64, value int64, ptr unsafe.Pointer, opt float64) int {
+func hostCallback(e *Effect, opcode int64, index int64, value int64, ptr unsafe.Pointer, opt float64) int {
 	// AudioMasterVersion is requested when plugin is created
 	// It's never in map
 	if HostOpcode(opcode) == HostVersion {
 		return version
 	}
 	mutex.RLock()
-	c, ok := callbacks[(*Effect)(e)]
+	c, ok := callbacks[e]
 	mutex.RUnlock()
 	if !ok {
 		panic("plugin was closed")
@@ -66,7 +66,7 @@ func hostCallback(e *C.Effect, opcode int64, index int64, value int64, ptr unsaf
 	if c == nil {
 		panic("host callback is undefined")
 	}
-	return c(HostOpcode(opcode), index, value, ptr, opt)
+	return c(e, HostOpcode(opcode), index, value, ptr, opt)
 }
 
 // Dispatch wraps-up C method to dispatch calls to plugin

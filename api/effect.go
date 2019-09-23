@@ -30,8 +30,17 @@ type (
 
 	Effect C.Effect
 
-	// HostCallbackFunc used as callback from plugin
-	HostCallbackFunc func(*Effect, HostOpcode, int64, int64, unsafe.Pointer, float64) int
+	// HostCallbackFunc used as callback function called by plugin.
+	HostCallbackFunc func(*Effect, HostOpcode, Index, Value, Ptr, Opt) int
+
+	// Index is index in plugin dispatch/host callback.
+	Index int64
+	// Value is value in plugin dispatch/host callback.
+	Value int64
+	// Ptr is ptr in plugin dispatch/host callback.
+	Ptr unsafe.Pointer
+	// Opt is opt in plugin dispatch/host callback.
+	Opt float64
 
 	effectMain C.vstPluginFuncPtr
 )
@@ -66,12 +75,12 @@ func hostCallback(e *Effect, opcode int64, index int64, value int64, ptr unsafe.
 	if c == nil {
 		panic("host callback is undefined")
 	}
-	return c(e, HostOpcode(opcode), index, value, ptr, opt)
+	return c(e, HostOpcode(opcode), Index(index), Value(value), Ptr(ptr), Opt(opt))
 }
 
 // Dispatch wraps-up C method to dispatch calls to plugin
-func (e *Effect) Dispatch(opcode EffectOpcode, index int64, value int64, ptr unsafe.Pointer, opt float64) {
-	C.dispatch((*C.Effect)(e), C.int(opcode), C.int(index), C.int64_t(value), ptr, C.float(opt))
+func (e *Effect) Dispatch(opcode EffectOpcode, index Index, value Value, ptr Ptr, opt Opt) {
+	C.dispatch((*C.Effect)(e), C.int(opcode), C.int(index), C.int64_t(value), unsafe.Pointer(ptr), C.float(opt))
 }
 
 // CanProcessFloat32 checks if plugin can process float32

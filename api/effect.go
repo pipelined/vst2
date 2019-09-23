@@ -49,12 +49,12 @@ func (e EntryPoint) Close() error {
 	return e.handle.close()
 }
 
-func Load(m EntryPoint, c HostCallbackFunc) *Effect {
-	e := (*Effect)(C.loadEffect(m.main))
+func (e EntryPoint) Load(c HostCallbackFunc) *Effect {
+	ef := (*Effect)(C.loadEffect(e.main))
 	mutex.Lock()
-	callbacks[e] = c
+	callbacks[ef] = c
 	mutex.Unlock()
-	return e
+	return ef
 }
 
 //export hostCallback

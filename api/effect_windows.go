@@ -8,10 +8,12 @@ import (
 	"unsafe"
 )
 
+// handle keeps a DLL reference to clean up on close.
 type handle struct {
 	dll *syscall.DLL
 }
 
+// Open loads the plugin entry point into memory. It's DLL in windows.
 func Open(path string) (EntryPoint, error) {
 	//Load plugin by path
 	dll, err := syscall.LoadDLL(l.Path)
@@ -35,7 +37,7 @@ func Open(path string) (EntryPoint, error) {
 	}, nil
 }
 
-//Close cleans up plugin refs
+// Close cleans up plugin refs.
 func (h handle) close() error {
 	if err := h.dll.Release(); err != nil {
 		return fmt.Errorf("failed to release VST handle: %w", err)

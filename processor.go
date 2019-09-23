@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"math"
 	"time"
-	"unsafe"
 
 	"github.com/pipelined/signal"
 	"github.com/pipelined/vst2/api"
@@ -58,7 +57,7 @@ func (p *Processor) Flush(string) error {
 
 // wraped callback with session.
 func (p *Processor) callback() api.HostCallbackFunc {
-	return func(e *api.Effect, opcode api.HostOpcode, index int64, value int64, ptr unsafe.Pointer, opt float64) int {
+	return func(e *api.Effect, opcode api.HostOpcode, index api.Index, value api.Value, ptr api.Ptr, opt api.Opt) int {
 		fmt.Printf("Callback: %v\n", opcode)
 		switch opcode {
 		case api.HostIdle:

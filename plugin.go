@@ -117,7 +117,7 @@ func (p *Plugin) SetSpeakerArrangement(numChannels int) {
 	in := newSpeakerArrangement(numChannels)
 	out := newSpeakerArrangement(numChannels)
 	inp := uintptr(unsafe.Pointer(in))
-	p.e.Dispatch(api.EffSetSpeakerArrangement, 0, int64(inp), unsafe.Pointer(out), 0.0)
+	p.e.Dispatch(api.EffSetSpeakerArrangement, 0, api.Value(inp), api.Ptr(out), 0.0)
 }
 
 // Resume starts the plugin
@@ -132,12 +132,12 @@ func (p *Plugin) Suspend() {
 
 // SetBufferSize sets a buffer size
 func (p *Plugin) SetBufferSize(bufferSize int) {
-	p.e.Dispatch(api.EffSetBufferSize, 0, int64(bufferSize), nil, 0.0)
+	p.e.Dispatch(api.EffSetBufferSize, 0, api.Value(bufferSize), nil, 0.0)
 }
 
 // SetSampleRate sets a sample rate for plugin
 func (p *Plugin) SetSampleRate(sampleRate int) {
-	p.e.Dispatch(api.EffSetSampleRate, 0, 0, nil, float64(sampleRate))
+	p.e.Dispatch(api.EffSetSampleRate, 0, 0, nil, api.Opt(sampleRate))
 }
 
 func newSpeakerArrangement(numChannels int) *api.SpeakerArrangement {
@@ -213,7 +213,7 @@ func (p *Plugin) SetTimeInfo(
 
 // DefaultHostCallback is a default callback, just prints incoming opcodes should be overridden with SetHostCallback
 func DefaultHostCallback(print bool) api.HostCallbackFunc {
-	return func(e *api.Effect, opcode api.HostOpcode, index int64, value int64, ptr unsafe.Pointer, opt float64) int {
+	return func(e *api.Effect, opcode api.HostOpcode, index api.Index, value api.Value, ptr api.Ptr, opt api.Opt) int {
 		fmt.Printf("Callback called with opcode: %v\n", opcode)
 		switch opcode {
 		case api.HostVersion:

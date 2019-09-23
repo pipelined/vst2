@@ -214,13 +214,13 @@ const (
 	// EffEditKeyDown passed when key is pressed.
 	// [index]: ASCII character.
 	// [value]: virtual key.
-	// [opt]: modifiers.
+	// [opt]: ModifierKey flags.
 	// [return]: 1 if key used.
 	EffEditKeyDown
 	// EffEditKeyUp passed when key is released.
 	// [index]: ASCII character.
 	// [value]: virtual key.
-	// [opt]: modifiers.
+	// [opt]: ModifierKey flags.
 	// [return]: 1 if key used.
 	EffEditKeyUp
 	// EffSetEditKnobMode passed to set knob Mode.

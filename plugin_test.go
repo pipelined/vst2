@@ -69,7 +69,7 @@ func TestPlugin(t *testing.T) {
 	// Set default sample rate and block size
 	blocksize := int64(len(samples32[0]))
 	plugin.e.Dispatch(api.EffSetSampleRate, 0, 0, nil, sampleRate)
-	plugin.e.Dispatch(api.EffSetBufferSize, 0, blocksize, nil, 0.0)
+	plugin.e.Dispatch(api.EffSetBufferSize, 0, api.Value(blocksize), nil, 0.0)
 	plugin.e.Dispatch(api.EffStateChanged, 0, 1, nil, 0.0)
 	plugin.SetSpeakerArrangement(2)
 

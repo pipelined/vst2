@@ -4,7 +4,7 @@ package api
 #cgo CFLAGS: -std=gnu99 -I${SRCDIR}
 #include <stdlib.h>
 #include <stdint.h>
-#include "api.h"
+#include "effect.h"
 */
 import "C"
 import (
@@ -42,7 +42,7 @@ type (
 	// Opt is opt in plugin dispatch/host callback.
 	Opt float64
 
-	effectMain C.vstPluginFuncPtr
+	effectMain C.EntryPoint
 )
 
 func (e EntryPoint) Close() error {

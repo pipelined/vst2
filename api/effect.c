@@ -2,14 +2,14 @@
 #include <stdio.h>
 //#include <stdarg.h>
 #include <stdint.h>
-#include "api.h"
+#include "effect.h"
 
 //Go callback prototype
 int hostCallback(Effect *effect, int opcode, int index, int64_t value, void *ptr, float opt);
 
 //Bridge function to call entry point on Effect
-Effect * loadEffect(vstPluginFuncPtr load){
-	return load((audioMasterCallback)hostCallback);
+Effect * loadEffect(EntryPoint load){
+	return load((HostCallback)hostCallback);
 }
 
 // Bridge to call dispatch function of loaded plugin

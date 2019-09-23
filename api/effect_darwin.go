@@ -24,10 +24,12 @@ import (
 	"unsafe"
 )
 
+// handle keeps a bundle reference to clean up on close.
 type handle struct {
 	bundle uintptr
 }
 
+// Open loads the plugin entry point into memory. It's CFBundle in OS X.
 func Open(path string) (EntryPoint, error) {
 	//create C string
 	cpath := C.CString(path)

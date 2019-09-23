@@ -67,7 +67,7 @@ func (v *Vst) Close() error {
 // Open creates new instance of plugin
 func (v *Vst) Open(c api.HostCallbackFunc) (*Plugin, error) {
 	return &Plugin{
-		e:    api.Load(v.entryPoint, c),
+		e:    v.entryPoint.Load(c),
 		Path: v.Path,
 		Name: v.Name,
 	}, nil

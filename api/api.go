@@ -1,21 +1,22 @@
 package api
 
-// VstStringConstants.
 const (
 	maxProgNameLen   = 24 // used for #effGetProgramName, #effSetProgramName, #effGetProgramNameIndexed
 	maxParamStrLen   = 8  // used for #effGetParamLabel, #effGetParamDisplay, #effGetParamName
 	maxVendorStrLen  = 64 // used for #effGetVendorString, #audioMasterGetVendorString
 	maxProductStrLen = 64 // used for #effGetProductString, #audioMasterGetProductString
 	maxEffectNameLen = 32 // used for #effGetEffectName
-)
 
-// Vst2StringConstants
-const (
 	maxNameLen       = 64  // used for #MidiProgramName, #MidiProgramCategory, #MidiKeyName, #VstSpeakerProperties, #VstPinProperties
 	maxLabelLen      = 64  // used for #VstParameterProperties->label, #VstPinProperties->label
 	maxShortLabelLen = 8   // used for #VstParameterProperties->shortLabel, #VstPinProperties->shortLabel
 	maxCategLabelLen = 24  // used for #VstParameterProperties->label
 	maxFileNameLen   = 100 // used for #VstAudioFile->name
+)
+
+const (
+	// EffectMagic is constant in every plugin.
+	EffectMagic = "VstP"
 )
 
 // TimeInfo describes the time at the start of the block currently being processed.

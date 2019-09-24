@@ -33,14 +33,13 @@ func (p *Processor) Process(pipeID string, sampleRate, numChannels int) (func([]
 	}
 	p.Plugin = plugin
 
-	// p.Plugin.SetCallback(p.callback())
-	p.Plugin.SetSampleRate(p.sampleRate)
-	p.Plugin.SetSpeakerArrangement(p.numChannels)
-	p.Plugin.Resume()
+	p.Plugin.e.SetSampleRate(p.sampleRate)
+	p.Plugin.e.SetSpeakerArrangement(newSpeakerArrangement(p.numChannels), newSpeakerArrangement(p.numChannels))
+	p.Plugin.e.Start()
 	var currentSize int
 	return func(b [][]float64) ([][]float64, error) {
 		if bufferSize := signal.Float64(b).Size(); currentSize != bufferSize {
-			p.Plugin.SetBufferSize(p.bufferSize)
+			p.Plugin.e.SetBufferSize(p.bufferSize)
 			currentSize = bufferSize
 		}
 		b = p.Plugin.Process(b)
@@ -51,7 +50,7 @@ func (p *Processor) Process(pipeID string, sampleRate, numChannels int) (func([]
 
 // Flush suspends plugin.
 func (p *Processor) Flush(string) error {
-	p.Plugin.Suspend()
+	p.Plugin.e.Stop()
 	return nil
 }
 

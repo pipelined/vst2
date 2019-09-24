@@ -8,6 +8,7 @@ import (
 	"github.com/pipelined/vst2/api"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 var (
@@ -36,7 +37,7 @@ const (
 func init() {
 	switch os := runtime.GOOS; os {
 	case "darwin":
-		pluginPath = "../_testdata/Krush.vst"
+		pluginPath = "../_testdata/Krush.dll"
 	case "windows":
 		pluginPath = "../_testdata/TAL-Reverb.dll"
 	default:
@@ -54,14 +55,11 @@ func testHostCallback() api.HostCallbackFunc {
 // Test plugin
 func TestPlugin(t *testing.T) {
 	ep, err := api.Open(pluginPath)
-	assert.Nil(t, err)
+	require.Nil(t, err)
 	defer ep.Close()
 
 	e := ep.Load(testHostCallback())
-	assert.Nil(t, err)
 	defer e.Dispatch(api.EffClose, 0, 0, nil, 0.0)
-
-	e.Dispatch(api.EffOpen, 0, 0, nil, 0.0)
 
 	// Set default sample rate and block size
 	blocksize := int64(len(samples32[0]))

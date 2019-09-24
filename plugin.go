@@ -112,34 +112,6 @@ func (p *Plugin) Process(buffer [][]float64) (result [][]float64) {
 	return
 }
 
-// SetSpeakerArrangement craetes and passes VstSpeakerArrangement structures to plugin
-func (p *Plugin) SetSpeakerArrangement(numChannels int) {
-	in := newSpeakerArrangement(numChannels)
-	out := newSpeakerArrangement(numChannels)
-	inp := uintptr(unsafe.Pointer(in))
-	p.e.Dispatch(api.EffSetSpeakerArrangement, 0, api.Value(inp), api.Ptr(out), 0.0)
-}
-
-// Resume starts the plugin
-func (p *Plugin) Resume() {
-	p.e.Dispatch(api.EffStateChanged, 0, 1, nil, 0.0)
-}
-
-// Suspend stops the plugin
-func (p *Plugin) Suspend() {
-	p.e.Dispatch(api.EffStateChanged, 0, 0, nil, 0.0)
-}
-
-// SetBufferSize sets a buffer size
-func (p *Plugin) SetBufferSize(bufferSize int) {
-	p.e.Dispatch(api.EffSetBufferSize, 0, api.Value(bufferSize), nil, 0.0)
-}
-
-// SetSampleRate sets a sample rate for plugin
-func (p *Plugin) SetSampleRate(sampleRate int) {
-	p.e.Dispatch(api.EffSetSampleRate, 0, 0, nil, api.Opt(sampleRate))
-}
-
 func newSpeakerArrangement(numChannels int) *api.SpeakerArrangement {
 	sa := api.SpeakerArrangement{}
 	sa.NumChannels = int32(numChannels)

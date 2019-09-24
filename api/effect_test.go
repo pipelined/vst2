@@ -37,7 +37,7 @@ const (
 func init() {
 	switch os := runtime.GOOS; os {
 	case "darwin":
-		pluginPath = "../_testdata/Krush.dll"
+		pluginPath = "../_testdata/Krush.vst"
 	case "windows":
 		pluginPath = "../_testdata/TAL-Reverb.dll"
 	default:
@@ -46,7 +46,7 @@ func init() {
 }
 
 func testHostCallback() api.HostCallbackFunc {
-	return func(e *api.Effect, opcode api.HostOpcode, index api.Index, value api.Value, ptr api.Ptr, opt api.Opt) int {
+	return func(e *api.Effect, opcode api.HostOpcode, index api.Index, value api.Value, ptr api.Ptr, opt api.Opt) api.Return {
 		fmt.Printf("Callback with opcode: %v\n", opcode)
 		return 0
 	}

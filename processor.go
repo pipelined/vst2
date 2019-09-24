@@ -2,8 +2,8 @@ package vst2
 
 import (
 	"fmt"
-	"math"
 	"time"
+	"unsafe"
 
 	"github.com/pipelined/signal"
 	"github.com/pipelined/vst2/api"
@@ -11,14 +11,12 @@ import (
 
 // Processor represents vst2 sound processor
 type Processor struct {
-	*Vst
-	Plugin *Plugin
+	*VST
+	plugin *Plugin
 
-	bufferSize    int
-	numChannels   int
-	sampleRate    int
-	tempo         float64
-	timeSignature TimeSignature
+	bufferSize  int
+	numChannels int
+	sampleRate  int
 
 	currentPosition int64
 }
@@ -27,22 +25,18 @@ type Processor struct {
 func (p *Processor) Process(pipeID string, sampleRate, numChannels int) (func([][]float64) ([][]float64, error), error) {
 	p.sampleRate = sampleRate
 	p.numChannels = numChannels
-	plugin, err := p.Vst.Open(p.callback())
-	if err != nil {
-		return nil, err
-	}
-	p.Plugin = plugin
+	p.plugin = p.VST.Load(p.callback())
 
-	p.Plugin.e.SetSampleRate(p.sampleRate)
-	p.Plugin.e.SetSpeakerArrangement(newSpeakerArrangement(p.numChannels), newSpeakerArrangement(p.numChannels))
-	p.Plugin.e.Start()
+	p.plugin.e.SetSampleRate(p.sampleRate)
+	p.plugin.e.SetSpeakerArrangement(newSpeakerArrangement(p.numChannels), newSpeakerArrangement(p.numChannels))
+	p.plugin.e.Start()
 	var currentSize int
 	return func(b [][]float64) ([][]float64, error) {
 		if bufferSize := signal.Float64(b).Size(); currentSize != bufferSize {
-			p.Plugin.e.SetBufferSize(p.bufferSize)
+			p.plugin.e.SetBufferSize(p.bufferSize)
 			currentSize = bufferSize
 		}
-		b = p.Plugin.Process(b)
+		b = p.plugin.Process(b)
 		p.currentPosition += int64(signal.Float64(b).Size())
 		return b, nil
 	}, nil
@@ -50,39 +44,33 @@ func (p *Processor) Process(pipeID string, sampleRate, numChannels int) (func([]
 
 // Flush suspends plugin.
 func (p *Processor) Flush(string) error {
-	p.Plugin.e.Stop()
+	p.plugin.e.Stop()
 	return nil
 }
 
 // wraped callback with session.
 func (p *Processor) callback() api.HostCallbackFunc {
-	return func(e *api.Effect, opcode api.HostOpcode, index api.Index, value api.Value, ptr api.Ptr, opt api.Opt) int {
+	return func(e *api.Effect, opcode api.HostOpcode, index api.Index, value api.Value, ptr api.Ptr, opt api.Opt) api.Return {
 		fmt.Printf("Callback: %v\n", opcode)
 		switch opcode {
 		case api.HostIdle:
-			p.Plugin.e.Dispatch(api.EffEditIdle, 0, 0, nil, 0)
+			p.plugin.e.Dispatch(api.EffEditIdle, 0, 0, nil, 0)
 		case api.HostGetCurrentProcessLevel:
-			return int(api.ProcessLevelRealtime)
+			return api.Return(api.ProcessLevelRealtime)
 		case api.HostGetSampleRate:
-			return int(p.sampleRate)
+			return api.Return(p.sampleRate)
 		case api.HostGetBlockSize:
-			return int(p.bufferSize)
+			return api.Return(p.bufferSize)
 		case api.HostGetTime:
 			nanoseconds := time.Now().UnixNano()
-			notesPerMeasure := p.timeSignature.NotesPerBar
-			//TODO: make this dynamic (handle time signature changes)
-			// samples position
-			samplePos := p.currentPosition
-			// todo tempo
-			tempo := p.tempo
 
-			samplesPerBeat := (60.0 / float64(tempo)) * float64(p.sampleRate)
-			// todo: ppqPos
-			ppqPos := float64(samplePos)/samplesPerBeat + 1.0
-			// todo: barPos
-			barPos := math.Floor(ppqPos / float64(notesPerMeasure))
-
-			return int(p.Plugin.SetTimeInfo(int(p.sampleRate), samplePos, tempo, p.timeSignature, float64(nanoseconds), ppqPos, barPos))
+			return api.Return(uintptr(unsafe.Pointer(&api.TimeInfo{
+				SampleRate:         float64(p.sampleRate),
+				SamplePos:          float64(p.currentPosition),
+				NanoSeconds:        float64(nanoseconds),
+				TimeSigNumerator:   4,
+				TimeSigDenominator: 4,
+			})))
 		default:
 			// log.Printf("Plugin requested value of opcode %v\n", opcode)
 			break

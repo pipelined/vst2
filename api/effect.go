@@ -20,7 +20,7 @@ var (
 
 //export hostCallback
 // calls real callback
-func hostCallback(e *Effect, opcode int64, index int64, value int64, ptr unsafe.Pointer, opt float64) int {
+func hostCallback(e *Effect, opcode int64, index int64, value int64, ptr unsafe.Pointer, opt float64) Return {
 	// AudioMasterVersion is requested when plugin is created
 	// It's never in map
 	if HostOpcode(opcode) == HostVersion {
@@ -58,7 +58,7 @@ type (
 	Effect C.Effect
 
 	// HostCallbackFunc used as callback function called by plugin.
-	HostCallbackFunc func(*Effect, HostOpcode, Index, Value, Ptr, Opt) int
+	HostCallbackFunc func(*Effect, HostOpcode, Index, Value, Ptr, Opt) Return
 
 	// Index is index in plugin dispatch/host callback.
 	Index int64
@@ -68,6 +68,8 @@ type (
 	Ptr unsafe.Pointer
 	// Opt is opt in plugin dispatch/host callback.
 	Opt float64
+	// Return is returned value for dispatch/host callback.
+	Return int64
 
 	effectMain C.EntryPoint
 )
@@ -93,8 +95,8 @@ func (e EntryPoint) Load(c HostCallbackFunc) *Effect {
 }
 
 // Dispatch wraps-up C method to dispatch calls to plugin
-func (e *Effect) Dispatch(opcode EffectOpcode, index Index, value Value, ptr Ptr, opt Opt) {
-	C.dispatch((*C.Effect)(e), C.int(opcode), C.int(index), C.int64_t(value), unsafe.Pointer(ptr), C.float(opt))
+func (e *Effect) Dispatch(opcode EffectOpcode, index Index, value Value, ptr Ptr, opt Opt) Return {
+	return Return(C.dispatch((*C.Effect)(e), C.int(opcode), C.int(index), C.int64_t(value), unsafe.Pointer(ptr), C.float(opt)))
 }
 
 // CanProcessFloat32 checks if plugin can process float32.
@@ -219,5 +221,5 @@ func (e *Effect) SetSampleRate(sampleRate int) {
 
 // SetSpeakerArrangement craetes and passes SpeakerArrangement structures to plugin
 func (e *Effect) SetSpeakerArrangement(in, out *SpeakerArrangement) {
-	e.Dispatch(EffSetSpeakerArrangement, 0, in.AsValue(), out.AsPtr(), 0.0)
+	e.Dispatch(EffSetSpeakerArrangement, 0, in.Value(), out.Ptr(), 0.0)
 }

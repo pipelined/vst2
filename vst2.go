@@ -3,7 +3,6 @@ package vst2
 import (
 	"fmt"
 	"path/filepath"
-	"unsafe"
 
 	"github.com/pipelined/vst2/api"
 )
@@ -14,32 +13,25 @@ func ScanPaths() (paths []string) {
 	return append([]string{}, scanPaths...)
 }
 
-// Plugin type provides interface
-type Plugin struct {
-	e        *api.Effect
-	Name     string
-	Path     string
-	timeInfo api.TimeInfo
-}
-
-// TimeSignature represents a time signature
-// NotesPerBar is 3 in 3/4.
-// NoteValue  is 4 in 3/4.
-type TimeSignature struct {
-	NotesPerBar int32
-	NoteValue   int32
-}
-
-// Vst used to create new instances of plugin.
+// VST used to create new instances of plugin.
 // TODO: make a list of references to opened plugins and close them when VST is closed.
-type Vst struct {
-	entryPoint api.EntryPoint
-	Name       string
-	Path       string
-}
+type (
+	VST struct {
+		entryPoint api.EntryPoint
+		Name       string
+		Path       string
+	}
+
+	// Plugin type provides interface
+	Plugin struct {
+		e    *api.Effect
+		Name string
+		Path string
+	}
+)
 
 // Open loads the VST into memory and stores entry point func.
-func Open(path string) (*Vst, error) {
+func Open(path string) (*VST, error) {
 	p, err := filepath.Abs(path)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get absolute path: %w", err)
@@ -50,27 +42,27 @@ func Open(path string) (*Vst, error) {
 		return nil, fmt.Errorf("failed to load VST '%s': %w", path, err)
 	}
 
-	return &Vst{
+	return &VST{
 		Path:       p,
 		entryPoint: ep,
 	}, nil
 }
 
 // Close cleans up VST resoures.
-func (v *Vst) Close() error {
+func (v *VST) Close() error {
 	if err := v.entryPoint.Close(); err != nil {
 		return fmt.Errorf("failed close VST %s: %w", v.Name, err)
 	}
 	return nil
 }
 
-// Open creates new instance of plugin
-func (v *Vst) Open(c api.HostCallbackFunc) (*Plugin, error) {
+// Load creates new instance of plugin.
+func (v *VST) Load(c api.HostCallbackFunc) *Plugin {
 	return &Plugin{
 		e:    v.entryPoint.Load(c),
 		Path: v.Path,
 		Name: v.Name,
-	}, nil
+	}
 }
 
 // Close cleans up C refs for plugin
@@ -144,48 +136,9 @@ func newSpeakerArrangement(numChannels int) *api.SpeakerArrangement {
 	return &sa
 }
 
-// SetTimeInfo sets new time info and returns pointer to it
-func (p *Plugin) SetTimeInfo(
-	sampleRate int,
-	samplePos int64,
-	tempo float64,
-	timeSig TimeSignature,
-	nanoSeconds float64,
-	ppqPos float64,
-	barPos float64) int64 {
-	// sample position
-	p.timeInfo.SampleRate = float64(sampleRate)
-	p.timeInfo.SamplePos = float64(samplePos)
-	p.timeInfo.Flags |= api.TransportPlaying
-	p.timeInfo.Flags |= api.TransportChanged
-
-	// nanoseconds
-	p.timeInfo.NanoSeconds = nanoSeconds
-	p.timeInfo.Flags |= api.NanosValid
-
-	// tempo
-	p.timeInfo.Tempo = tempo
-	p.timeInfo.Flags |= api.TempoValid
-
-	// time signature
-	p.timeInfo.TimeSigNumerator = timeSig.NotesPerBar
-	p.timeInfo.TimeSigDenominator = timeSig.NoteValue
-	p.timeInfo.Flags |= api.TimeSigValid
-
-	// ppq
-	p.timeInfo.PpqPos = ppqPos
-	p.timeInfo.Flags |= api.PpqPosValid
-
-	// bar start
-	p.timeInfo.BarStartPos = barPos
-	p.timeInfo.Flags |= api.BarsValid
-
-	return int64(uintptr(unsafe.Pointer(&p.timeInfo)))
-}
-
 // DefaultHostCallback is a default callback, just prints incoming opcodes should be overridden with SetHostCallback
 func DefaultHostCallback(print bool) api.HostCallbackFunc {
-	return func(e *api.Effect, opcode api.HostOpcode, index api.Index, value api.Value, ptr api.Ptr, opt api.Opt) int {
+	return func(e *api.Effect, opcode api.HostOpcode, index api.Index, value api.Value, ptr api.Ptr, opt api.Opt) api.Return {
 		fmt.Printf("Callback called with opcode: %v\n", opcode)
 		switch opcode {
 		case api.HostVersion:

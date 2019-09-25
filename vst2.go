@@ -49,16 +49,8 @@ const (
 )
 
 type (
-	// entryPoint is a reference to VST main function. It also keeps
-	// reference to VST handle to clean up on Close.
-	entryPoint struct {
-		main effectMain
-		// handle is OS-specific.
-		handle
-	}
-
-	// wrapper on C entry point.
-	effectMain C.EntryPoint
+	// HostCallbackFunc used as callback function called by plugin.
+	HostCallbackFunc func(*Plugin, HostOpcode, Index, Value, Ptr, Opt) Return
 
 	// Index is index in plugin dispatch/host callback.
 	Index int64
@@ -76,14 +68,18 @@ type (
 	// Effect is an alias on C effect type.
 	effect C.Effect
 
-	// HostCallbackFunc used as callback function called by plugin.
-	HostCallbackFunc func(*Plugin, HostOpcode, Index, Value, Ptr, Opt) Return
+	// effectMain is a reference to VST main function.
+	// wrapper on C entry point.
+	effectMain C.EntryPoint
 
 	// VST used to create new instances of plugin.
+	// It also keeps reference to VST handle to clean up on Close.
 	VST struct {
-		entryPoint entryPoint
-		Name       string
-		Path       string
+		main effectMain
+		// handle is OS-specific.
+		handle
+		Name string
+		Path string
 	}
 
 	// Plugin is VST2 plugin instance.
@@ -95,40 +91,31 @@ type (
 	}
 )
 
-// Close cleans up VST handle.
-func (e entryPoint) Close() error {
-	if e.main == nil {
-		return nil
-	}
-	e.main = nil
-	return e.handle.close()
-}
-
 // Dispatch wraps-up C method to dispatch calls to plugin
-func (e *effect) Dispatch(opcode EffectOpcode, index Index, value Value, ptr Ptr, opt Opt) Return {
-	return Return(C.dispatch((*C.Effect)(e), C.int(opcode), C.int(index), C.int64_t(value), unsafe.Pointer(ptr), C.float(opt)))
+func (p *Plugin) Dispatch(opcode EffectOpcode, index Index, value Value, ptr Ptr, opt Opt) Return {
+	return Return(C.dispatch((*C.Effect)(p.effect), C.int(opcode), C.int(index), C.int64_t(value), unsafe.Pointer(ptr), C.float(opt)))
 }
 
 // CanProcessFloat32 checks if plugin can process float32.
-func (e *effect) CanProcessFloat32() bool {
-	if e == nil {
+func (p *Plugin) CanProcessFloat32() bool {
+	if p == nil {
 		return false
 	}
-	return EffectFlags(e.flags)&EffFlagsCanReplacing == EffFlagsCanReplacing
+	return EffectFlags(p.effect.flags)&EffFlagsCanReplacing == EffFlagsCanReplacing
 }
 
 // CanProcessFloat64 checks if plugin can process float64.
-func (e *effect) CanProcessFloat64() bool {
-	if e == nil {
+func (p *Plugin) CanProcessFloat64() bool {
+	if p == nil {
 		return false
 	}
-	return EffectFlags(e.flags)&EffFlagsCanDoubleReplacing == EffFlagsCanDoubleReplacing
+	return EffectFlags(p.effect.flags)&EffFlagsCanDoubleReplacing == EffFlagsCanDoubleReplacing
 }
 
 // ProcessDouble audio with VST plugin.
-func (e *effect) ProcessDouble(in, out DoubleBuffer) {
+func (p *Plugin) ProcessDouble(in, out DoubleBuffer) {
 	C.processDouble(
-		(*C.Effect)(e),
+		(*C.Effect)(p.effect),
 		C.int(in.numChannels),
 		C.int(in.size),
 		&in.data[0],
@@ -138,7 +125,7 @@ func (e *effect) ProcessDouble(in, out DoubleBuffer) {
 
 // ProcessFloat32 audio with VST plugin.
 // TODO: add c buffer parameter.
-func (e *effect) ProcessFloat32(in [][]float32) (out [][]float32) {
+func (p *Plugin) ProcessFloat32(in [][]float32) (out [][]float32) {
 	numChannels := len(in)
 	blocksize := len(in[0])
 
@@ -163,7 +150,7 @@ func (e *effect) ProcessFloat32(in [][]float32) (out [][]float32) {
 		defer C.free(unsafe.Pointer(outp))
 	}
 
-	C.processFloat((*C.Effect)(e), C.int(numChannels), C.int(blocksize), &input[0], &output[0])
+	C.processFloat((*C.Effect)(p.effect), C.int(numChannels), C.int(blocksize), &input[0], &output[0])
 
 	//convert []*C.float slices to [][]float32
 	out = make([][]float32, numChannels)
@@ -179,28 +166,28 @@ func (e *effect) ProcessFloat32(in [][]float32) (out [][]float32) {
 }
 
 // Start the plugin.
-func (e *effect) Start() {
-	e.Dispatch(EffStateChanged, 0, 1, nil, 0.0)
+func (p *Plugin) Start() {
+	p.Dispatch(EffStateChanged, 0, 1, nil, 0.0)
 }
 
 // Stop the plugin.
-func (e *effect) Stop() {
-	e.Dispatch(EffStateChanged, 0, 0, nil, 0.0)
+func (p *Plugin) Stop() {
+	p.Dispatch(EffStateChanged, 0, 0, nil, 0.0)
 }
 
 // SetBufferSize sets a buffer size
-func (e *effect) SetBufferSize(bufferSize int) {
-	e.Dispatch(EffSetBufferSize, 0, Value(bufferSize), nil, 0.0)
+func (p *Plugin) SetBufferSize(bufferSize int) {
+	p.Dispatch(EffSetBufferSize, 0, Value(bufferSize), nil, 0.0)
 }
 
 // SetSampleRate sets a sample rate for plugin
-func (e *effect) SetSampleRate(sampleRate int) {
-	e.Dispatch(EffSetSampleRate, 0, 0, nil, Opt(sampleRate))
+func (p *Plugin) SetSampleRate(sampleRate int) {
+	p.Dispatch(EffSetSampleRate, 0, 0, nil, Opt(sampleRate))
 }
 
 // SetSpeakerArrangement craetes and passes SpeakerArrangement structures to plugin
-func (e *effect) SetSpeakerArrangement(in, out *SpeakerArrangement) {
-	e.Dispatch(EffSetSpeakerArrangement, 0, in.Value(), out.Ptr(), 0.0)
+func (p *Plugin) SetSpeakerArrangement(in, out *SpeakerArrangement) {
+	p.Dispatch(EffSetSpeakerArrangement, 0, in.Value(), out.Ptr(), 0.0)
 }
 
 // ScanPaths returns a slice of default vst2 locations.
@@ -216,20 +203,25 @@ func Open(path string) (*VST, error) {
 		return nil, fmt.Errorf("failed to get absolute path: %w", err)
 	}
 
-	ep, err := open(p)
+	m, h, err := open(p)
 	if err != nil {
 		return nil, fmt.Errorf("failed to load VST '%s': %w", path, err)
 	}
 
 	return &VST{
-		Path:       p,
-		entryPoint: ep,
+		Path:   p,
+		main:   m,
+		handle: h,
 	}, nil
 }
 
 // Close cleans up VST resoures.
 func (v *VST) Close() error {
-	if err := v.entryPoint.Close(); err != nil {
+	if v.main == nil {
+		return nil
+	}
+	v.main = nil
+	if err := v.handle.close(); err != nil {
 		return fmt.Errorf("failed close VST %s: %w", v.Name, err)
 	}
 	return nil
@@ -238,7 +230,7 @@ func (v *VST) Close() error {
 // Load new instance of VST plugin with provided callback.
 // This function also calls dispatch with EffOpen opcode.
 func (v *VST) Load(c HostCallbackFunc) *Plugin {
-	e := (*effect)(C.loadEffect(v.entryPoint.main))
+	e := (*effect)(C.loadEffect(v.main))
 	p := &Plugin{
 		effect:   e,
 		Path:     v.Path,
@@ -248,7 +240,7 @@ func (v *VST) Load(c HostCallbackFunc) *Plugin {
 	mutex.Lock()
 	plugins[e] = p
 	mutex.Unlock()
-	e.Dispatch(EffOpen, 0, 0, nil, 0.0)
+	p.Dispatch(EffOpen, 0, 0, nil, 0.0)
 	return p
 }
 

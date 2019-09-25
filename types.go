@@ -1,4 +1,4 @@
-package api
+package vst2
 
 const (
 	maxProgNameLen   = 24 // used for #effGetProgramName, #effSetProgramName, #effGetProgramNameIndexed

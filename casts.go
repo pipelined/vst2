@@ -1,4 +1,4 @@
-package api
+package vst2
 
 import "unsafe"
 

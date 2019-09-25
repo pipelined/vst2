@@ -1,4 +1,4 @@
-package api
+package vst2
 
 //#cgo darwin LDFLAGS: -framework CoreFoundation
 //#include <CoreFoundation/CoreFoundation.h>
@@ -8,13 +8,26 @@ import (
 	"unsafe"
 )
 
+const (
+	// Extension of Vst2 files
+	Extension = ".vst"
+)
+
+var (
+	// ScanPaths of Vst2 files
+	scanPaths = []string{
+		"~/Library/Audio/Plug-Ins/VST",
+		"/Library/Audio/Plug-Ins/VST",
+	}
+)
+
 // handle keeps a bundle reference to clean up on close.
 type handle struct {
 	bundle uintptr
 }
 
 // Open loads the plugin entry point into memory. It's CFBundle in OS X.
-func Open(path string) (EntryPoint, error) {
+func open(path string) (entryPoint, error) {
 	//create C string
 	cpath := C.CString(path)
 	defer C.free(unsafe.Pointer(cpath))
@@ -25,15 +38,15 @@ func Open(path string) (EntryPoint, error) {
 	//get bundle url
 	bundleURL := C.CFURLCreateWithFileSystemPath(C.kCFAllocatorDefault, cfpath, C.kCFURLPOSIXPathStyle, C.true)
 	if bundleURL == 0 {
-		return EntryPoint{}, fmt.Errorf("failed to create bundle url at %v", path)
+		return entryPoint{}, fmt.Errorf("failed to create bundle url at %v", path)
 	}
 	defer C.CFRelease(C.CFTypeRef(bundleURL))
 
 	// open bundle and release it only if it failed.
-	// bundle ref should be released in the end of program with EntryPoint.Close call.
+	// bundle ref should be released in the end of program with entryPoint.Close call.
 	bundle := C.CFBundleCreate(C.kCFAllocatorDefault, bundleURL)
 	if bundle == 0 {
-		return EntryPoint{}, fmt.Errorf("failed to create bundle ref at %v", path)
+		return entryPoint{}, fmt.Errorf("failed to create bundle ref at %v", path)
 	}
 
 	//create C string
@@ -43,14 +56,14 @@ func Open(path string) (EntryPoint, error) {
 	cfvstMain := C.CFStringCreateWithCString(0, cvstMain, C.kCFStringEncodingUTF8)
 	defer C.CFRelease(C.CFTypeRef(cfvstMain))
 
-	entryPoint := unsafe.Pointer(C.CFBundleGetFunctionPointerForName(bundle, cfvstMain))
-	if entryPoint == nil {
+	ep := unsafe.Pointer(C.CFBundleGetFunctionPointerForName(bundle, cfvstMain))
+	if ep == nil {
 		C.CFRelease(C.CFTypeRef(C.CFBundleRef(bundle)))
-		return EntryPoint{}, fmt.Errorf("failed to find entry point in bundle %v", path)
+		return entryPoint{}, fmt.Errorf("failed to find entry point in bundle %v", path)
 	}
 
-	return EntryPoint{
-		main: effectMain(entryPoint),
+	return entryPoint{
+		main: effectMain(ep),
 		handle: handle{
 			bundle: uintptr(bundle),
 		},

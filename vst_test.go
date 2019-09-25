@@ -1,4 +1,4 @@
-package api_test
+package vst2_test
 
 import (
 	"fmt"
@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/pipelined/signal"
-	"github.com/pipelined/vst2/api"
+	"github.com/pipelined/vst2"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -38,16 +38,16 @@ const (
 func init() {
 	switch os := runtime.GOOS; os {
 	case "darwin":
-		pluginPath = "../_testdata/Krush.vst"
+		pluginPath = "_testdata/Krush.vst"
 	case "windows":
-		pluginPath = "../_testdata/TAL-Reverb.dll"
+		pluginPath = "_testdata/TAL-Reverb.dll"
 	default:
 		pluginPath = ""
 	}
 }
 
-func testHostCallback() api.HostCallbackFunc {
-	return func(e *api.Effect, opcode api.HostOpcode, index api.Index, value api.Value, ptr api.Ptr, opt api.Opt) api.Return {
+func testHostCallback() vst2.HostCallbackFunc {
+	return func(e *vst2.Plugin, opcode vst2.HostOpcode, index vst2.Index, value vst2.Value, ptr vst2.Ptr, opt vst2.Opt) vst2.Return {
 		fmt.Printf("Callback with opcode: %v\n", opcode)
 		return 0
 	}
@@ -55,48 +55,48 @@ func testHostCallback() api.HostCallbackFunc {
 
 // Test plugin
 func TestPlugin(t *testing.T) {
-	ep, err := api.Open(pluginPath)
+	vst, err := vst2.Open(pluginPath)
 	require.Nil(t, err)
-	defer ep.Close()
+	defer vst.Close()
 
-	e := ep.Load(testHostCallback())
-	defer e.Dispatch(api.EffClose, 0, 0, nil, 0.0)
+	p := vst.Load(testHostCallback())
+	defer p.Dispatch(vst2.EffClose, 0, 0, nil, 0.0)
 
 	// Set default sample rate and block size
 	blocksize := int64(len(samples32[0]))
-	e.Dispatch(api.EffSetSampleRate, 0, 0, nil, sampleRate)
-	e.Dispatch(api.EffSetBufferSize, 0, api.Value(blocksize), nil, 0.0)
-	e.Dispatch(api.EffStateChanged, 0, 1, nil, 0.0)
-	// e.SetSpeakerArrangement(2)
+	p.Dispatch(vst2.EffSetSampleRate, 0, 0, nil, sampleRate)
+	p.Dispatch(vst2.EffSetBufferSize, 0, vst2.Value(blocksize), nil, 0.0)
+	p.Dispatch(vst2.EffStateChanged, 0, 1, nil, 0.0)
+	// p.SetSpeakerArrangement(2)
 
-	if e.CanProcessFloat64() {
-		in := api.NewDoubleBuffer(samples64.NumChannels(), samples64.Size())
-		out := api.NewDoubleBuffer(samples64.NumChannels(), samples64.Size())
+	if p.CanProcessFloat64() {
+		in := vst2.NewDoubleBuffer(samples64.NumChannels(), samples64.Size())
+		out := vst2.NewDoubleBuffer(samples64.NumChannels(), samples64.Size())
 
-		api.CopyFloat64(samples64, in)
-		e.ProcessDouble(in, out)
+		vst2.CopyFloat64(samples64, in)
+		p.ProcessDouble(in, out)
 
 		ps := signal.Float64Buffer(samples64.NumChannels(), samples64.Size(), 0)
-		api.CopyDouble(out, ps)
+		vst2.CopyDouble(out, ps)
 
 		assert.NotNil(t, ps)
 		assert.NotEmpty(t, ps)
 		assert.Equal(t, len(samples64), len(ps))
 		for c, s := range ps {
-			assert.Equal(t, len(samples64[c]), len(s), "Output channel %v has wrong size. Expected: %v got: %v", c, len(samples64[c]), len(s))
+			assert.Equal(t, len(samples64[c]), len(s), "Output channel %v has wrong sizp. Expected: %v got: %v", c, len(samples64[c]), len(s))
 			zc, zp, zpos := zeroesFloat64(s)
 			assert.Equal(t, true, zeroesProportionThreshold >= zp, "Too many zeroed samples in channel %v expected: %v%% got: %.4f%% zeroes count: %v zeroes positions: %v", c, zeroesProportionThreshold, zp, zc, zpos)
 		}
 	}
 
-	if e.CanProcessFloat32() {
-		assert.Equal(t, false, e.CanProcessFloat64())
-		ps := e.ProcessFloat32(samples32)
+	if p.CanProcessFloat32() {
+		assert.Equal(t, false, p.CanProcessFloat64())
+		ps := p.ProcessFloat32(samples32)
 		assert.NotNil(t, ps)
 		assert.NotEmpty(t, ps)
 		assert.Equal(t, len(samples32), len(ps))
 		for c, s := range ps {
-			assert.Equal(t, len(samples32[c]), len(s), "Output channel %v has wrong size. Expected: %v got: %v", c, len(samples32[c]), len(s))
+			assert.Equal(t, len(samples32[c]), len(s), "Output channel %v has wrong sizp. Expected: %v got: %v", c, len(samples32[c]), len(s))
 			zc, zp, zpos := zeroesFloat32(s)
 			assert.Equal(t, true, zeroesProportionThreshold >= zp, "Too many zeroed samples in channel %v. Expected: %v%% got: %.4f%% zeroes count: %v zeroes positions: %v", c, zeroesProportionThreshold, zp, zc, zpos)
 		}

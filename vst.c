@@ -1,8 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
-//#include <stdarg.h>
 #include <stdint.h>
-#include "effect.h"
+#include "vst.h"
 
 //Go callback prototype
 int hostCallback(Effect *effect, int opcode, int index, int64_t value, void *ptr, float opt);

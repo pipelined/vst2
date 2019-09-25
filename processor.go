@@ -19,6 +19,9 @@ type Processor struct {
 	sampleRate  int
 
 	currentPosition int64
+
+	doubleIn  api.DoubleBuffer
+	doubleOut api.DoubleBuffer
 }
 
 // Process returns processor function with default settings initialized.
@@ -31,14 +34,25 @@ func (p *Processor) Process(pipeID string, sampleRate, numChannels int) (func([]
 	p.plugin.e.SetSpeakerArrangement(newSpeakerArrangement(p.numChannels), newSpeakerArrangement(p.numChannels))
 	p.plugin.e.Start()
 	var currentSize int
+	var out signal.Float64
 	return func(b [][]float64) ([][]float64, error) {
-		if bufferSize := signal.Float64(b).Size(); currentSize != bufferSize {
-			p.plugin.e.SetBufferSize(p.bufferSize)
-			currentSize = bufferSize
+		// new buffer size.
+		if currentSize != signal.Float64(b).Size() {
+			currentSize = signal.Float64(b).Size()
+			p.plugin.e.SetBufferSize(currentSize)
+
+			// reset buffers.
+			p.doubleIn.Free()
+			p.doubleOut.Free()
+			p.doubleIn = api.NewDoubleBuffer(numChannels, currentSize)
+			p.doubleOut = api.NewDoubleBuffer(numChannels, currentSize)
+			out = signal.Float64Buffer(numChannels, currentSize, 0)
 		}
-		b = p.plugin.Process(b)
+		p.plugin.e.ProcessDouble(p.doubleIn, p.doubleOut)
 		p.currentPosition += int64(signal.Float64(b).Size())
-		return b, nil
+
+		api.CopyDouble(p.doubleOut, out)
+		return out, nil
 	}, nil
 }
 

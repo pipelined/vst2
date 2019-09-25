@@ -51,8 +51,12 @@ type (
 	// reference to VST handle to clean up on Close.
 	EntryPoint struct {
 		main effectMain
+		// handle is OS-specific.
 		handle
 	}
+
+	// wrapper on C entry point.
+	effectMain C.EntryPoint
 
 	// Effect is an alias on C effect type.
 	Effect C.Effect
@@ -70,8 +74,6 @@ type (
 	Opt float64
 	// Return is returned value for dispatch/host callback.
 	Return int64
-
-	effectMain C.EntryPoint
 )
 
 // Close cleans up VST handle.
@@ -115,46 +117,15 @@ func (e *Effect) CanProcessFloat64() bool {
 	return EffectFlags(e.flags)&EffFlagsCanDoubleReplacing == EffFlagsCanDoubleReplacing
 }
 
-// ProcessFloat64 audio with VST plugin.
-// TODO: add c buffer parameter.
-func (e *Effect) ProcessFloat64(in [][]float64) [][]float64 {
-	numChannels := len(in)
-	blocksize := len(in[0])
-
-	// convert [][]float64 to []*C.double
-	input := make([]*C.double, numChannels)
-	output := make([]*C.double, numChannels)
-	for i, row := range in {
-		// allocate input memory for C layout
-		inp := (*C.double)(C.malloc(C.size_t(C.sizeof_double * blocksize)))
-		input[i] = inp
-		defer C.free(unsafe.Pointer(inp))
-
-		// copy data from slice to C array
-		pa := (*[1 << 30]C.double)(unsafe.Pointer(inp))
-		for j, v := range row {
-			(*pa)[j] = C.double(v)
-		}
-
-		// allocate output memory for C layout
-		outp := (*C.double)(C.malloc(C.size_t(C.sizeof_double * blocksize)))
-		output[i] = outp
-		defer C.free(unsafe.Pointer(outp))
-	}
-
-	C.processDouble((*C.Effect)(e), C.int(numChannels), C.int(blocksize), &input[0], &output[0])
-
-	//convert []*C.double slices to [][]float64
-	out := make([][]float64, numChannels)
-	for i, data := range output {
-		// copy data from C array to slice
-		pa := (*[1 << 30]C.float)(unsafe.Pointer(data))
-		out[i] = make([]float64, blocksize)
-		for j := range out[i] {
-			out[i][j] = float64(pa[j])
-		}
-	}
-	return out
+// ProcessDouble audio with VST plugin.
+func (e *Effect) ProcessDouble(in, out DoubleBuffer) {
+	C.processDouble(
+		(*C.Effect)(e),
+		C.int(in.numChannels),
+		C.int(in.size),
+		&in.data[0],
+		&out.data[0],
+	)
 }
 
 // ProcessFloat32 audio with VST plugin.

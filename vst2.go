@@ -74,35 +74,35 @@ func (p *Plugin) Close() error {
 
 // Process is a wrapper over ProcessFloat64 and ProcessFloat32
 // in case if plugin supports only ProcessFloat32, conversion is done
-func (p *Plugin) Process(buffer [][]float64) (result [][]float64) {
-	if buffer == nil || len(buffer) == 0 || buffer[0] == nil {
-		return
-	}
+// func (p *Plugin) Process(buffer [][]float64) (result [][]float64) {
+// 	if buffer == nil || len(buffer) == 0 || buffer[0] == nil {
+// 		return
+// 	}
 
-	if p.e.CanProcessFloat32() {
+// 	if p.e.CanProcessFloat32() {
 
-		in32 := make([][]float32, len(buffer))
-		for i := range buffer {
-			in32[i] = make([]float32, len(buffer[0]))
-			for j, v := range buffer[i] {
-				in32[i][j] = float32(v)
-			}
-		}
+// 		in32 := make([][]float32, len(buffer))
+// 		for i := range buffer {
+// 			in32[i] = make([]float32, len(buffer[0]))
+// 			for j, v := range buffer[i] {
+// 				in32[i][j] = float32(v)
+// 			}
+// 		}
 
-		out32 := p.e.ProcessFloat32(in32)
+// 		out32 := p.e.ProcessFloat32(in32)
 
-		result = make([][]float64, len(out32))
-		for i := range out32 {
-			result[i] = make([]float64, len(out32[i]))
-			for j, v := range out32[i] {
-				result[i][j] = float64(v)
-			}
-		}
-	} else {
-		result = p.e.ProcessFloat64([][]float64(buffer))
-	}
-	return
-}
+// 		result = make([][]float64, len(out32))
+// 		for i := range out32 {
+// 			result[i] = make([]float64, len(out32[i]))
+// 			for j, v := range out32[i] {
+// 				result[i][j] = float64(v)
+// 			}
+// 		}
+// 	} else {
+// 		result = p.e.ProcessFloat64([][]float64(buffer))
+// 	}
+// 	return
+// }
 
 func newSpeakerArrangement(numChannels int) *api.SpeakerArrangement {
 	sa := api.SpeakerArrangement{}

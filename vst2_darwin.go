@@ -27,18 +27,18 @@ type handle struct {
 }
 
 // Open loads the plugin entry point into memory. It's CFBundle in OS X.
-func open(path string) (entryPoint, error) {
-	//create C string
+func open(path string) (effectMain, handle, error) {
+	// create C string.
 	cpath := C.CString(path)
 	defer C.free(unsafe.Pointer(cpath))
-	//convert to CF string
+	// convert to CF string.
 	cfpath := C.CFStringCreateWithCString(0, cpath, C.kCFStringEncodingUTF8)
 	defer C.CFRelease(C.CFTypeRef(cfpath))
 
-	//get bundle url
+	// get bundle url.
 	bundleURL := C.CFURLCreateWithFileSystemPath(C.kCFAllocatorDefault, cfpath, C.kCFURLPOSIXPathStyle, C.true)
 	if bundleURL == 0 {
-		return entryPoint{}, fmt.Errorf("failed to create bundle url at %v", path)
+		return nil, handle{}, fmt.Errorf("failed to create bundle url at %v", path)
 	}
 	defer C.CFRelease(C.CFTypeRef(bundleURL))
 
@@ -46,28 +46,23 @@ func open(path string) (entryPoint, error) {
 	// bundle ref should be released in the end of program with entryPoint.Close call.
 	bundle := C.CFBundleCreate(C.kCFAllocatorDefault, bundleURL)
 	if bundle == 0 {
-		return entryPoint{}, fmt.Errorf("failed to create bundle ref at %v", path)
+		return nil, handle{}, fmt.Errorf("failed to create bundle ref at %v", path)
 	}
 
-	//create C string
+	// create C string.
 	cvstMain := C.CString(main)
 	defer C.free(unsafe.Pointer(cvstMain))
-	//create CF string
+	// create CF string.
 	cfvstMain := C.CFStringCreateWithCString(0, cvstMain, C.kCFStringEncodingUTF8)
 	defer C.CFRelease(C.CFTypeRef(cfvstMain))
 
 	ep := unsafe.Pointer(C.CFBundleGetFunctionPointerForName(bundle, cfvstMain))
 	if ep == nil {
 		C.CFRelease(C.CFTypeRef(C.CFBundleRef(bundle)))
-		return entryPoint{}, fmt.Errorf("failed to find entry point in bundle %v", path)
+		return nil, handle{}, fmt.Errorf("failed to find entry point in bundle %v", path)
 	}
 
-	return entryPoint{
-		main: effectMain(ep),
-		handle: handle{
-			bundle: uintptr(bundle),
-		},
-	}, nil
+	return effectMain(ep), handle{bundle: uintptr(bundle)}, nil
 }
 
 // close cleans up bundle reference.

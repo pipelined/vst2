@@ -34,28 +34,23 @@ func init() {
 	}
 }
 
-// Open loads the plugin entry point into memory. It's DLL in windows.
-func Open(path string) (entryPoint, error) {
+// open loads the plugin entry point into memory. It's DLL in windows.
+func open(path string) (effectMain, handle, error) {
 	//Load plugin by path
 	dll, err := syscall.LoadDLL(l.Path)
 	if err != nil {
-		return entryPoint{}, fmt.Errorf("failed to load VST from '%s': %v\n", l.Path, err)
+		return nil, handle{}, fmt.Errorf("failed to load VST from '%s': %v\n", l.Path, err)
 	}
 	l.library = unsafe.Pointer(dll)
 	l.Name = strings.TrimSuffix(filepath.Base(dll.Name), filepath.Ext(dll.Name))
 
 	//Get pointer to plugin's Main function
-	entryPoint, err := syscall.GetProcAddress(dll.Handle, main)
+	m, err := syscall.GetProcAddress(dll.Handle, main)
 	if err != nil {
 		l.Close()
-		return entryPoint{}, fmt.Errorf("failed to get entry point for plugin'%s': %v\n", l.Path, err)
+		return nil, handle{}, fmt.Errorf("failed to get entry point for plugin'%s': %v\n", l.Path, err)
 	}
-	return entryPoint{
-		main: effectMain(entryPoint),
-		handle: handle{
-			dll: dll,
-		},
-	}, nil
+	return effectMain(m), handle{dll: dll}, nil
 }
 
 // Close cleans up plugin refs.

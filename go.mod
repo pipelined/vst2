@@ -6,4 +6,6 @@ require (
 	github.com/stretchr/testify v1.3.0
 )
 
+replace github.com/pipelined/signal => ../signal
+
 go 1.13

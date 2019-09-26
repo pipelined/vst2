@@ -14,10 +14,10 @@ import (
 	"unsafe"
 )
 
-// global state for plugins.
+// global state for callbacks.
 var (
-	mutex   sync.RWMutex
-	plugins = make(map[*effect]*Plugin)
+	mutex     sync.RWMutex
+	callbacks = make(map[*effect]HostCallbackFunc)
 )
 
 //export hostCallback
@@ -29,16 +29,16 @@ func hostCallback(e *effect, opcode int64, index int64, value int64, ptr unsafe.
 		return version
 	}
 	mutex.RLock()
-	p, ok := plugins[e]
+	c, ok := callbacks[e]
 	mutex.RUnlock()
 	if !ok {
 		panic("plugin was closed")
 	}
 
-	if p == nil || p.callback == nil {
+	if c == nil {
 		panic("host callback is undefined")
 	}
-	return p.callback(p, HostOpcode(opcode), Index(index), Value(value), Ptr(ptr), Opt(opt))
+	return c(HostOpcode(opcode), Index(index), Value(value), Ptr(ptr), Opt(opt))
 }
 
 const (
@@ -49,8 +49,9 @@ const (
 )
 
 type (
-	// HostCallbackFunc used as callback function called by plugin.
-	HostCallbackFunc func(*Plugin, HostOpcode, Index, Value, Ptr, Opt) Return
+	// HostCallbackFunc used as callback function called by plugin. Use closure
+	// wrapping technic to add more types to callback.
+	HostCallbackFunc func(HostOpcode, Index, Value, Ptr, Opt) Return
 
 	// Index is index in plugin dispatch/host callback.
 	Index int64
@@ -85,9 +86,8 @@ type (
 	// Plugin is VST2 plugin instance.
 	Plugin struct {
 		*effect
-		Name     string
-		Path     string
-		callback HostCallbackFunc
+		Name string
+		Path string
 	}
 )
 
@@ -129,15 +129,15 @@ func (v VST) Load(c HostCallbackFunc) *Plugin {
 		return nil
 	}
 	e := (*effect)(C.loadEffect(v.main))
-	p := &Plugin{
-		effect:   e,
-		Path:     v.Path,
-		Name:     v.Name,
-		callback: c,
-	}
 	mutex.Lock()
-	plugins[e] = p
+	callbacks[e] = c
 	mutex.Unlock()
+
+	p := &Plugin{
+		effect: e,
+		Path:   v.Path,
+		Name:   v.Name,
+	}
 	p.Dispatch(EffOpen, 0, 0, nil, 0.0)
 	return p
 }

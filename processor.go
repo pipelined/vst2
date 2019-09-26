@@ -3,7 +3,6 @@ package vst2
 import (
 	"fmt"
 	"time"
-	"unsafe"
 
 	"github.com/pipelined/signal"
 )
@@ -77,14 +76,14 @@ func (p *Processor) callback() HostCallbackFunc {
 			return Return(p.bufferSize)
 		case HostGetTime:
 			nanoseconds := time.Now().UnixNano()
-
-			return Return(uintptr(unsafe.Pointer(&TimeInfo{
+			ti := &TimeInfo{
 				SampleRate:         float64(p.sampleRate),
 				SamplePos:          float64(p.currentPosition),
 				NanoSeconds:        float64(nanoseconds),
 				TimeSigNumerator:   4,
 				TimeSigDenominator: 4,
-			})))
+			}
+			return ti.Return()
 		default:
 			// log.Printf("Plugin requested value of opcode %v\n", opcode)
 			break

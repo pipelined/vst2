@@ -91,6 +91,64 @@ type (
 	}
 )
 
+// Open loads the VST into memory and stores entry point func.
+func Open(path string) (VST, error) {
+	p, err := filepath.Abs(path)
+	if err != nil {
+		return VST{}, fmt.Errorf("failed to get absolute path: %w", err)
+	}
+
+	m, h, err := open(p)
+	if err != nil {
+		return VST{}, fmt.Errorf("failed to load VST '%s': %w", path, err)
+	}
+
+	return VST{
+		Path:   p,
+		main:   m,
+		handle: h,
+	}, nil
+}
+
+// Close cleans up VST resoures.
+func (v VST) Close() error {
+	if v.main == nil {
+		return nil
+	}
+	v.main = nil
+	if err := v.handle.close(); err != nil {
+		return fmt.Errorf("failed close VST %s: %w", v.Name, err)
+	}
+	return nil
+}
+
+// Load new instance of VST plugin with provided callback.
+// This function also calls dispatch with EffOpen opcode.
+func (v VST) Load(c HostCallbackFunc) *Plugin {
+	if v.main == nil || c == nil {
+		return nil
+	}
+	e := (*effect)(C.loadEffect(v.main))
+	p := &Plugin{
+		effect:   e,
+		Path:     v.Path,
+		Name:     v.Name,
+		callback: c,
+	}
+	mutex.Lock()
+	plugins[e] = p
+	mutex.Unlock()
+	p.Dispatch(EffOpen, 0, 0, nil, 0.0)
+	return p
+}
+
+// Close cleans up C refs for plugin
+func (p *Plugin) Close() error {
+	p.Dispatch(EffClose, 0, 0, nil, 0.0)
+	p.effect = nil
+	return nil
+}
+
 // Dispatch wraps-up C method to dispatch calls to plugin
 func (p *Plugin) Dispatch(opcode EffectOpcode, index Index, value Value, ptr Ptr, opt Opt) Return {
 	return Return(C.dispatch((*C.Effect)(p.effect), C.int(opcode), C.int(index), C.int64_t(value), unsafe.Pointer(ptr), C.float(opt)))
@@ -194,61 +252,6 @@ func (p *Plugin) SetSpeakerArrangement(in, out *SpeakerArrangement) {
 // Locations are OS-specific.
 func ScanPaths() (paths []string) {
 	return append([]string{}, scanPaths...)
-}
-
-// Open loads the VST into memory and stores entry point func.
-func Open(path string) (*VST, error) {
-	p, err := filepath.Abs(path)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get absolute path: %w", err)
-	}
-
-	m, h, err := open(p)
-	if err != nil {
-		return nil, fmt.Errorf("failed to load VST '%s': %w", path, err)
-	}
-
-	return &VST{
-		Path:   p,
-		main:   m,
-		handle: h,
-	}, nil
-}
-
-// Close cleans up VST resoures.
-func (v *VST) Close() error {
-	if v.main == nil {
-		return nil
-	}
-	v.main = nil
-	if err := v.handle.close(); err != nil {
-		return fmt.Errorf("failed close VST %s: %w", v.Name, err)
-	}
-	return nil
-}
-
-// Load new instance of VST plugin with provided callback.
-// This function also calls dispatch with EffOpen opcode.
-func (v *VST) Load(c HostCallbackFunc) *Plugin {
-	e := (*effect)(C.loadEffect(v.main))
-	p := &Plugin{
-		effect:   e,
-		Path:     v.Path,
-		Name:     v.Name,
-		callback: c,
-	}
-	mutex.Lock()
-	plugins[e] = p
-	mutex.Unlock()
-	p.Dispatch(EffOpen, 0, 0, nil, 0.0)
-	return p
-}
-
-// Close cleans up C refs for plugin
-func (p *Plugin) Close() error {
-	p.Dispatch(EffClose, 0, 0, nil, 0.0)
-	p.effect = nil
-	return nil
 }
 
 func newSpeakerArrangement(numChannels int) *SpeakerArrangement {

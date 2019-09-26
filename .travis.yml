@@ -1,5 +1,5 @@
 language: go
-go: 
+go:
  - "1.11.x"
 
 os: osx
@@ -11,25 +11,7 @@ env:
     - GO111MODULE=on
     - CODECOV_TOKEN="6ac7ddfb-dfa8-4ac5-8d75-527a81eed7f3"
 
-addons:
-  ssh_known_hosts:
-  - github.com
-  - ssh.github.com
-
-before_install:
-  - >-
-    openssl aes-256-cbc 
-    -K $encrypted_87b4f940d6a2_key 
-    -iv $encrypted_87b4f940d6a2_iv 
-    -in vstsdk_rsa.enc 
-    -out vstsdk_rsa 
-    -d
-  - chmod 600 vstsdk_rsa
-  - eval $(ssh-agent -s)
-  - ssh-add vstsdk_rsa
-  - git clone ssh://git@github.com/dudk/vst2sdk.git
-
-script: env CGO_CFLAGS=-I$(pwd)/vst2sdk go test -race -coverprofile=coverage.txt -covermode=atomic ./... 
+script: go test -race -coverprofile=coverage.txt -covermode=atomic ./...
 
 after_success:
   - bash <(curl -s https://codecov.io/bash)

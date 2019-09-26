@@ -47,7 +47,7 @@ func init() {
 }
 
 func testHostCallback() vst2.HostCallbackFunc {
-	return func(e *vst2.Plugin, opcode vst2.HostOpcode, index vst2.Index, value vst2.Value, ptr vst2.Ptr, opt vst2.Opt) vst2.Return {
+	return func(opcode vst2.HostOpcode, index vst2.Index, value vst2.Value, ptr vst2.Ptr, opt vst2.Opt) vst2.Return {
 		fmt.Printf("Callback with opcode: %v\n", opcode)
 		return 0
 	}
@@ -69,37 +69,23 @@ func TestPlugin(t *testing.T) {
 	p.Dispatch(vst2.EffStateChanged, 0, 1, nil, 0.0)
 	// p.SetSpeakerArrangement(2)
 
-	if p.CanProcessFloat64() {
-		in := vst2.NewDoubleBuffer(samples64.NumChannels(), samples64.Size())
-		out := vst2.NewDoubleBuffer(samples64.NumChannels(), samples64.Size())
+	fmt.Printf("Processing 64: %v Proc 32: %v", p.CanProcessFloat64(), p.CanProcessFloat32())
+	in := vst2.NewDoubleBuffer(samples64.NumChannels(), samples64.Size())
+	out := vst2.NewDoubleBuffer(samples64.NumChannels(), samples64.Size())
 
-		in.CopyFrom(samples64)
-		p.ProcessDouble(in, out)
+	in.CopyFrom(samples64)
+	p.ProcessDouble(in, out)
 
-		ps := signal.Float64Buffer(samples64.NumChannels(), samples64.Size(), 0)
-		out.CopyTo(ps)
+	ps := signal.Float64Buffer(samples64.NumChannels(), samples64.Size(), 0)
+	out.CopyTo(ps)
 
-		assert.NotNil(t, ps)
-		assert.NotEmpty(t, ps)
-		assert.Equal(t, len(samples64), len(ps))
-		for c, s := range ps {
-			assert.Equal(t, len(samples64[c]), len(s), "Output channel %v has wrong sizp. Expected: %v got: %v", c, len(samples64[c]), len(s))
-			zc, zp, zpos := zeroesFloat64(s)
-			assert.Equal(t, true, zeroesProportionThreshold >= zp, "Too many zeroed samples in channel %v expected: %v%% got: %.4f%% zeroes count: %v zeroes positions: %v", c, zeroesProportionThreshold, zp, zc, zpos)
-		}
-	}
-
-	if p.CanProcessFloat32() {
-		assert.Equal(t, false, p.CanProcessFloat64())
-		ps := p.ProcessFloat32(samples32)
-		assert.NotNil(t, ps)
-		assert.NotEmpty(t, ps)
-		assert.Equal(t, len(samples32), len(ps))
-		for c, s := range ps {
-			assert.Equal(t, len(samples32[c]), len(s), "Output channel %v has wrong sizp. Expected: %v got: %v", c, len(samples32[c]), len(s))
-			zc, zp, zpos := zeroesFloat32(s)
-			assert.Equal(t, true, zeroesProportionThreshold >= zp, "Too many zeroed samples in channel %v. Expected: %v%% got: %.4f%% zeroes count: %v zeroes positions: %v", c, zeroesProportionThreshold, zp, zc, zpos)
-		}
+	assert.NotNil(t, ps)
+	assert.NotEmpty(t, ps)
+	assert.Equal(t, len(samples64), len(ps))
+	for c, s := range ps {
+		assert.Equal(t, len(samples64[c]), len(s), "Output channel %v has wrong sizp. Expected: %v got: %v", c, len(samples64[c]), len(s))
+		zc, zp, zpos := zeroesFloat64(s)
+		assert.Equal(t, true, zeroesProportionThreshold >= zp, "Too many zeroed samples in channel %v expected: %v%% got: %.4f%% zeroes count: %v zeroes positions: %v", c, zeroesProportionThreshold, zp, zc, zpos)
 	}
 }
 

@@ -73,11 +73,11 @@ func TestPlugin(t *testing.T) {
 		in := vst2.NewDoubleBuffer(samples64.NumChannels(), samples64.Size())
 		out := vst2.NewDoubleBuffer(samples64.NumChannels(), samples64.Size())
 
-		vst2.CopyFloat64(samples64, in)
+		in.CopyFrom(samples64)
 		p.ProcessDouble(in, out)
 
 		ps := signal.Float64Buffer(samples64.NumChannels(), samples64.Size(), 0)
-		vst2.CopyDouble(out, ps)
+		out.CopyTo(ps)
 
 		assert.NotNil(t, ps)
 		assert.NotEmpty(t, ps)

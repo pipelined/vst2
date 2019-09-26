@@ -10,7 +10,7 @@ import (
 
 // Processor represents vst2 sound processor
 type Processor struct {
-	*VST
+	VST
 	plugin *Plugin
 
 	bufferSize  int
@@ -47,10 +47,11 @@ func (p *Processor) Process(pipeID string, sampleRate, numChannels int) (func([]
 			p.doubleOut = NewDoubleBuffer(numChannels, currentSize)
 			out = signal.Float64Buffer(numChannels, currentSize, 0)
 		}
+		p.doubleIn.CopyFrom(b)
 		p.plugin.ProcessDouble(p.doubleIn, p.doubleOut)
 		p.currentPosition += int64(signal.Float64(b).Size())
 
-		CopyDouble(p.doubleOut, out)
+		p.doubleOut.CopyTo(out)
 		return out, nil
 	}, nil
 }

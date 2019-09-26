@@ -2,6 +2,7 @@ package vst2
 
 import "unsafe"
 
+// Value cast used in EffSetSpeakerArrangement call.
 func (sa *SpeakerArrangement) Value() Value {
 	if sa == nil {
 		return 0
@@ -9,6 +10,7 @@ func (sa *SpeakerArrangement) Value() Value {
 	return Value(uintptr(unsafe.Pointer(sa)))
 }
 
+// Ptr cast used in EffSetSpeakerArrangement call.
 func (sa *SpeakerArrangement) Ptr() Ptr {
 	if sa == nil {
 		return nil
@@ -16,6 +18,7 @@ func (sa *SpeakerArrangement) Ptr() Ptr {
 	return Ptr(unsafe.Pointer(sa))
 }
 
+// Return cast used in HostGetTime call.
 func (ti *TimeInfo) Return() Return {
 	if ti == nil {
 		return 0

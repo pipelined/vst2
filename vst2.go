@@ -181,46 +181,15 @@ func (p *Plugin) ProcessDouble(in, out DoubleBuffer) {
 	)
 }
 
-// ProcessFloat32 audio with VST plugin.
-// TODO: add c buffer parameter.
-func (p *Plugin) ProcessFloat32(in [][]float32) (out [][]float32) {
-	numChannels := len(in)
-	blocksize := len(in[0])
-
-	// convert [][]float32 to []*C.float
-	input := make([]*C.float, numChannels)
-	output := make([]*C.float, numChannels)
-	for i, row := range in {
-		// allocate input memory for C layout
-		inp := (*C.float)(C.malloc(C.size_t(C.sizeof_float * blocksize)))
-		input[i] = inp
-		defer C.free(unsafe.Pointer(inp))
-
-		// copy data from slice to C array
-		pa := (*[1 << 30]C.float)(unsafe.Pointer(inp))
-		for j, v := range row {
-			(*pa)[j] = C.float(v)
-		}
-
-		// allocate output memory for C layout
-		outp := (*C.float)(C.malloc(C.size_t(C.sizeof_float * blocksize)))
-		output[i] = outp
-		defer C.free(unsafe.Pointer(outp))
-	}
-
-	C.processFloat((*C.Effect)(p.effect), C.int(numChannels), C.int(blocksize), &input[0], &output[0])
-
-	//convert []*C.float slices to [][]float32
-	out = make([][]float32, numChannels)
-	for i, data := range output {
-		// copy data from C array to slice
-		pa := (*[1 << 30]C.float)(unsafe.Pointer(data))
-		out[i] = make([]float32, blocksize)
-		for j := range out[i] {
-			out[i][j] = float32(pa[j])
-		}
-	}
-	return out
+// ProcessFloat audio with VST plugin.
+func (p *Plugin) ProcessFloat(in, out FloatBuffer) {
+	C.processFloat(
+		(*C.Effect)(p.effect),
+		C.int(in.numChannels),
+		C.int(in.size),
+		&in.data[0],
+		&out.data[0],
+	)
 }
 
 // Start the plugin.

@@ -1,4 +1,4 @@
-vst2
+`vst2`
 ===
 [![GoDoc](https://godoc.org/github.com/pipelined/vst2?status.svg)](https://godoc.org/github.com/pipelined/vst2)
 [![Go Report Card](https://goreportcard.com/badge/github.com/pipelined/vst2)](https://goreportcard.com/report/github.com/pipelined/vst2)

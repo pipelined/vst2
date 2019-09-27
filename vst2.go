@@ -1,3 +1,4 @@
+// Package vst2 provides interface to VST2 plugins.
 package vst2
 
 /*
@@ -144,6 +145,9 @@ func (v VST) Load(c HostCallbackFunc) *Plugin {
 
 // Close cleans up C refs for plugin
 func (p *Plugin) Close() error {
+	if p.effect == nil {
+		return nil
+	}
 	p.Dispatch(EffClose, 0, 0, nil, 0.0)
 	p.effect = nil
 	return nil

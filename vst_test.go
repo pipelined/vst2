@@ -76,7 +76,7 @@ func TestPlugin(t *testing.T) {
 	in.CopyFrom(samples64)
 	p.ProcessDouble(in, out)
 
-	ps := signal.Float64Buffer(samples64.NumChannels(), samples64.Size(), 0)
+	ps := signal.Float64Buffer(samples64.NumChannels(), samples64.Size())
 	out.CopyTo(ps)
 
 	assert.NotNil(t, ps)

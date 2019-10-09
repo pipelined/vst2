@@ -14,29 +14,30 @@ type Processor struct {
 
 	bufferSize  int
 	numChannels int
-	sampleRate  int
+	sampleRate  signal.SampleRate
 
 	currentPosition int64
 
+	// references are needed to free them in Flush.
 	doubleIn  DoubleBuffer
 	doubleOut DoubleBuffer
 }
 
 // Process returns processor function with default settings initialized.
-func (p *Processor) Process(pipeID string, sampleRate, numChannels int) (func([][]float64) ([][]float64, error), error) {
+func (p *Processor) Process(pipeID string, sampleRate signal.SampleRate, numChannels int) (func(signal.Float64) error, error) {
 	p.sampleRate = sampleRate
 	p.numChannels = numChannels
 	p.plugin = p.VST.Load(p.callback())
 
-	p.plugin.SetSampleRate(p.sampleRate)
+	p.plugin.SetSampleRate(int(p.sampleRate))
 	p.plugin.SetSpeakerArrangement(newSpeakerArrangement(p.numChannels), newSpeakerArrangement(p.numChannels))
 	p.plugin.Start()
 	var currentSize int
 	var out signal.Float64
-	return func(b [][]float64) ([][]float64, error) {
+	return func(in signal.Float64) error {
 		// new buffer size.
-		if currentSize != signal.Float64(b).Size() {
-			currentSize = signal.Float64(b).Size()
+		if currentSize != in.Size() {
+			currentSize = in.Size()
 			p.plugin.SetBufferSize(currentSize)
 
 			// reset buffers.
@@ -44,20 +45,26 @@ func (p *Processor) Process(pipeID string, sampleRate, numChannels int) (func([]
 			p.doubleOut.Free()
 			p.doubleIn = NewDoubleBuffer(numChannels, currentSize)
 			p.doubleOut = NewDoubleBuffer(numChannels, currentSize)
-			out = signal.Float64Buffer(numChannels, currentSize, 0)
+			out = signal.Float64Buffer(numChannels, currentSize)
 		}
-		p.doubleIn.CopyFrom(b)
+		p.doubleIn.CopyFrom(in)
 		p.plugin.ProcessDouble(p.doubleIn, p.doubleOut)
-		p.currentPosition += int64(signal.Float64(b).Size())
-
+		p.currentPosition += int64(in.Size())
 		p.doubleOut.CopyTo(out)
-		return out, nil
+
+		// copy result back to input buffer.
+		for i := range out {
+			copy(in[i], out[i])
+		}
+		return nil
 	}, nil
 }
 
 // Flush suspends plugin.
 func (p *Processor) Flush(string) error {
 	p.plugin.Stop()
+	p.doubleIn.Free()
+	p.doubleOut.Free()
 	return nil
 }
 

@@ -32,20 +32,20 @@ func (p *Processor) Process(pipeID string, sampleRate signal.SampleRate, numChan
 	p.plugin.SetSampleRate(int(p.sampleRate))
 	p.plugin.SetSpeakerArrangement(newSpeakerArrangement(p.numChannels), newSpeakerArrangement(p.numChannels))
 	p.plugin.Start()
-	var currentSize int
+	var size int
 	var out signal.Float64
 	return func(in signal.Float64) error {
 		// new buffer size.
-		if currentSize != in.Size() {
-			currentSize = in.Size()
-			p.plugin.SetBufferSize(currentSize)
+		if size != in.Size() {
+			size = in.Size()
+			p.plugin.SetBufferSize(size)
 
 			// reset buffers.
 			p.doubleIn.Free()
 			p.doubleOut.Free()
-			p.doubleIn = NewDoubleBuffer(numChannels, currentSize)
-			p.doubleOut = NewDoubleBuffer(numChannels, currentSize)
-			out = signal.Float64Buffer(numChannels, currentSize)
+			p.doubleIn = NewDoubleBuffer(numChannels, size)
+			p.doubleOut = NewDoubleBuffer(numChannels, size)
+			out = signal.Float64Buffer(numChannels, size)
 		}
 		p.doubleIn.CopyFrom(in)
 		p.plugin.ProcessDouble(p.doubleIn, p.doubleOut)

@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/pipelined/signal"
-	"github.com/pipelined/vst2"
+	"pipelined.dev/signal"
+	"pipelined.dev/vst2"
 )
 
 // PrinterHostCallback returns closure that prints received opcode with provided

@@ -5,7 +5,7 @@ import "C"
 import (
 	"unsafe"
 
-	"github.com/pipelined/signal"
+	"pipelined.dev/signal"
 )
 
 type (

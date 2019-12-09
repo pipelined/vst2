@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/pipelined/signal"
+	"pipelined.dev/signal"
 )
 
 // Processor represents vst2 sound processor

@@ -5,8 +5,8 @@ import (
 	"runtime"
 	"testing"
 
-	"github.com/pipelined/signal"
-	"github.com/pipelined/vst2"
+	"pipelined.dev/signal"
+	"pipelined.dev/vst2"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"

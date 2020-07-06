@@ -1,8 +1,9 @@
-package vst2_test
+package main
 
 import (
 	"fmt"
 	"log"
+	"runtime"
 
 	"pipelined.dev/signal"
 	"pipelined.dev/vst2"
@@ -28,16 +29,23 @@ var data = signal.Float64([][]float64{
 	},
 })
 
-func Example() {
+func main() {
 	// VST2 files have OS-specific extensions.
-	// This example is applicable for OS X.
-	path := "_testdata/Krush.vst"
+	var pluginPath string
+	switch os := runtime.GOOS; os {
+	case "darwin":
+		pluginPath = "../_testdata/Krush.vst"
+	case "windows":
+		pluginPath = "../_testdata/TAL-Reverb.dll"
+	default:
+		pluginPath = ""
+	}
 
 	// Open VST library. Library contains a reference to
 	// OS-specific handle, that needs to be freed with Close.
-	vst, err := vst2.Open(path)
+	vst, err := vst2.Open(pluginPath)
 	if err != nil {
-		log.Panicf("failed to open VST library: %w", err)
+		log.Panicf("failed to open VST library: %v", err)
 	}
 	defer vst.Close()
 

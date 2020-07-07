@@ -1,16 +1,14 @@
-package main
+package vst2_test
 
 import (
 	"fmt"
 	"log"
-	"runtime"
-
 	"pipelined.dev/signal"
 	"pipelined.dev/vst2"
 )
 
 // PrinterHostCallback returns closure that prints received opcode with provided
-// prefix. This technic allows to provide callback with any context needed.
+// prefix. This technique allows to provide callback with any context needed.
 func PrinterHostCallback(prefix string) vst2.HostCallbackFunc {
 	return func(code vst2.HostOpcode,
 		index vst2.Index,
@@ -29,17 +27,9 @@ var data = signal.Float64([][]float64{
 	},
 })
 
-func main() {
+func ExampleDarwin() {
 	// VST2 files have OS-specific extensions.
-	var pluginPath string
-	switch os := runtime.GOOS; os {
-	case "darwin":
-		pluginPath = "../_testdata/Krush.vst"
-	case "windows":
-		pluginPath = "../_testdata/TAL-Reverb.dll"
-	default:
-		pluginPath = ""
-	}
+	pluginPath := "_testdata/Krush.vst"
 
 	// Open VST library. Library contains a reference to
 	// OS-specific handle, that needs to be freed with Close.
@@ -53,7 +43,7 @@ func main() {
 	plugin := vst.Load(PrinterHostCallback("Received opcode"))
 	defer plugin.Close()
 
-	// Set sample rate in Herz.
+	// Set sample rate in Hertz.
 	plugin.SetSampleRate(44100)
 	// Set channels information.
 	plugin.SetSpeakerArrangement(

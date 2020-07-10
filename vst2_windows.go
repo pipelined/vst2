@@ -43,12 +43,14 @@ func open(path string) (effectMain, handle, error) {
 
 	//Get pointer to plugin's Main function
 	m, err := syscall.GetProcAddress(dll.Handle, main)
-	if err != nil {
-		_ = dll.Release()
-		return nil, handle{}, fmt.Errorf("failed to get entry point for plugin'%s': %v\n", path, err)
+	if err == nil {
+		return effectMain(unsafe.Pointer(m)), handle{dll: dll}, nil
 	}
-
-	return effectMain(unsafe.Pointer(m)), handle{dll: dll}, nil
+	err = fmt.Errorf("failed to get entry point for plugin '%s': %w\n", path, err)
+	if errRelease := dll.Release(); errRelease != nil {
+		return nil, handle{}, fmt.Errorf("failed to release DLL '%s': %w after: %v", path, errRelease, err)
+	}
+	return nil, handle{}, err
 }
 
 // Close cleans up plugin refs.

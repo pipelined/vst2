@@ -60,16 +60,23 @@ func TestPlugin(t *testing.T) {
 	defer vst.Close()
 
 	p := vst.Load(testHostCallback())
-	defer p.Dispatch(vst2.EffClose, 0, 0, nil, 0.0)
+	defer p.Close()
 
-	// Set default sample rate and block size
-	blocksize := int64(len(samples32[0]))
-	p.Dispatch(vst2.EffSetSampleRate, 0, 0, nil, sampleRate)
-	p.Dispatch(vst2.EffSetBufferSize, 0, vst2.Value(blocksize), nil, 0.0)
-	p.Dispatch(vst2.EffStateChanged, 0, 1, nil, 0.0)
-	// p.SetSpeakerArrangement(2)
+	p.SetSampleRate(sampleRate)
+	p.SetBufferSize(len(samples64[0]))
+	p.SetSpeakerArrangement(
+		&vst2.SpeakerArrangement{
+			Type:        vst2.SpeakerArrMono,
+			NumChannels: int32(samples64.NumChannels()),
+		},
+		&vst2.SpeakerArrangement{
+			Type:        vst2.SpeakerArrMono,
+			NumChannels: int32(samples64.NumChannels()),
+		},
+	)
+	p.Start()
 
-	fmt.Printf("Processing 64: %v Proc 32: %v", p.CanProcessFloat64(), p.CanProcessFloat32())
+	fmt.Printf("Processing 64: %v Proc 32: %v\n", p.CanProcessFloat64(), p.CanProcessFloat32())
 	in := vst2.NewDoubleBuffer(samples64.NumChannels(), samples64.Size())
 	out := vst2.NewDoubleBuffer(samples64.NumChannels(), samples64.Size())
 
@@ -83,7 +90,7 @@ func TestPlugin(t *testing.T) {
 	assert.NotEmpty(t, ps)
 	assert.Equal(t, len(samples64), len(ps))
 	for c, s := range ps {
-		assert.Equal(t, len(samples64[c]), len(s), "Output channel %v has wrong sizp. Expected: %v got: %v", c, len(samples64[c]), len(s))
+		assert.Equal(t, len(samples64[c]), len(s), "Output channel %v has wrong size. Expected: %v got: %v", c, len(samples64[c]), len(s))
 		zc, zp, zpos := zeroesFloat64(s)
 		assert.Equal(t, true, zeroesProportionThreshold >= zp, "Too many zeroed samples in channel %v expected: %v%% got: %.4f%% zeroes count: %v zeroes positions: %v", c, zeroesProportionThreshold, zp, zc, zpos)
 	}

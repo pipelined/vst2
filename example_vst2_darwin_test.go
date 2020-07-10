@@ -80,5 +80,7 @@ func ExampleDarwin() {
 
 	// Output:
 	// Received opcode: HostGetCurrentProcessLevel
+	// Received opcode: HostGetTime
+	// Received opcode: hostWantMidi
 	// Received opcode: HostGetCurrentProcessLevel
 }

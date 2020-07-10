@@ -1,3 +1,5 @@
+// +build darwin,cgo
+
 package vst2_test
 
 import (
@@ -75,4 +77,8 @@ func ExampleDarwin() {
 	plugin.ProcessDouble(in, out)
 	// Copy processed data.
 	out.CopyTo(data)
+
+	// Output:
+	// Received opcode: HostGetCurrentProcessLevel
+	// Received opcode: HostGetCurrentProcessLevel
 }

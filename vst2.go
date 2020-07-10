@@ -51,7 +51,7 @@ const (
 
 type (
 	// HostCallbackFunc used as callback function called by plugin. Use closure
-	// wrapping technic to add more types to callback.
+	// wrapping technique to add more types to callback.
 	HostCallbackFunc func(HostOpcode, Index, Value, Ptr, Opt) Return
 
 	// Index is index in plugin dispatch/host callback.
@@ -111,7 +111,7 @@ func Open(path string) (VST, error) {
 	}, nil
 }
 
-// Close cleans up VST resoures.
+// Close cleans up VST resources.
 func (v VST) Close() error {
 	if v.main == nil {
 		return nil
@@ -216,7 +216,7 @@ func (p *Plugin) SetSampleRate(sampleRate int) {
 	p.Dispatch(EffSetSampleRate, 0, 0, nil, Opt(sampleRate))
 }
 
-// SetSpeakerArrangement craetes and passes SpeakerArrangement structures to plugin
+// SetSpeakerArrangement creates and passes SpeakerArrangement structures to plugin
 func (p *Plugin) SetSpeakerArrangement(in, out *SpeakerArrangement) {
 	p.Dispatch(EffSetSpeakerArrangement, 0, in.Value(), out.Ptr(), 0.0)
 }

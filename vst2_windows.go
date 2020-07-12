@@ -1,6 +1,5 @@
 package vst2
 
-import "C"
 import (
 	"fmt"
 	"os"

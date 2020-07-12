@@ -1,5 +1,3 @@
-// +build darwin,cgo
-
 package vst2_test
 
 import (

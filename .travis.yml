@@ -2,7 +2,9 @@ language: go
 go:
  - "1.x"
 
-os: osx
+os:
+ - osx
+ - windows
 
 install: true
 

@@ -95,7 +95,7 @@ func pluginPath() string {
 	case "windows":
 		return "_testdata/TAL-Reverb.dll"
 	case "darwin":
-		return "_testdata/TAL-Reverb.vst"
+		return "_testdata\\TAL-Reverb.vst"
 	default:
 		panic(fmt.Sprintf("unsupported OS: %v", os))
 	}

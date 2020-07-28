@@ -73,7 +73,9 @@ func Example_plugin() {
 	// memory layout differs from Golang slices.
 	// We need two buffers for input and output.
 	in := vst2.NewDoubleBuffer(buffer.Channels(), buffer.Length())
+	defer in.Free()
 	out := vst2.NewDoubleBuffer(buffer.Channels(), buffer.Length())
+	defer in.Free()
 
 	// Fill input with data values.
 	in.CopyFrom(buffer)

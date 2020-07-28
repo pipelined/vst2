@@ -92,12 +92,14 @@ func Example_plugin() {
 // not supported.
 func pluginPath() string {
 	os := runtime.GOOS
+	var path string
 	switch os {
 	case "windows":
-		return filepath.Abs("_testdata\\TAL-Reverb.dll")
+		path, _ = filepath.Abs("_testdata\\TAL-Reverb.dll")
 	case "darwin":
-		return filepath.Abs("_testdata/TAL-Reverb.vst")
+		path, _ = filepath.Abs("_testdata/TAL-Reverb.vst")
 	default:
 		panic(fmt.Sprintf("unsupported OS: %v", os))
 	}
+	return path
 }

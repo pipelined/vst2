@@ -95,7 +95,7 @@ func pluginPath() string {
 	var path string
 	switch os {
 	case "windows":
-		path, _ = filepath.Abs("_testdata\\TAL-Reverb-4.dll")
+		path, _ = filepath.Abs("_testdata\\TAL-Reverb.dll")
 	case "darwin":
 		path, _ = filepath.Abs("_testdata/TAL-Reverb.vst")
 	default:

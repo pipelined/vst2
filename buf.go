@@ -72,8 +72,8 @@ func (b DoubleBuffer) CopyFrom(s signal.Floating) {
 
 // Free the allocated memory.
 func (b DoubleBuffer) Free() {
-	for _, c := range b.data {
-		C.free(unsafe.Pointer(c))
+	for i := range b.data {
+		C.free(unsafe.Pointer(b.data[i]))
 	}
 }
 

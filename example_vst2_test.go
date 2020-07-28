@@ -3,6 +3,7 @@ package vst2_test
 import (
 	"fmt"
 	"log"
+	"path/filepath"
 	"runtime"
 
 	"pipelined.dev/signal"
@@ -93,9 +94,9 @@ func pluginPath() string {
 	os := runtime.GOOS
 	switch os {
 	case "windows":
-		return "_testdata\\TAL-Reverb.dll"
+		return filepath.Abs("_testdata\\TAL-Reverb.dll")
 	case "darwin":
-		return "_testdata/TAL-Reverb.vst"
+		return filepath.Abs("_testdata/TAL-Reverb.vst")
 	default:
 		panic(fmt.Sprintf("unsupported OS: %v", os))
 	}

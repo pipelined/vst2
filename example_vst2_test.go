@@ -75,7 +75,7 @@ func Example_plugin() {
 	in := vst2.NewDoubleBuffer(buffer.Channels(), buffer.Length())
 	defer in.Free()
 	out := vst2.NewDoubleBuffer(buffer.Channels(), buffer.Length())
-	defer in.Free()
+	defer out.Free()
 
 	// Fill input with data values.
 	in.CopyFrom(buffer)

@@ -6,8 +6,8 @@ import (
 	"path/filepath"
 	"runtime"
 
+	"pipelined.dev/audio/vst2"
 	"pipelined.dev/signal"
-	"pipelined.dev/vst2"
 )
 
 // PrinterHostCallback returns closure that prints received opcode with

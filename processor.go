@@ -9,26 +9,17 @@ import (
 )
 
 // Processor represents vst2 sound processor.
-type Processor struct {
-	VST
-	HostCallback HostCallbackAllocator
-}
-
-// Processor returns new vst2 processor allocator.
-func (p *Processor) Processor() pipe.ProcessorAllocatorFunc {
+func Processor(vst VST, callback HostCallbackAllocator) pipe.ProcessorAllocatorFunc {
 	return func(bufferSize int, props pipe.SignalProperties) (pipe.Processor, pipe.SignalProperties, error) {
 		host := HostProperties{
 			BufferSize: bufferSize,
 			Channels:   props.Channels,
 			SampleRate: props.SampleRate,
 		}
-		var hostCallback HostCallbackAllocator
-		if p.HostCallback != nil {
-			hostCallback = p.HostCallback
-		} else {
-			hostCallback = DefaultHostCallback
+		if callback == nil {
+			callback = DefaultHostCallback
 		}
-		plugin := p.VST.Load(hostCallback(&host))
+		plugin := vst.Load(callback(&host))
 		plugin.SetSampleRate(int(props.SampleRate))
 		plugin.SetSpeakerArrangement(newSpeakerArrangement(props.Channels), newSpeakerArrangement(props.Channels))
 		plugin.Start()

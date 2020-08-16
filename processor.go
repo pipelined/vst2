@@ -53,7 +53,7 @@ func doubleProcessor(plugin *Plugin, host *HostProperties) pipe.Processor {
 		},
 		FlushFunc: func(context.Context) error {
 			doubleIn.Free()
-			doubleIn.Free()
+			doubleOut.Free()
 			plugin.Stop()
 			return nil
 		},
@@ -73,7 +73,7 @@ func floatProcessor(plugin *Plugin, host *HostProperties) pipe.Processor {
 		},
 		FlushFunc: func(context.Context) error {
 			floatIn.Free()
-			floatIn.Free()
+			floatOut.Free()
 			plugin.Stop()
 			return nil
 		},

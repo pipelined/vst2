@@ -42,7 +42,7 @@ func Processor(vst VST, callback HostCallbackAllocator, init ProcessorInitFunc) 
 		plugin := vst.Load(callback(&host))
 		plugin.SetSampleRate(int(props.SampleRate))
 		plugin.SetBufferSize(bufferSize)
-		if init == nil {
+		if init != nil {
 			init(plugin)
 		}
 		plugin.Start()

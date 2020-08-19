@@ -8,20 +8,43 @@ import (
 	"pipelined.dev/signal"
 )
 
-// Processor represents vst2 sound processor.
-func Processor(vst VST, callback HostCallbackAllocator) pipe.ProcessorAllocatorFunc {
+type (
+	// HostProperties contains values required to handle plugin-to-host
+	// callbacks. It must be modified in the processing goroutine, otherwise
+	// race condition might happen.
+	HostProperties struct {
+		BufferSize int
+		Channels   int
+		signal.SampleRate
+		CurrentPosition int64
+	}
+
+	// HostCallbackAllocator returns new host callback function that uses host
+	// properties to interact with the plugin.
+	HostCallbackAllocator func(*HostProperties) HostCallbackFunc
+
+	// ProcessorInitFunc applies configuration on plugin before starting it
+	// in the processor routine.
+	ProcessorInitFunc func(*Plugin)
+)
+
+// Processor represents vst2 sound processor. It loads plugin from the
+// provided vst and applies the following configuration: set up sample
+// rate, set up buffer size, calls provided init function and then starts
+// the plugin.
+func Processor(vst VST, callback HostCallbackAllocator, init ProcessorInitFunc) pipe.ProcessorAllocatorFunc {
 	return func(bufferSize int, props pipe.SignalProperties) (pipe.Processor, pipe.SignalProperties, error) {
 		host := HostProperties{
 			BufferSize: bufferSize,
 			Channels:   props.Channels,
 			SampleRate: props.SampleRate,
 		}
-		if callback == nil {
-			callback = DefaultHostCallback
-		}
 		plugin := vst.Load(callback(&host))
 		plugin.SetSampleRate(int(props.SampleRate))
-		plugin.SetSpeakerArrangement(newSpeakerArrangement(props.Channels), newSpeakerArrangement(props.Channels))
+		plugin.SetBufferSize(bufferSize)
+		if init == nil {
+			init(plugin)
+		}
 		plugin.Start()
 
 		return processor(plugin, &host),
@@ -79,20 +102,6 @@ func floatProcessor(plugin *Plugin, host *HostProperties) pipe.Processor {
 		},
 	}
 }
-
-// HostProperties contains values required to handle plugin-to-host
-// callbacks. It must be modified in the processing goroutine, otherwise
-// race condition might happen.
-type HostProperties struct {
-	BufferSize int
-	Channels   int
-	signal.SampleRate
-	CurrentPosition int64
-}
-
-// HostCallbackAllocator returns new host callback function that uses host
-// properties to interact with the plugin.
-type HostCallbackAllocator func(*HostProperties) HostCallbackFunc
 
 // DefaultHostCallback returns default vst2 host callback.
 func DefaultHostCallback(props *HostProperties) HostCallbackFunc {

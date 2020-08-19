@@ -1,7 +1,7 @@
 module pipelined.dev/audio/vst2
 
 require (
-	pipelined.dev/pipe v0.8.3
+	pipelined.dev/pipe v0.8.4
 	pipelined.dev/signal v0.8.0
 )
 

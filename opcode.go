@@ -3,7 +3,7 @@
 package vst2
 
 // EffectOpcode is sent by host in dispatch call to effect.
-// It relfects AEffectOpcodes and AEffectXOpcodes opcodes values.
+// It reflects AEffectOpcodes and AEffectXOpcodes opcodes values.
 type EffectOpcode uint64
 
 const (
@@ -189,7 +189,7 @@ const (
 	EffCanDo
 
 	// EffGetTailSize passed to check if "tail" data is expected.
-	// Return: tail size (e.g. reverb time). 0 is defualt, 1 means no tail.
+	// Return: tail size (e.g. reverb time). 0 is default, 1 means no tail.
 	EffGetTailSize
 
 	// deprecated in VST v2.4
@@ -301,7 +301,7 @@ const (
 )
 
 // HostOpcode is sent by plugin in dispatch call to host.
-// It relfects AudioMasterOpcodes and AudioMasterOpcodesX opcodes values.
+// It reflects AudioMasterOpcodes and AudioMasterOpcodesX opcodes values.
 type HostOpcode uint64
 
 const (

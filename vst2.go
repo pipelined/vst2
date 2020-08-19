@@ -149,6 +149,9 @@ func (p *Plugin) Close() error {
 		return nil
 	}
 	p.Dispatch(EffClose, 0, 0, nil, 0.0)
+	mutex.Lock()
+	delete(callbacks, p.effect)
+	mutex.Unlock()
 	p.effect = nil
 	return nil
 }
@@ -206,12 +209,12 @@ func (p *Plugin) Stop() {
 	p.Dispatch(EffStateChanged, 0, 0, nil, 0.0)
 }
 
-// SetBufferSize sets a buffer size
+// SetBufferSize sets a buffer size per channel.
 func (p *Plugin) SetBufferSize(bufferSize int) {
 	p.Dispatch(EffSetBufferSize, 0, Value(bufferSize), nil, 0.0)
 }
 
-// SetSampleRate sets a sample rate for plugin
+// SetSampleRate sets a sample rate for plugin.
 func (p *Plugin) SetSampleRate(sampleRate int) {
 	p.Dispatch(EffSetSampleRate, 0, 0, nil, Opt(sampleRate))
 }

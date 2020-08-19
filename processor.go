@@ -1,98 +1,128 @@
 package vst2
 
 import (
-	"fmt"
+	"context"
 	"time"
 
+	"pipelined.dev/pipe"
 	"pipelined.dev/signal"
 )
 
-// Processor represents vst2 sound processor
-type Processor struct {
-	VST
-	plugin *Plugin
+type (
+	// HostProperties contains values required to handle plugin-to-host
+	// callbacks. It must be modified in the processing goroutine, otherwise
+	// race condition might happen.
+	HostProperties struct {
+		BufferSize int
+		Channels   int
+		signal.SampleRate
+		CurrentPosition int64
+	}
 
-	bufferSize  int
-	numChannels int
-	sampleRate  signal.SampleRate
+	// HostCallbackAllocator returns new host callback function that uses host
+	// properties to interact with the plugin.
+	HostCallbackAllocator func(*HostProperties) HostCallbackFunc
 
-	currentPosition int64
+	// ProcessorInitFunc applies configuration on plugin before starting it
+	// in the processor routine.
+	ProcessorInitFunc func(*Plugin)
+)
 
-	// references are needed to free them in Flush.
-	doubleIn  DoubleBuffer
-	doubleOut DoubleBuffer
-}
-
-// Process returns processor function with default settings initialized.
-func (p *Processor) Process(pipeID string, sampleRate signal.SampleRate, numChannels int) (func(signal.Float64) error, error) {
-	p.sampleRate = sampleRate
-	p.numChannels = numChannels
-	p.plugin = p.VST.Load(p.callback())
-
-	p.plugin.SetSampleRate(int(p.sampleRate))
-	p.plugin.SetSpeakerArrangement(newSpeakerArrangement(p.numChannels), newSpeakerArrangement(p.numChannels))
-	p.plugin.Start()
-	var size int
-	var out signal.Float64
-	return func(in signal.Float64) error {
-		// new buffer size.
-		if size != in.Size() {
-			size = in.Size()
-			p.plugin.SetBufferSize(size)
-
-			// reset buffers.
-			p.doubleIn.Free()
-			p.doubleOut.Free()
-			p.doubleIn = NewDoubleBuffer(numChannels, size)
-			p.doubleOut = NewDoubleBuffer(numChannels, size)
-			out = signal.Float64Buffer(numChannels, size)
+// Processor represents vst2 sound processor. It loads plugin from the
+// provided vst and applies the following configuration: set up sample
+// rate, set up buffer size, calls provided init function and then starts
+// the plugin.
+func Processor(vst VST, callback HostCallbackAllocator, init ProcessorInitFunc) pipe.ProcessorAllocatorFunc {
+	return func(bufferSize int, props pipe.SignalProperties) (pipe.Processor, pipe.SignalProperties, error) {
+		host := HostProperties{
+			BufferSize: bufferSize,
+			Channels:   props.Channels,
+			SampleRate: props.SampleRate,
 		}
-		p.doubleIn.CopyFrom(in)
-		p.plugin.ProcessDouble(p.doubleIn, p.doubleOut)
-		p.currentPosition += int64(in.Size())
-		p.doubleOut.CopyTo(out)
-
-		// copy result back to input buffer.
-		for i := range out {
-			copy(in[i], out[i])
+		plugin := vst.Load(callback(&host))
+		plugin.SetSampleRate(int(props.SampleRate))
+		plugin.SetBufferSize(bufferSize)
+		if init == nil {
+			init(plugin)
 		}
-		return nil
-	}, nil
+		plugin.Start()
+
+		return processor(plugin, &host),
+			pipe.SignalProperties{
+				Channels:   props.Channels,
+				SampleRate: props.SampleRate,
+			},
+			nil
+	}
 }
 
-// Flush suspends plugin.
-func (p *Processor) Flush(string) error {
-	p.plugin.Stop()
-	p.doubleIn.Free()
-	p.doubleOut.Free()
-	return nil
+func processor(plugin *Plugin, host *HostProperties) pipe.Processor {
+	if plugin.CanProcessFloat64() {
+		return doubleProcessor(plugin, host)
+	}
+	return floatProcessor(plugin, host)
 }
 
-// wraped callback with session.
-func (p *Processor) callback() HostCallbackFunc {
+func doubleProcessor(plugin *Plugin, host *HostProperties) pipe.Processor {
+	doubleIn := NewDoubleBuffer(host.Channels, host.BufferSize)
+	doubleOut := NewDoubleBuffer(host.Channels, host.BufferSize)
+	return pipe.Processor{
+		ProcessFunc: func(in, out signal.Floating) error {
+			doubleIn.CopyFrom(in)
+			plugin.ProcessDouble(doubleIn, doubleOut)
+			host.CurrentPosition += int64(in.Length())
+			doubleOut.CopyTo(out)
+			return nil
+		},
+		FlushFunc: func(context.Context) error {
+			doubleIn.Free()
+			doubleOut.Free()
+			plugin.Stop()
+			return nil
+		},
+	}
+}
+
+func floatProcessor(plugin *Plugin, host *HostProperties) pipe.Processor {
+	floatIn := NewFloatBuffer(host.Channels, host.BufferSize)
+	floatOut := NewFloatBuffer(host.Channels, host.BufferSize)
+	return pipe.Processor{
+		ProcessFunc: func(in, out signal.Floating) error {
+			floatIn.CopyFrom(in)
+			plugin.ProcessFloat(floatIn, floatOut)
+			host.CurrentPosition += int64(in.Length())
+			floatOut.CopyTo(out)
+			return nil
+		},
+		FlushFunc: func(context.Context) error {
+			floatIn.Free()
+			floatOut.Free()
+			plugin.Stop()
+			return nil
+		},
+	}
+}
+
+// DefaultHostCallback returns default vst2 host callback.
+func DefaultHostCallback(props *HostProperties) HostCallbackFunc {
 	return func(opcode HostOpcode, index Index, value Value, ptr Ptr, opt Opt) Return {
-		fmt.Printf("Callback: %v\n", opcode)
 		switch opcode {
-		case HostIdle:
-			p.plugin.Dispatch(EffEditIdle, 0, 0, nil, 0)
 		case HostGetCurrentProcessLevel:
 			return Return(ProcessLevelRealtime)
 		case HostGetSampleRate:
-			return Return(p.sampleRate)
+			return Return(props.SampleRate)
 		case HostGetBlockSize:
-			return Return(p.bufferSize)
+			return Return(props.SampleRate)
 		case HostGetTime:
-			nanoseconds := time.Now().UnixNano()
 			ti := &TimeInfo{
-				SampleRate:         float64(p.sampleRate),
-				SamplePos:          float64(p.currentPosition),
-				NanoSeconds:        float64(nanoseconds),
+				SampleRate:         float64(props.SampleRate),
+				SamplePos:          float64(props.CurrentPosition),
+				NanoSeconds:        float64(time.Now().UnixNano()),
 				TimeSigNumerator:   4,
 				TimeSigDenominator: 4,
 			}
 			return ti.Return()
 		default:
-			// log.Printf("Plugin requested value of opcode %v\n", opcode)
 			break
 		}
 		return 0

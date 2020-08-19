@@ -40,40 +40,40 @@ func NewDoubleBuffer(numChannels, bufferSize int) DoubleBuffer {
 	}
 }
 
-// CopyTo copies values to signal.Float64 buffer. If dimensions differ - the lesser used.
-func (b DoubleBuffer) CopyTo(s signal.Float64) {
+// CopyTo copies values to signal.Floating buffer. If dimensions differ - the lesser used.
+func (b DoubleBuffer) CopyTo(s signal.Floating) {
+	mustSameChannels(s.Channels(), b.numChannels)
 	// determine the size of data by picking up a lesser dimensions.
-	numChannels := min(s.NumChannels(), b.numChannels)
-	bufferSize := min(s.Size(), s.Size())
+	bufferSize := min(s.Length(), b.size)
 
 	// copy data.
-	for i := 0; i < numChannels; i++ {
-		row := (*[1 << 30]C.double)(unsafe.Pointer(b.data[i]))
-		for j := 0; j < bufferSize; j++ {
-			s[i][j] = float64(row[j])
+	for c := 0; c < s.Channels(); c++ {
+		row := (*[1 << 30]C.double)(unsafe.Pointer(b.data[c]))
+		for i := 0; i < bufferSize; i++ {
+			s.SetSample(s.BufferIndex(c, i), float64(row[i]))
 		}
 	}
 }
 
 // CopyFrom copies values from signal.Float64. If dimensions differ - the lesser used.
-func (b DoubleBuffer) CopyFrom(s signal.Float64) {
+func (b DoubleBuffer) CopyFrom(s signal.Floating) {
+	mustSameChannels(s.Channels(), b.numChannels)
 	// determine the size of data by picking up a lesser dimensions.
-	numChannels := min(s.NumChannels(), b.numChannels)
-	bufferSize := min(s.Size(), s.Size())
+	bufferSize := min(s.Length(), b.size)
 
 	// copy data.
-	for i := 0; i < numChannels; i++ {
-		row := (*[1 << 30]C.double)(unsafe.Pointer(b.data[i]))
-		for j := 0; j < bufferSize; j++ {
-			(*row)[j] = C.double(s[i][j])
+	for c := 0; c < s.Channels(); c++ {
+		row := (*[1 << 30]C.double)(unsafe.Pointer(b.data[c]))
+		for i := 0; i < bufferSize; i++ {
+			(*row)[i] = C.double(s.Sample(s.BufferIndex(c, i)))
 		}
 	}
 }
 
 // Free the allocated memory.
 func (b DoubleBuffer) Free() {
-	for _, c := range b.data {
-		C.free(unsafe.Pointer(c))
+	for i := range b.data {
+		C.free(unsafe.Pointer(b.data[i]))
 	}
 }
 
@@ -91,31 +91,31 @@ func NewFloatBuffer(numChannels, bufferSize int) FloatBuffer {
 }
 
 // CopyTo copies values to signal.Float64 buffer. If dimensions differ - the lesser used.
-func (b FloatBuffer) CopyTo(s signal.Float64) {
+func (b FloatBuffer) CopyTo(s signal.Floating) {
+	mustSameChannels(s.Channels(), b.numChannels)
 	// determine the size of data by picking up a lesser dimensions.
-	numChannels := min(s.NumChannels(), b.numChannels)
-	bufferSize := min(s.Size(), s.Size())
+	bufferSize := min(s.Length(), b.size)
 
 	// copy data.
-	for i := 0; i < numChannels; i++ {
-		row := (*[1 << 30]C.float)(unsafe.Pointer(b.data[i]))
-		for j := 0; j < bufferSize; j++ {
-			s[i][j] = float64(row[j])
+	for c := 0; c < s.Channels(); c++ {
+		row := (*[1 << 30]C.float)(unsafe.Pointer(b.data[c]))
+		for i := 0; i < bufferSize; i++ {
+			s.SetSample(s.BufferIndex(c, i), float64(row[i]))
 		}
 	}
 }
 
 // CopyFrom copies values from signal.Float64. If dimensions differ - the lesser used.
-func (b FloatBuffer) CopyFrom(s signal.Float64) {
+func (b FloatBuffer) CopyFrom(s signal.Floating) {
+	mustSameChannels(s.Channels(), b.numChannels)
 	// determine the size of data by picking up a lesser dimensions.
-	numChannels := min(s.NumChannels(), b.numChannels)
-	bufferSize := min(s.Size(), s.Size())
+	bufferSize := min(s.Length(), b.size)
 
 	// copy data.
-	for i := 0; i < numChannels; i++ {
-		row := (*[1 << 30]C.float)(unsafe.Pointer(b.data[i]))
-		for j := 0; j < bufferSize; j++ {
-			(*row)[j] = C.float(s[i][j])
+	for c := 0; c < s.Channels(); c++ {
+		row := (*[1 << 30]C.float)(unsafe.Pointer(b.data[c]))
+		for i := 0; i < bufferSize; i++ {
+			(*row)[i] = C.float(s.Sample(s.BufferIndex(c, i)))
 		}
 	}
 }
@@ -132,4 +132,10 @@ func min(a, b int) int {
 		return a
 	}
 	return b
+}
+
+func mustSameChannels(c1, c2 int) {
+	if c1 != c2 {
+		panic("different number of channels")
+	}
 }

@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"pipelined.dev/pipe"
+	"pipelined.dev/pipe/mutable"
 	"pipelined.dev/signal"
 )
 
@@ -13,9 +14,9 @@ type (
 	// callbacks. It must be modified in the processing goroutine, otherwise
 	// race condition might happen.
 	HostProperties struct {
-		BufferSize int
-		Channels   int
-		signal.SampleRate
+		BufferSize      int
+		Channels        int
+		SampleRate      signal.Frequency
 		CurrentPosition int64
 	}
 
@@ -33,7 +34,7 @@ type (
 // rate, set up buffer size, calls provided init function and then starts
 // the plugin.
 func Processor(vst VST, callback HostCallbackAllocator, init ProcessorInitFunc) pipe.ProcessorAllocatorFunc {
-	return func(bufferSize int, props pipe.SignalProperties) (pipe.Processor, pipe.SignalProperties, error) {
+	return func(mctx mutable.Context, bufferSize int, props pipe.SignalProperties) (pipe.Processor, error) {
 		host := HostProperties{
 			BufferSize: bufferSize,
 			Channels:   props.Channels,
@@ -47,12 +48,12 @@ func Processor(vst VST, callback HostCallbackAllocator, init ProcessorInitFunc) 
 		}
 		plugin.Start()
 
-		return processor(plugin, &host),
-			pipe.SignalProperties{
-				Channels:   props.Channels,
-				SampleRate: props.SampleRate,
-			},
-			nil
+		p := processor(plugin, &host)
+		p.Output = pipe.SignalProperties{
+			Channels:   props.Channels,
+			SampleRate: props.SampleRate,
+		}
+		return p, nil
 	}
 }
 

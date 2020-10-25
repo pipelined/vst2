@@ -7,7 +7,9 @@ package vst2
 #include "vst.h"
 */
 import "C"
-import "unsafe"
+import (
+	"unsafe"
+)
 
 // Plugin is VST2 plugin instance.
 type Plugin struct {
@@ -74,17 +76,17 @@ func (p *Plugin) ProcessFloat(in, out FloatBuffer) {
 
 // Start the plugin.
 func (p *Plugin) Start() {
-	p.Dispatch(EffStateChanged, 0, 1, nil, 0.0)
+	p.Dispatch(EffStateChanged, 0, 1, nil, 0)
 }
 
 // Stop the plugin.
 func (p *Plugin) Stop() {
-	p.Dispatch(EffStateChanged, 0, 0, nil, 0.0)
+	p.Dispatch(EffStateChanged, 0, 0, nil, 0)
 }
 
 // SetBufferSize sets a buffer size per channel.
 func (p *Plugin) SetBufferSize(bufferSize int) {
-	p.Dispatch(EffSetBufferSize, 0, Value(bufferSize), nil, 0.0)
+	p.Dispatch(EffSetBufferSize, 0, Value(bufferSize), nil, 0)
 }
 
 // SetSampleRate sets a sample rate for plugin.
@@ -94,5 +96,16 @@ func (p *Plugin) SetSampleRate(sampleRate int) {
 
 // SetSpeakerArrangement creates and passes SpeakerArrangement structures to plugin
 func (p *Plugin) SetSpeakerArrangement(in, out *SpeakerArrangement) {
-	p.Dispatch(EffSetSpeakerArrangement, 0, in.Value(), out.Ptr(), 0.0)
+	p.Dispatch(EffSetSpeakerArrangement, 0, in.Value(), out.Ptr(), 0)
+}
+
+// ParameterProperties returns parameter properties for provided parameter
+// index. If opcode is not supported, boolean result is false.
+func (p *Plugin) ParameterProperties(index int) (*ParameterProperties, bool) {
+	var props ParameterProperties
+	r := p.Dispatch(EffGetParameterProperties, Index(i), 0, Ptr(&props), 0)
+	if r > 0 {
+		return &props, true
+	}
+	return nil, false
 }

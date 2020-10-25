@@ -33,7 +33,7 @@ func (p *Plugin) Close() error {
 
 // Dispatch wraps-up C method to dispatch calls to plugin
 func (p *Plugin) Dispatch(opcode EffectOpcode, index Index, value Value, ptr Ptr, opt Opt) Return {
-	return Return(C.dispatch((*C.Effect)(p.effect), C.int(opcode), C.int(index), C.int64_t(value), unsafe.Pointer(ptr), C.float(opt)))
+	return Return(C.dispatch((*C.Effect)(p.effect), C.int32_t(opcode), C.int32_t(index), C.int64_t(value), unsafe.Pointer(ptr), C.float(opt)))
 }
 
 // CanProcessFloat32 checks if plugin can process float32.
@@ -56,8 +56,8 @@ func (p *Plugin) CanProcessFloat64() bool {
 func (p *Plugin) ProcessDouble(in, out DoubleBuffer) {
 	C.processDouble(
 		(*C.Effect)(p.effect),
-		C.int(in.numChannels),
-		C.int(in.size),
+		C.int32_t(in.numChannels),
+		C.int32_t(in.size),
 		&in.data[0],
 		&out.data[0],
 	)
@@ -67,8 +67,8 @@ func (p *Plugin) ProcessDouble(in, out DoubleBuffer) {
 func (p *Plugin) ProcessFloat(in, out FloatBuffer) {
 	C.processFloat(
 		(*C.Effect)(p.effect),
-		C.int(in.numChannels),
-		C.int(in.size),
+		C.int32_t(in.numChannels),
+		C.int32_t(in.size),
 		&in.data[0],
 		&out.data[0],
 	)
@@ -103,9 +103,17 @@ func (p *Plugin) SetSpeakerArrangement(in, out *SpeakerArrangement) {
 // index. If opcode is not supported, boolean result is false.
 func (p *Plugin) ParameterProperties(index int) (*ParameterProperties, bool) {
 	var props ParameterProperties
-	r := p.Dispatch(EffGetParameterProperties, Index(i), 0, Ptr(&props), 0)
+	r := p.Dispatch(EffGetParameterProperties, Index(index), 0, Ptr(&props), 0)
 	if r > 0 {
 		return &props, true
 	}
 	return nil, false
+}
+
+func (p *Plugin) GetParameterValue(index int) float32 {
+	return float32(C.getParameter((*C.Effect)(p.effect), C.int32_t(index)))
+}
+
+func (p *Plugin) SetParameterValue(index int, value float32) {
+	C.setParameter((*C.Effect)(p.effect), C.int32_t(index), C.float(value))
 }

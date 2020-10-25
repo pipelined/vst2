@@ -25,3 +25,13 @@ void processDouble(Effect *effect, int numChannels, int blocksize, double ** inp
 void processFloat(Effect *effect, int numChannels, int blocksize, float **inputs, float **outputs){
 	effect -> processReplacing(effect, inputs, outputs, blocksize);
 }
+
+// Bridge to call get parameter fucntion of loaded plugin
+float getParameter(Effect *effect, int paramIndex) {
+	return effect->getParameter(effect, paramIndex);
+}
+
+// Bridge to call set parameter fucntion of loaded plugin
+void setParameter(Effect *effect, int32_t paramIndex, float value) {
+	effect->setParameter(effect, paramIndex, value);
+}

@@ -31,6 +31,11 @@ func (p *Plugin) Close() error {
 	return nil
 }
 
+// NumParams returns the number of parameters.
+func (p *Plugin) NumParams() int {
+	return int(p.effect.numParams)
+}
+
 // Dispatch wraps-up C method to dispatch calls to plugin
 func (p *Plugin) Dispatch(opcode EffectOpcode, index Index, value Value, ptr Ptr, opt Opt) Return {
 	return Return(C.dispatch((*C.Effect)(p.effect), C.int32_t(opcode), C.int32_t(index), C.int64_t(value), unsafe.Pointer(ptr), C.float(opt)))
@@ -110,10 +115,33 @@ func (p *Plugin) ParameterProperties(index int) (*ParameterProperties, bool) {
 	return nil, false
 }
 
+// GetParameterValue returns the value of parameter.
 func (p *Plugin) GetParameterValue(index int) float32 {
 	return float32(C.getParameter((*C.Effect)(p.effect), C.int32_t(index)))
 }
 
+// SetParameterValue sets new value for parameter.
 func (p *Plugin) SetParameterValue(index int, value float32) {
 	C.setParameter((*C.Effect)(p.effect), C.int32_t(index), C.float(value))
+}
+
+// GetParamName returns the parameter label: "Release", "Gain", etc.
+func (p *Plugin) GetParamName(index int) string {
+	var val [maxParamStrLen]byte
+	p.Dispatch(EffGetParamName, Index(index), 0, Ptr(&val), 0)
+	return string(val[:])
+}
+
+// GetParamValueName returns the parameter value label: "0.5", "HALL", etc.
+func (p *Plugin) GetParamValueName(index int) string {
+	var val [maxParamStrLen]byte
+	p.Dispatch(EffGetParamDisplay, Index(index), 0, Ptr(&val), 0)
+	return string(val[:])
+}
+
+// GetParamUnitName returns the parameter unit label: "db", "ms", etc.
+func (p *Plugin) GetParamUnitName(index int) string {
+	var val [maxParamStrLen]byte
+	p.Dispatch(EffGetParamLabel, Index(index), 0, Ptr(&val), 0)
+	return string(val[:])
 }

@@ -104,9 +104,9 @@ func (p *Plugin) SetSpeakerArrangement(in, out *SpeakerArrangement) {
 	p.Dispatch(EffSetSpeakerArrangement, 0, in.Value(), out.Ptr(), 0)
 }
 
-// ParameterProperties returns parameter properties for provided parameter
+// ParamProperties returns parameter properties for provided parameter
 // index. If opcode is not supported, boolean result is false.
-func (p *Plugin) ParameterProperties(index int) (*ParameterProperties, bool) {
+func (p *Plugin) ParamProperties(index int) (*ParameterProperties, bool) {
 	var props ParameterProperties
 	r := p.Dispatch(EffGetParameterProperties, Index(index), 0, Ptr(&props), 0)
 	if r > 0 {
@@ -115,32 +115,32 @@ func (p *Plugin) ParameterProperties(index int) (*ParameterProperties, bool) {
 	return nil, false
 }
 
-// GetParameterValue returns the value of parameter.
-func (p *Plugin) GetParameterValue(index int) float32 {
+// ParamValue returns the value of parameter.
+func (p *Plugin) ParamValue(index int) float32 {
 	return float32(C.getParameter((*C.Effect)(p.effect), C.int32_t(index)))
 }
 
-// SetParameterValue sets new value for parameter.
-func (p *Plugin) SetParameterValue(index int, value float32) {
+// SetParamValue sets new value for parameter.
+func (p *Plugin) SetParamValue(index int, value float32) {
 	C.setParameter((*C.Effect)(p.effect), C.int32_t(index), C.float(value))
 }
 
-// GetParamName returns the parameter label: "Release", "Gain", etc.
-func (p *Plugin) GetParamName(index int) string {
+// ParamName returns the parameter label: "Release", "Gain", etc.
+func (p *Plugin) ParamName(index int) string {
 	var val [maxParamStrLen]byte
 	p.Dispatch(EffGetParamName, Index(index), 0, Ptr(&val), 0)
 	return string(val[:])
 }
 
-// GetParamValueName returns the parameter value label: "0.5", "HALL", etc.
-func (p *Plugin) GetParamValueName(index int) string {
+// ParamValueName returns the parameter value label: "0.5", "HALL", etc.
+func (p *Plugin) ParamValueName(index int) string {
 	var val [maxParamStrLen]byte
 	p.Dispatch(EffGetParamDisplay, Index(index), 0, Ptr(&val), 0)
 	return string(val[:])
 }
 
-// GetParamUnitName returns the parameter unit label: "db", "ms", etc.
-func (p *Plugin) GetParamUnitName(index int) string {
+// ParamUnitName returns the parameter unit label: "db", "ms", etc.
+func (p *Plugin) ParamUnitName(index int) string {
 	var val [maxParamStrLen]byte
 	p.Dispatch(EffGetParamLabel, Index(index), 0, Ptr(&val), 0)
 	return string(val[:])

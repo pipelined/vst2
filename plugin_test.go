@@ -21,9 +21,9 @@ func TestPluginParameters(t *testing.T) {
 	p := v.Load(vst2.DefaultHostCallback(&host))
 	defer p.Close()
 
-	p.SetParameterValue(0, 0)
+	p.SetParamValue(0, 0)
 	for i := 0; i < p.NumParams(); i++ {
-		fmt.Printf("param %d \tname: %v \tdisplay: %v \tlabel: %v \tvalue: %v\n", i, p.GetParamName(i), p.GetParamUnitName(i), p.GetParamValueName(i), p.GetParameterValue(i))
+		fmt.Printf("param %d \tname: %v \tdisplay: %v \tlabel: %v \tvalue: %v\n", i, p.ParamName(i), p.ParamValueName(i), p.ParamUnitName(i), p.ParamValue(i))
 	}
 }
 

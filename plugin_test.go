@@ -25,6 +25,15 @@ func TestPluginParameters(t *testing.T) {
 	for i := 0; i < p.NumParams(); i++ {
 		fmt.Printf("param %d \tname: %v \tdisplay: %v \tlabel: %v \tvalue: %v\n", i, p.ParamName(i), p.ParamValueName(i), p.ParamUnitName(i), p.ParamValue(i))
 	}
+
+	fmt.Printf("programs: %v\n", p.NumPrograms())
+	fmt.Printf("current program: %v\n", p.Program())
+	fmt.Printf("current program name: %v\n", p.CurrentProgramName())
+	p.SetProgramName("test")
+	fmt.Printf("current program name: %v\n", p.CurrentProgramName())
+	for i := 0; i < p.NumPrograms(); i++ {
+		fmt.Printf("prog name: \t%v\n", p.ProgramName(i))
+	}
 }
 
 func assertEqual(t *testing.T, name string, result, expected interface{}) {

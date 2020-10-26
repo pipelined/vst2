@@ -36,6 +36,11 @@ func (p *Plugin) NumParams() int {
 	return int(p.effect.numParams)
 }
 
+// NumPrograms returns the number of programs.
+func (p *Plugin) NumPrograms() int {
+	return int(p.effect.numPrograms)
+}
+
 // Dispatch wraps-up C method to dispatch calls to plugin
 func (p *Plugin) Dispatch(opcode EffectOpcode, index Index, value Value, ptr Ptr, opt Opt) Return {
 	return Return(C.dispatch((*C.Effect)(p.effect), C.int32_t(opcode), C.int32_t(index), C.int64_t(value), unsafe.Pointer(ptr), C.float(opt)))
@@ -144,4 +149,35 @@ func (p *Plugin) ParamUnitName(index int) string {
 	var val [maxParamStrLen]byte
 	p.Dispatch(EffGetParamLabel, Index(index), 0, Ptr(&val), 0)
 	return string(val[:])
+}
+
+// Program returns current program number.
+func (p *Plugin) Program() int {
+	return int(p.Dispatch(EffGetProgram, 0, 0, nil, 0))
+}
+
+// SetProgram changes current program index.
+func (p *Plugin) SetProgram(index int) {
+	p.Dispatch(EffSetProgram, 0, Value(index), nil, 0)
+}
+
+// CurrentProgramName returns current program name.
+func (p *Plugin) CurrentProgramName() string {
+	var val [maxProgNameLen]byte
+	p.Dispatch(EffGetProgramName, 0, 0, Ptr(&val), 0)
+	return string(val[:])
+}
+
+// ProgramName returns program name for provided program index.
+func (p *Plugin) ProgramName(index int) string {
+	var val [maxProgNameLen]byte
+	p.Dispatch(EffGetProgramNameIndexed, Index(index), 0, Ptr(&val), 0)
+	return string(val[:])
+}
+
+// SetProgramName sets new name to the current program.
+func (p *Plugin) SetProgramName(name string) {
+	var val [maxProgNameLen]byte
+	copy(val[:], ([]byte)(name))
+	p.Dispatch(EffSetProgramName, 0, 0, Ptr(&val), 0)
 }

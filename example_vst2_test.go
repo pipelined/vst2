@@ -159,9 +159,9 @@ func pluginPath() string {
 	var path string
 	switch os {
 	case "windows":
-		path, _ = filepath.Abs("_testdata\\TAL-Reverb.dll")
+		path, _ = filepath.Abs("_testdata\\TAL-Noisemaker.dll")
 	case "darwin":
-		path, _ = filepath.Abs("_testdata/TAL-Reverb.vst")
+		path, _ = filepath.Abs("_testdata/TAL-Noisemaker.vst")
 	default:
 		panic(fmt.Sprintf("unsupported OS: %v", os))
 	}

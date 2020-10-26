@@ -34,6 +34,7 @@ func TestPluginParameters(t *testing.T) {
 	for i := 0; i < p.NumPrograms(); i++ {
 		fmt.Printf("prog name: \t%v\n", p.ProgramName(i))
 	}
+	fmt.Printf("program data: %v\n", string(p.GetProgramData()))
 }
 
 func assertEqual(t *testing.T, name string, result, expected interface{}) {

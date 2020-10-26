@@ -19,8 +19,65 @@ const (
 	EffectMagic = "VstP"
 )
 
-// TimeInfo describes the time at the start of the block currently being processed.
 type (
+	// ParameterProperties contains the information about parameter.
+	ParameterProperties struct {
+		// valid if ParameterUsesIntegerMinMax is set
+		StepFloat      float32
+		SmallStepFloat float32
+		LargeStepFloat float32
+
+		Label [maxLabelLen]byte
+		Flags ParameterFlag
+
+		// valid if ParameterUsesIntegerMinMax is set
+		MinInteger int32
+		MaxInteger int32
+
+		// valid if ParameterUsesIntStep is set
+		StepInteger      int32
+		LargeStepInteger int32
+		ShortLabel       [maxShortLabelLen]byte
+
+		// valid if ParameterSupportsDisplayIndex is set
+		DisplayIndex int16 // Index where parameter should be displayed, starts with 0
+
+		// valid if ParameterSupportsDisplayCategory is set
+		Category             int16
+		ParametersInCategory int16
+		reserved             int16 // always zero
+		CategoryLabel        [maxCategLabelLen]byte
+
+		future [16]byte //Reserved for future.
+	}
+
+	// ParameterFlag is used to describe ParameterProperties struct.
+	ParameterFlag int32
+)
+
+const (
+	// ParameterIsSwitch is set if parameter is a switch (on/off).
+	ParameterIsSwitch ParameterFlag = 1 << iota
+	// ParameterUsesIntegerMinMax is set if parameter has min/max int
+	// values.
+	ParameterUsesIntegerMinMax
+	// ParameterUsesFloatStep is set if parameter uses float steps.
+	ParameterUsesFloatStep
+	// ParameterUsesIntStep is set if parameter uses int steps.
+	ParameterUsesIntStep
+	// ParameterSupportsDisplayIndex is set if parameter should be
+	// displayed at certain position.
+	ParameterSupportsDisplayIndex
+	// ParameterSupportsDisplayCategory is set if parameter should be
+	// displayed under specific category.
+	ParameterSupportsDisplayCategory
+	// ParameterCanRamp is set if parameter can ramp up/down.
+	ParameterCanRamp
+)
+
+type (
+	// TimeInfo describes the time at the start of the block currently
+	// being processed.
 	TimeInfo struct {
 		// Current Position in audio samples.
 		SamplePos float64
@@ -42,12 +99,14 @@ type (
 		TimeSigNumerator int32
 		// Time Signature Denominator (e.g. 4 for 3/4).
 		TimeSigDenominator int32
-		// SMPTE offset in SMPTE subframes (bits; 1/80 of a frame).
-		// The current SMPTE position can be calculated using SamplePos, SampleRate, and SMPTEFrameRate.
+		// SMPTE offset in SMPTE subframes (bits; 1/80 of a frame). The
+		// current SMPTE position can be calculated using SamplePos,
+		// SampleRate, and SMPTEFrameRate.
 		SMPTEOffset int32
 		// SMPTEFrameRate value.
 		SMPTEFrameRate
-		// MIDI Clock Resolution (24 Per Quarter Note), can be negative (nearest clock).
+		// MIDI Clock Resolution (24 Per Quarter Note), can be negative
+		// (nearest clock).
 		SamplesToNextClock int32
 		// TimeInfoFlags values.
 		Flags TimeInfoFlags
@@ -83,11 +142,14 @@ const (
 	TempoValid
 	// BarsValid is set if TimeInfo.BarStartPos is valid.
 	BarsValid
-	// CyclePosValid is set if both TimeInfo.CycleStartPos and TimeInfo.CycleEndPos are valid.
+	// CyclePosValid is set if both TimeInfo.CycleStartPos and
+	// TimeInfo.CycleEndPos are valid.
 	CyclePosValid
-	// TimeSigValid is set if both TimeInfo.TimeSigNumerator and TimeInfo.TimeSigDenominator are valid.
+	// TimeSigValid is set if both TimeInfo.TimeSigNumerator and
+	// TimeInfo.TimeSigDenominator are valid.
 	TimeSigValid
-	// SMPTEValid is set if both TimeInfo.SMPTEOffset and TimeInfo.SMPTEFrameRate are valid.
+	// SMPTEValid is set if both TimeInfo.SMPTEOffset and
+	// TimeInfo.SMPTEFrameRate are valid.
 	SMPTEValid
 	// ClockValid is set if TimeInfo.SamplesToNextClock are valid.
 	ClockValid
@@ -130,8 +192,8 @@ type (
 		Speakers    [8]Speaker
 	}
 
-	// SpeakerArrangementType indicates how the channels are intended to be used in the plugin.
-	// Only useful for some hosts.
+	// SpeakerArrangementType indicates how the channels are intended to be
+	// used in the plugin. Only useful for some hosts.
 	SpeakerArrangementType int32
 
 	// Speaker configuration.
@@ -272,19 +334,23 @@ const (
 	_
 	_
 	_
-	// EffFlagsCanReplacing is set if plugin supports replacing process mode.
+	// EffFlagsCanReplacing is set if plugin supports replacing process
+	// mode.
 	EffFlagsCanReplacing
-	// EffFlagsProgramChunks is set if preset data is handled in formatless chunks.
+	// EffFlagsProgramChunks is set if preset data is handled in formatless
+	// chunks.
 	EffFlagsProgramChunks
 	_
 	_
 	// EffFlagsIsSynth is set if plugin is a synth.
 	EffFlagsIsSynth
-	// EffFlagsNoSoundInStop is set if plugin does not produce sound when input is silence.
+	// EffFlagsNoSoundInStop is set if plugin does not produce sound when
+	// input is silence.
 	EffFlagsNoSoundInStop
 	_
 	_
-	// EffFlagsCanDoubleReplacing is set if plugin supports double precision processing.
+	// EffFlagsCanDoubleReplacing is set if plugin supports double
+	// precision processing.
 	EffFlagsCanDoubleReplacing
 
 	// deprecated in VST v2.4
@@ -308,10 +374,13 @@ const (
 	ProcessLevelUnknown ProcessLevels = iota
 	// ProcessLevelUser is returned when in user thread (GUI).
 	ProcessLevelUser
-	// ProcessLevelRealtime is returned when in audio thread (where process is called).
+	// ProcessLevelRealtime is returned when in audio thread (where process
+	// is called).
 	ProcessLevelRealtime
-	// ProcessLevelPrefetch is returned when in sequencer thread (MIDI, timer etc).
+	// ProcessLevelPrefetch is returned when in sequencer thread (MIDI,
+	// timer etc).
 	ProcessLevelPrefetch
-	// ProcessLevelOffline is returned when in offline processing and thus in user thread.
+	// ProcessLevelOffline is returned when in offline processing and thus
+	// in user thread.
 	ProcessLevelOffline
 )

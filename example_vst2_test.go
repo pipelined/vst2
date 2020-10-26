@@ -149,6 +149,7 @@ func Example_plugin() {
 
 	// Output:
 	// Received opcode: HostGetCurrentProcessLevel
+	// Received opcode: hostWantMidi
 	// Received opcode: HostGetCurrentProcessLevel
 }
 

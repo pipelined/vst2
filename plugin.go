@@ -182,14 +182,12 @@ func (p *Plugin) SetProgramName(name string) {
 	p.Dispatch(EffSetProgramName, 0, 0, Ptr(&val), 0)
 }
 
-// GetProgramData returns current preset data.
+// GetProgramData returns current preset data. Plugin allocates required
+// memory, then this function allocates new byte slice of required length
+// where data is copied.
 func (p *Plugin) GetProgramData() []byte {
 	var ptr unsafe.Pointer
-	v := int(p.Dispatch(EffGetChunk, 1, 0, Ptr(&ptr), 0))
-	chunk := (*[1 << 30]C.uint8_t)(ptr)
-	data := make([]byte, 0, v)
-	for i := 0; i < v; i++ {
-		data = append(data, byte(chunk[i]))
-	}
+	length := C.int(p.Dispatch(EffGetChunk, 1, 0, Ptr(&ptr), 0))
+	data := C.GoBytes(ptr, length)
 	return data
 }

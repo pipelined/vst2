@@ -3,6 +3,7 @@ package vst2_test
 import (
 	"fmt"
 	"reflect"
+	"strings"
 	"testing"
 
 	"pipelined.dev/audio/vst2"
@@ -34,8 +35,28 @@ func TestPluginParameters(t *testing.T) {
 	for i := 0; i < p.NumPrograms(); i++ {
 		fmt.Printf("prog name: \t%v\n", p.ProgramName(i))
 	}
-	fmt.Printf("program data: %v\n", string(p.GetProgramData()))
+	assertEqual(t, "resonance", p.ParamValue(4), float32(0))
+	prog := p.GetProgramData()
+	// fmt.Printf("program data before: %v\n", string(prog))
+	newProg := strings.ReplaceAll(string(prog), "resonance=\"0.0\"", "resonance=\"1.0\"")
+
+	// preset := getPreset(t)
+	p.SetProgramData(([]byte)(newProg))
+
+	prog = p.GetProgramData()
+	// fmt.Printf("program data after: %v\n", string(prog))
+	// prog = p.GetProgramData()
+	// fmt.Printf("program data: %v\n", string(prog))
+	assertEqual(t, "resonance", p.ParamValue(4), float32(1))
 }
+
+// func getPreset(t *testing.T) []byte {
+// 	preset, err := os.Open("_testdata/preset")
+// 	assertEqual(t, "open preset error", err, nil)
+// 	b, err := ioutil.ReadAll(preset)
+// 	assertEqual(t, "load preset error", err, nil)
+// 	return b
+// }
 
 func assertEqual(t *testing.T, name string, result, expected interface{}) {
 	t.Helper()

@@ -188,6 +188,13 @@ func (p *Plugin) SetProgramName(name string) {
 func (p *Plugin) GetProgramData() []byte {
 	var ptr unsafe.Pointer
 	length := C.int(p.Dispatch(EffGetChunk, 1, 0, Ptr(&ptr), 0))
-	data := C.GoBytes(ptr, length)
-	return data
+	return C.GoBytes(ptr, length)
+}
+
+// SetProgramData sets preset data to the plugin. Data is the full preset
+// including chunk header.
+func (p *Plugin) SetProgramData(data []byte) {
+	ptr := C.CBytes(data)
+	p.Dispatch(EffSetChunk, 1, Value(len(data)), Ptr(ptr), 0)
+	C.free(ptr)
 }

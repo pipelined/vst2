@@ -8,6 +8,7 @@ package vst2
 */
 import "C"
 import (
+	"strings"
 	"unsafe"
 )
 
@@ -134,21 +135,21 @@ func (p *Plugin) SetParamValue(index int, value float32) {
 func (p *Plugin) ParamName(index int) string {
 	var val [maxParamStrLen]byte
 	p.Dispatch(EffGetParamName, Index(index), 0, Ptr(&val), 0)
-	return string(val[:])
+	return strings.Trim(string(val[:]), "\x00")
 }
 
 // ParamValueName returns the parameter value label: "0.5", "HALL", etc.
 func (p *Plugin) ParamValueName(index int) string {
 	var val [maxParamStrLen]byte
 	p.Dispatch(EffGetParamDisplay, Index(index), 0, Ptr(&val), 0)
-	return string(val[:])
+	return strings.Trim(string(val[:]), "\x00")
 }
 
 // ParamUnitName returns the parameter unit label: "db", "ms", etc.
 func (p *Plugin) ParamUnitName(index int) string {
 	var val [maxParamStrLen]byte
 	p.Dispatch(EffGetParamLabel, Index(index), 0, Ptr(&val), 0)
-	return string(val[:])
+	return strings.Trim(string(val[:]), "\x00")
 }
 
 // Program returns current program number.
@@ -165,14 +166,14 @@ func (p *Plugin) SetProgram(index int) {
 func (p *Plugin) CurrentProgramName() string {
 	var val [maxProgNameLen]byte
 	p.Dispatch(EffGetProgramName, 0, 0, Ptr(&val), 0)
-	return string(val[:])
+	return strings.Trim(string(val[:]), "\x00")
 }
 
 // ProgramName returns program name for provided program index.
 func (p *Plugin) ProgramName(index int) string {
 	var val [maxProgNameLen]byte
 	p.Dispatch(EffGetProgramNameIndexed, Index(index), 0, Ptr(&val), 0)
-	return string(val[:])
+	return strings.Trim(string(val[:]), "\x00")
 }
 
 // SetProgramName sets new name to the current program.
@@ -196,5 +197,22 @@ func (p *Plugin) GetProgramData() []byte {
 func (p *Plugin) SetProgramData(data []byte) {
 	ptr := C.CBytes(data)
 	p.Dispatch(EffSetChunk, 1, Value(len(data)), Ptr(ptr), 0)
+	C.free(ptr)
+}
+
+// GetBankData returns current bank data. Plugin allocates required
+// memory, then this function allocates new byte slice of required length
+// where data is copied.
+func (p *Plugin) GetBankData() []byte {
+	var ptr unsafe.Pointer
+	length := C.int(p.Dispatch(EffGetChunk, 0, 0, Ptr(&ptr), 0))
+	return C.GoBytes(ptr, length)
+}
+
+// SetBankData sets preset data to the plugin. Data is the full preset
+// including chunk header.
+func (p *Plugin) SetBankData(data []byte) {
+	ptr := C.CBytes(data)
+	p.Dispatch(EffSetChunk, 0, Value(len(data)), Ptr(ptr), 0)
 	C.free(ptr)
 }

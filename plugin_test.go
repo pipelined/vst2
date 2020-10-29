@@ -29,11 +29,12 @@ func TestPluginParameters(t *testing.T) {
 
 	fmt.Printf("programs: %v\n", p.NumPrograms())
 	fmt.Printf("current program: %v\n", p.Program())
-	fmt.Printf("current program name: %v\n", p.CurrentProgramName())
-	p.SetProgramName("test")
-	fmt.Printf("current program name: %v\n", p.CurrentProgramName())
+	newProgName := "test"
+	p.SetProgramName(newProgName)
+	assertEqual(t, "program name", p.CurrentProgramName(), newProgName)
 	for i := 0; i < p.NumPrograms(); i++ {
-		fmt.Printf("prog name: \t%v\n", p.ProgramName(i))
+		name := p.ProgramName(i)
+		assertEqual(t, "prog name", len(name) > 0, true)
 	}
 	assertEqual(t, "resonance", p.ParamValue(4), float32(0))
 	prog := p.GetProgramData()
@@ -44,9 +45,6 @@ func TestPluginParameters(t *testing.T) {
 	p.SetProgramData(([]byte)(newProg))
 
 	prog = p.GetProgramData()
-	// fmt.Printf("program data after: %v\n", string(prog))
-	// prog = p.GetProgramData()
-	// fmt.Printf("program data: %v\n", string(prog))
 	assertEqual(t, "resonance", p.ParamValue(4), float32(1))
 }
 

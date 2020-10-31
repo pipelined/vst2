@@ -19,23 +19,23 @@ const (
 	// Return: current program number.
 	EffGetProgram
 	// EffSetProgramName passed to set new program name.
-	// Ptr: *[maxProgNameLen]uint8 buffer with new program name.
+	// Ptr: *[maxProgNameLen]byte buffer with new program name.
 	EffSetProgramName
 	// EffGetProgramName passed to get current program name.
-	// Ptr: *[maxProgNameLen]uint8 buffer for current program name.
+	// Ptr: *[maxProgNameLen]byte buffer for current program name.
 	EffGetProgramName
 
 	// EffGetParamLabel passed to get parameter unit label: "db", "ms", etc.
 	// Index: parameter index.
-	// Ptr: *[maxParamStrLen]uint8 buffer for parameter unit label.
+	// Ptr: *[maxParamStrLen]byte buffer for parameter unit label.
 	EffGetParamLabel
 	// EffGetParamDisplay passed to get parameter value label: "0.5", "HALL", etc.
 	// Index: parameter index.
-	// Ptr: *[maxParamStrLen]uint8 buffer for parameter value label.
+	// Ptr: *[maxParamStrLen]byte buffer for parameter value label.
 	EffGetParamDisplay
 	// EffGetParamName passed to get parameter label: "Release", "Gain", etc.
 	// Index: parameter index.
-	// Ptr: *[maxParamStrLen]uint8 buffer for parameter label.
+	// Ptr: *[maxParamStrLen]byte buffer for parameter label.
 	EffGetParamName
 
 	// deprecated in VST v2.4
@@ -106,7 +106,7 @@ const (
 
 	// EffGetProgramNameIndexed passed to get program name by index.
 	// Index: program index.
-	// Ptr: *[maxProgNameLen]uint8 buffer for program name.
+	// Ptr: *[maxProgNameLen]byte buffer for program name.
 	// Return: true for success.
 	EffGetProgramNameIndexed
 
@@ -165,17 +165,17 @@ const (
 	// Value: 1 is bypass, 0 is no bypass.
 	EffSetBypass
 	// EffGetEffectName passed to get a name of the effect.
-	// Ptr: *[maxEffectNameLen]uint8 buffer for effect name.
+	// Ptr: *[maxEffectNameLen]byte buffer for effect name.
 	EffGetEffectName
 
 	// deprecated in VST v2.4
 	effGetErrorText
 
 	// EffGetVendorString passed to get vendor string.
-	// *[maxVendorStrLen]uint8 buffer for effect vendor string.
+	// *[maxVendorStrLen]byte buffer for effect vendor string.
 	EffGetVendorString
 	// EffGetProductString passed to get product string.
-	// *[maxProductStrLen]uint8 buffer for effect product string.
+	// *[maxProductStrLen]byte buffer for effect product string.
 	EffGetProductString
 	// EffGetVendorVersion passed to get vendor-specific version.
 	// Return: vendor-specific version.
@@ -263,7 +263,7 @@ const (
 	// Ptr: output *SpeakerArrangement.
 	EffGetSpeakerArrangement
 	// EffShellGetNextPlugin passed to get unique id of next plugin.
-	// Ptr: *[maxProductStrLen]uint8 buffer for plug-in name.
+	// Ptr: *[maxProductStrLen]byte buffer for plug-in name.
 	// Return: next plugin's unique ID.
 	EffShellGetNextPlugin
 
@@ -408,10 +408,10 @@ const (
 	hostGetOutputSpeakerArrangement
 
 	// HostGetVendorString is sent to get host vendor string.
-	// Ptr: *[maxVendorStrLen]uint8 buffer for host vendor name.
+	// Ptr: *[maxVendorStrLen]byte buffer for host vendor name.
 	HostGetVendorString
 	// HostGetProductString is sent to get host product string.
-	// Ptr: *[maxProductStrLen]uint8 buffer for host product name.
+	// Ptr: *[maxProductStrLen]byte buffer for host product name.
 	HostGetProductString
 	// HostGetVendorVersion is sent to get host version.
 	// Return: vendor-specific version.
@@ -436,7 +436,7 @@ const (
 	hostCloseWindow
 
 	// HostGetDirectory passed to get the current directory.
-	// Return: *[]uint8 with path.
+	// Return: *[]byte with path.
 	HostGetDirectory
 	// HostUpdateDisplay passed to request host screen refresh.
 	HostUpdateDisplay

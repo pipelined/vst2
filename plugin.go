@@ -27,6 +27,13 @@ func (s ParamString) String() string {
 	return trimNull(string(s[:]))
 }
 
+// ProgramString used to get and set program name.
+type ProgramString [maxProgNameLen]byte
+
+func (s ProgramString) String() string {
+	return trimNull(string(s[:]))
+}
+
 // Close cleans up C refs for plugin
 func (p *Plugin) Close() error {
 	if p.effect == nil {
@@ -172,23 +179,23 @@ func (p *Plugin) SetProgram(index int) {
 
 // CurrentProgramName returns current program name.
 func (p *Plugin) CurrentProgramName() string {
-	var val [maxProgNameLen]byte
-	p.Dispatch(EffGetProgramName, 0, 0, Ptr(&val), 0)
-	return strings.Trim(string(val[:]), "\x00")
+	var s ProgramString
+	p.Dispatch(EffGetProgramName, 0, 0, Ptr(&s), 0)
+	return s.String()
 }
 
 // ProgramName returns program name for provided program index.
 func (p *Plugin) ProgramName(index int) string {
-	var val [maxProgNameLen]byte
-	p.Dispatch(EffGetProgramNameIndexed, Index(index), 0, Ptr(&val), 0)
-	return strings.Trim(string(val[:]), "\x00")
+	var s ProgramString
+	p.Dispatch(EffGetProgramNameIndexed, Index(index), 0, Ptr(&s), 0)
+	return s.String()
 }
 
 // SetProgramName sets new name to the current program.
 func (p *Plugin) SetProgramName(name string) {
-	var val [maxProgNameLen]byte
-	copy(val[:], []byte(name))
-	p.Dispatch(EffSetProgramName, 0, 0, Ptr(&val), 0)
+	var s ProgramString
+	copy(s[:], []byte(name))
+	p.Dispatch(EffSetProgramName, 0, 0, Ptr(&s), 0)
 }
 
 // GetProgramData returns current preset data. Plugin allocates required

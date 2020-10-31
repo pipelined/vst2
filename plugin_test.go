@@ -66,6 +66,13 @@ func TestPluginParameters(t *testing.T) {
 		p.SetProgramData([]byte(progData))
 		assertEqual(t, "resonance before", p.ParamValue(4), float32(1))
 	}))
+	t.Run("set bank data", testPlugin(func(p *vst2.Plugin) {
+		assertEqual(t, "resonance before", p.ParamValue(4), float32(0))
+		progData := string(p.GetBankData())
+		progData = strings.ReplaceAll(progData, "resonance=\"0.0\"", "resonance=\"1.0\"")
+		p.SetBankData([]byte(progData))
+		assertEqual(t, "resonance before", p.ParamValue(4), float32(1))
+	}))
 }
 
 func assertEqual(t *testing.T, name string, result, expected interface{}) {

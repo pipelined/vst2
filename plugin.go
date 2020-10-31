@@ -19,6 +19,14 @@ type Plugin struct {
 	Path string
 }
 
+// ParamString used to get parameter string values: name, unit name and
+// value name.
+type ParamString [maxParamStrLen]byte
+
+func (s ParamString) String() string {
+	return trimNull(string(s[:]))
+}
+
 // Close cleans up C refs for plugin
 func (p *Plugin) Close() error {
 	if p.effect == nil {
@@ -133,23 +141,23 @@ func (p *Plugin) SetParamValue(index int, value float32) {
 
 // ParamName returns the parameter label: "Release", "Gain", etc.
 func (p *Plugin) ParamName(index int) string {
-	var val [maxParamStrLen]byte
-	p.Dispatch(EffGetParamName, Index(index), 0, Ptr(&val), 0)
-	return strings.Trim(string(val[:]), "\x00")
+	var s ParamString
+	p.Dispatch(EffGetParamName, Index(index), 0, Ptr(&s), 0)
+	return s.String()
 }
 
 // ParamValueName returns the parameter value label: "0.5", "HALL", etc.
 func (p *Plugin) ParamValueName(index int) string {
-	var val [maxParamStrLen]byte
-	p.Dispatch(EffGetParamDisplay, Index(index), 0, Ptr(&val), 0)
-	return strings.Trim(string(val[:]), "\x00")
+	var s ParamString
+	p.Dispatch(EffGetParamDisplay, Index(index), 0, Ptr(&s), 0)
+	return s.String()
 }
 
 // ParamUnitName returns the parameter unit label: "db", "ms", etc.
 func (p *Plugin) ParamUnitName(index int) string {
-	var val [maxParamStrLen]byte
-	p.Dispatch(EffGetParamLabel, Index(index), 0, Ptr(&val), 0)
-	return strings.Trim(string(val[:]), "\x00")
+	var s ParamString
+	p.Dispatch(EffGetParamLabel, Index(index), 0, Ptr(&s), 0)
+	return s.String()
 }
 
 // Program returns current program number.
@@ -179,7 +187,7 @@ func (p *Plugin) ProgramName(index int) string {
 // SetProgramName sets new name to the current program.
 func (p *Plugin) SetProgramName(name string) {
 	var val [maxProgNameLen]byte
-	copy(val[:], ([]byte)(name))
+	copy(val[:], []byte(name))
 	p.Dispatch(EffSetProgramName, 0, 0, Ptr(&val), 0)
 }
 
@@ -215,4 +223,8 @@ func (p *Plugin) SetBankData(data []byte) {
 	ptr := C.CBytes(data)
 	p.Dispatch(EffSetChunk, 0, Value(len(data)), Ptr(ptr), 0)
 	C.free(ptr)
+}
+
+func trimNull(s string) string {
+	return strings.Trim(s, "\x00")
 }

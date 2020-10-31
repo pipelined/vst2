@@ -8,6 +8,7 @@ package vst2
 */
 import "C"
 import (
+	"strings"
 	"unsafe"
 )
 
@@ -16,6 +17,21 @@ type Plugin struct {
 	*effect
 	Name string
 	Path string
+}
+
+// ParamString used to get parameter string values: name, unit name and
+// value name.
+type ParamString [maxParamStrLen]byte
+
+func (s ParamString) String() string {
+	return trimNull(string(s[:]))
+}
+
+// ProgramString used to get and set program name.
+type ProgramString [maxProgNameLen]byte
+
+func (s ProgramString) String() string {
+	return trimNull(string(s[:]))
 }
 
 // Close cleans up C refs for plugin
@@ -34,6 +50,11 @@ func (p *Plugin) Close() error {
 // NumParams returns the number of parameters.
 func (p *Plugin) NumParams() int {
 	return int(p.effect.numParams)
+}
+
+// NumPrograms returns the number of programs.
+func (p *Plugin) NumPrograms() int {
+	return int(p.effect.numPrograms)
 }
 
 // Dispatch wraps-up C method to dispatch calls to plugin
@@ -127,21 +148,90 @@ func (p *Plugin) SetParamValue(index int, value float32) {
 
 // ParamName returns the parameter label: "Release", "Gain", etc.
 func (p *Plugin) ParamName(index int) string {
-	var val [maxParamStrLen]byte
-	p.Dispatch(EffGetParamName, Index(index), 0, Ptr(&val), 0)
-	return string(val[:])
+	var s ParamString
+	p.Dispatch(EffGetParamName, Index(index), 0, Ptr(&s), 0)
+	return s.String()
 }
 
 // ParamValueName returns the parameter value label: "0.5", "HALL", etc.
 func (p *Plugin) ParamValueName(index int) string {
-	var val [maxParamStrLen]byte
-	p.Dispatch(EffGetParamDisplay, Index(index), 0, Ptr(&val), 0)
-	return string(val[:])
+	var s ParamString
+	p.Dispatch(EffGetParamDisplay, Index(index), 0, Ptr(&s), 0)
+	return s.String()
 }
 
 // ParamUnitName returns the parameter unit label: "db", "ms", etc.
 func (p *Plugin) ParamUnitName(index int) string {
-	var val [maxParamStrLen]byte
-	p.Dispatch(EffGetParamLabel, Index(index), 0, Ptr(&val), 0)
-	return string(val[:])
+	var s ParamString
+	p.Dispatch(EffGetParamLabel, Index(index), 0, Ptr(&s), 0)
+	return s.String()
+}
+
+// Program returns current program number.
+func (p *Plugin) Program() int {
+	return int(p.Dispatch(EffGetProgram, 0, 0, nil, 0))
+}
+
+// SetProgram changes current program index.
+func (p *Plugin) SetProgram(index int) {
+	p.Dispatch(EffSetProgram, 0, Value(index), nil, 0)
+}
+
+// CurrentProgramName returns current program name.
+func (p *Plugin) CurrentProgramName() string {
+	var s ProgramString
+	p.Dispatch(EffGetProgramName, 0, 0, Ptr(&s), 0)
+	return s.String()
+}
+
+// ProgramName returns program name for provided program index.
+func (p *Plugin) ProgramName(index int) string {
+	var s ProgramString
+	p.Dispatch(EffGetProgramNameIndexed, Index(index), 0, Ptr(&s), 0)
+	return s.String()
+}
+
+// SetProgramName sets new name to the current program.
+func (p *Plugin) SetProgramName(name string) {
+	var s ProgramString
+	copy(s[:], []byte(name))
+	p.Dispatch(EffSetProgramName, 0, 0, Ptr(&s), 0)
+}
+
+// GetProgramData returns current preset data. Plugin allocates required
+// memory, then this function allocates new byte slice of required length
+// where data is copied.
+func (p *Plugin) GetProgramData() []byte {
+	var ptr unsafe.Pointer
+	length := C.int(p.Dispatch(EffGetChunk, 1, 0, Ptr(&ptr), 0))
+	return C.GoBytes(ptr, length)
+}
+
+// SetProgramData sets preset data to the plugin. Data is the full preset
+// including chunk header.
+func (p *Plugin) SetProgramData(data []byte) {
+	ptr := C.CBytes(data)
+	p.Dispatch(EffSetChunk, 1, Value(len(data)), Ptr(ptr), 0)
+	C.free(ptr)
+}
+
+// GetBankData returns current bank data. Plugin allocates required
+// memory, then this function allocates new byte slice of required length
+// where data is copied.
+func (p *Plugin) GetBankData() []byte {
+	var ptr unsafe.Pointer
+	length := C.int(p.Dispatch(EffGetChunk, 0, 0, Ptr(&ptr), 0))
+	return C.GoBytes(ptr, length)
+}
+
+// SetBankData sets preset data to the plugin. Data is the full preset
+// including chunk header.
+func (p *Plugin) SetBankData(data []byte) {
+	ptr := C.CBytes(data)
+	p.Dispatch(EffSetChunk, 0, Value(len(data)), Ptr(ptr), 0)
+	C.free(ptr)
+}
+
+func trimNull(s string) string {
+	return strings.Trim(s, "\x00")
 }

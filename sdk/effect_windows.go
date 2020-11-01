@@ -39,16 +39,16 @@ func Open(path string) (*EntryPoint, error) {
 	m, err := syscall.GetProcAddress(dll.Handle, main)
 	if err == nil {
 		return &EntryPoint{
-			main:   C.entryPoint(unsafe.Pointer(m)),
-			handle: dll.Handle,
+			main:   effectMain(unsafe.Pointer(m)),
+			handle: uintptr(dll.Handle),
 		}, nil
 	}
 
 	err = fmt.Errorf("failed to get entry point for plugin '%s': %w\n", path, err)
 	if errRelease := dll.Release(); errRelease != nil {
-		return nil, handle{}, fmt.Errorf("failed to release DLL '%s': %w after: %v", path, errRelease, err)
+		return nil, fmt.Errorf("failed to release DLL '%s': %w after: %v", path, errRelease, err)
 	}
-	return nil, handle{}, err
+	return nil, err
 }
 
 // Close frees plugin handle.

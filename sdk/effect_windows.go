@@ -53,7 +53,7 @@ func Open(path string) (*EntryPoint, error) {
 
 // Close frees plugin handle.
 func (m *EntryPoint) Close() error {
-	if err := syscall.FreeLibrary(m.handle); err != nil {
+	if err := syscall.FreeLibrary(syscall.Handle(m.handle)); err != nil {
 		return fmt.Errorf("failed to release VST handle: %w", err)
 	}
 	return nil

@@ -1,4 +1,4 @@
-package vst2
+package sdk
 
 // #include <stdlib.h>
 import "C"

@@ -7,14 +7,15 @@ import (
 	"runtime"
 
 	"pipelined.dev/audio/vst2"
+	"pipelined.dev/audio/vst2/sdk"
 	"pipelined.dev/signal"
 )
 
 // PrinterHostCallback returns closure that prints received opcode with
 // provided prefix. This technique allows to provide callback with any
 // context needed.
-func PrinterHostCallback(prefix string) vst2.HostCallbackFunc {
-	return func(code vst2.HostOpcode, _ vst2.Index, _ vst2.Value, _ vst2.Ptr, _ vst2.Opt) vst2.Return {
+func PrinterHostCallback(prefix string) sdk.HostCallbackFunc {
+	return func(code sdk.HostOpcode, _ sdk.Index, _ sdk.Value, _ sdk.Ptr, _ sdk.Opt) sdk.Return {
 		fmt.Printf("%s: %v\n", prefix, code)
 		return 0
 	}
@@ -116,12 +117,12 @@ func Example_plugin() {
 	plugin.SetSampleRate(44100)
 	// Set channels information.
 	plugin.SetSpeakerArrangement(
-		&vst2.SpeakerArrangement{
-			Type:        vst2.SpeakerArrMono,
+		&sdk.SpeakerArrangement{
+			Type:        sdk.SpeakerArrMono,
 			NumChannels: int32(buffer.Channels()),
 		},
-		&vst2.SpeakerArrangement{
-			Type:        vst2.SpeakerArrMono,
+		&sdk.SpeakerArrangement{
+			Type:        sdk.SpeakerArrMono,
 			NumChannels: int32(buffer.Channels()),
 		},
 	)
@@ -134,9 +135,9 @@ func Example_plugin() {
 	// It's needed because VST SDK was written in C and expected
 	// memory layout differs from Golang slices.
 	// We need two buffers for input and output.
-	in := vst2.NewDoubleBuffer(buffer.Channels(), buffer.Length())
+	in := sdk.NewDoubleBuffer(buffer.Channels(), buffer.Length())
 	defer in.Free()
-	out := vst2.NewDoubleBuffer(buffer.Channels(), buffer.Length())
+	out := sdk.NewDoubleBuffer(buffer.Channels(), buffer.Length())
 	defer out.Free()
 
 	// Fill input with data values.

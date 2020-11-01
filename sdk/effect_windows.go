@@ -1,4 +1,4 @@
-package vst2
+package sdk
 
 import (
 	"fmt"
@@ -20,11 +20,6 @@ var (
 	}
 )
 
-// handle keeps a DLL reference to clean up on close.
-type handle struct {
-	dll *syscall.DLL
-}
-
 func init() {
 	envVstPath := os.Getenv("VST_PATH")
 	if len(envVstPath) > 0 {
@@ -32,19 +27,23 @@ func init() {
 	}
 }
 
-// open loads the plugin entry point into memory. It's DLL in windows.
-func open(path string) (effectMain, handle, error) {
+// Open loads the plugin entry point into memory. It's DLL in windows.
+func Open(path string) (*EntryPoint, error) {
 	//Load plugin by path
 	dll, err := syscall.LoadDLL(path)
 	if err != nil {
-		return nil, handle{}, fmt.Errorf("failed to load VST from '%s': %v\n", path, err)
+		return nil, fmt.Errorf("failed to load VST from '%s': %v\n", path, err)
 	}
 
 	//Get pointer to plugin's Main function
 	m, err := syscall.GetProcAddress(dll.Handle, main)
 	if err == nil {
-		return effectMain(unsafe.Pointer(m)), handle{dll: dll}, nil
+		return &EntryPoint{
+			main:   C.entryPoint(unsafe.Pointer(m)),
+			handle: dll.Handle,
+		}, nil
 	}
+
 	err = fmt.Errorf("failed to get entry point for plugin '%s': %w\n", path, err)
 	if errRelease := dll.Release(); errRelease != nil {
 		return nil, handle{}, fmt.Errorf("failed to release DLL '%s': %w after: %v", path, errRelease, err)
@@ -52,9 +51,9 @@ func open(path string) (effectMain, handle, error) {
 	return nil, handle{}, err
 }
 
-// Close cleans up plugin refs.
-func (h handle) close() error {
-	if err := h.dll.Release(); err != nil {
+// Close frees plugin handle.
+func (m *EntryPoint) Close() error {
+	if err := syscall.FreeLibrary(m.handle); err != nil {
 		return fmt.Errorf("failed to release VST handle: %w", err)
 	}
 	return nil

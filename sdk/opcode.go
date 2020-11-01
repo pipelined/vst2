@@ -1,6 +1,6 @@
 //go:generate stringer -type=EffectOpcode,HostOpcode -output=opcode_string.go
 
-package vst2
+package sdk
 
 // EffectOpcode is sent by host in dispatch call to effect.
 // It reflects AEffectOpcodes and AEffectXOpcodes opcodes values.

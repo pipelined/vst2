@@ -1,17 +1,17 @@
-package vst2
+package sdk
 
 const (
-	maxProgNameLen   = 24 // used for #effGetProgramName, #effSetProgramName, #effGetProgramNameIndexed
-	maxParamStrLen   = 8  // used for #effGetParamLabel, #effGetParamDisplay, #effGetParamName
-	maxVendorStrLen  = 64 // used for #effGetVendorString, #audioMasterGetVendorString
-	maxProductStrLen = 64 // used for #effGetProductString, #audioMasterGetProductString
-	maxEffectNameLen = 32 // used for #effGetEffectName
+	MaxProgNameLen   = 24 // used for #effGetProgramName, #effSetProgramName, #effGetProgramNameIndexed
+	MaxParamStrLen   = 8  // used for #effGetParamLabel, #effGetParamDisplay, #effGetParamName
+	MaxVendorStrLen  = 64 // used for #effGetVendorString, #audioMasterGetVendorString
+	MaxProductStrLen = 64 // used for #effGetProductString, #audioMasterGetProductString
+	MaxEffectNameLen = 32 // used for #effGetEffectName
 
-	maxNameLen       = 64  // used for #MidiProgramName, #MidiProgramCategory, #MidiKeyName, #VstSpeakerProperties, #VstPinProperties
-	maxLabelLen      = 64  // used for #VstParameterProperties->label, #VstPinProperties->label
-	maxShortLabelLen = 8   // used for #VstParameterProperties->shortLabel, #VstPinProperties->shortLabel
-	maxCategLabelLen = 24  // used for #VstParameterProperties->label
-	maxFileNameLen   = 100 // used for #VstAudioFile->name
+	MaxNameLen       = 64  // used for #MidiProgramName, #MidiProgramCategory, #MidiKeyName, #VstSpeakerProperties, #VstPinProperties
+	MaxLabelLen      = 64  // used for #VstParameterProperties->label, #VstPinProperties->label
+	MaxShortLabelLen = 8   // used for #VstParameterProperties->shortLabel, #VstPinProperties->shortLabel
+	MaxCategLabelLen = 24  // used for #VstParameterProperties->label
+	MaxFileNameLen   = 100 // used for #VstAudioFile->name
 )
 
 const (
@@ -27,7 +27,7 @@ type (
 		SmallStepFloat float32
 		LargeStepFloat float32
 
-		Label [maxLabelLen]byte
+		Label [MaxLabelLen]byte
 		Flags ParameterFlag
 
 		// valid if ParameterUsesIntegerMinMax is set
@@ -37,7 +37,7 @@ type (
 		// valid if ParameterUsesIntStep is set
 		StepInteger      int32
 		LargeStepInteger int32
-		ShortLabel       [maxShortLabelLen]byte
+		ShortLabel       [MaxShortLabelLen]byte
 
 		// valid if ParameterSupportsDisplayIndex is set
 		DisplayIndex int16 // Index where parameter should be displayed, starts with 0
@@ -46,7 +46,7 @@ type (
 		Category             int16
 		ParametersInCategory int16
 		reserved             int16 // always zero
-		CategoryLabel        [maxCategLabelLen]byte
+		CategoryLabel        [MaxCategLabelLen]byte
 
 		future [16]byte //Reserved for future.
 	}

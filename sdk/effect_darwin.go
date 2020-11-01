@@ -1,4 +1,4 @@
-package vst2
+package sdk
 
 //#cgo darwin LDFLAGS: -framework CoreFoundation
 //#include <CoreFoundation/CoreFoundation.h>
@@ -21,13 +21,8 @@ var (
 	}
 )
 
-// handle keeps a bundle reference to clean up on close.
-type handle struct {
-	bundle uintptr
-}
-
 // Open loads the plugin entry point into memory. It's CFBundle in OS X.
-func open(path string) (effectMain, handle, error) {
+func Open(path string) (*EntryPoint, error) {
 	// create C string.
 	cpath := C.CString(path)
 	defer C.free(unsafe.Pointer(cpath))
@@ -38,7 +33,7 @@ func open(path string) (effectMain, handle, error) {
 	// get bundle url.
 	bundleURL := C.CFURLCreateWithFileSystemPath(C.kCFAllocatorDefault, cfpath, C.kCFURLPOSIXPathStyle, C.true)
 	if bundleURL == 0 {
-		return nil, handle{}, fmt.Errorf("failed to create bundle url at %v", path)
+		return nil, fmt.Errorf("failed to create bundle url at %v", path)
 	}
 	defer C.CFRelease(C.CFTypeRef(bundleURL))
 
@@ -46,7 +41,7 @@ func open(path string) (effectMain, handle, error) {
 	// bundle ref should be released in the end of program with entryPoint.Close call.
 	bundle := C.CFBundleCreate(C.kCFAllocatorDefault, bundleURL)
 	if bundle == 0 {
-		return nil, handle{}, fmt.Errorf("failed to create bundle ref at %v", path)
+		return nil, fmt.Errorf("failed to create bundle ref at %v", path)
 	}
 
 	// create C string.
@@ -59,14 +54,17 @@ func open(path string) (effectMain, handle, error) {
 	ep := unsafe.Pointer(C.CFBundleGetFunctionPointerForName(bundle, cfvstMain))
 	if ep == nil {
 		C.CFRelease(C.CFTypeRef(C.CFBundleRef(bundle)))
-		return nil, handle{}, fmt.Errorf("failed to find entry point in bundle %v", path)
+		return nil, fmt.Errorf("failed to find entry point in bundle %v", path)
 	}
 
-	return effectMain(ep), handle{bundle: uintptr(bundle)}, nil
+	return &EntryPoint{
+		main:   effectMain(ep),
+		handle: uintptr(bundle),
+	}, nil
 }
 
-// close cleans up bundle reference.
-func (h handle) close() error {
-	C.CFRelease(C.CFTypeRef(C.CFBundleRef(h.bundle)))
+// Close frees plugin handle.
+func (m *EntryPoint) Close() error {
+	C.CFRelease(C.CFTypeRef(C.CFBundleRef(m.handle)))
 	return nil
 }

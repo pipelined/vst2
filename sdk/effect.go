@@ -45,17 +45,6 @@ func (m *EntryPoint) Load(c HostCallbackFunc) *Effect {
 	return e
 }
 
-// Close cleans up C refs for plugin
-func (e *Effect) Close() error {
-	if e == nil {
-		return nil
-	}
-	mutex.Lock()
-	delete(callbacks, e)
-	mutex.Unlock()
-	return nil
-}
-
 // Dispatch wraps-up C method to dispatch calls to plugin
 func (e *Effect) Dispatch(opcode EffectOpcode, index Index, value Value, ptr Ptr, opt Opt) Return {
 	return Return(C.dispatch((*C.Effect)(e), C.int32_t(opcode), C.int32_t(index), C.int64_t(value), unsafe.Pointer(ptr), C.float(opt)))

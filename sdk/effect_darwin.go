@@ -25,11 +25,8 @@ var (
 
 // Open loads the plugin entry point into memory. It's CFBundle in OS X.
 func Open(path string) (*EntryPoint, error) {
-	// create C string.
-	cpath := C.CString(path)
-	defer C.free(unsafe.Pointer(cpath))
 	// convert to CF string.
-	cfpath := C.CFStringCreateWithCString(0, cpath, C.kCFStringEncodingUTF8)
+	cfpath := C.CFStringCreateWithCString(0, stringToCString(path), C.kCFStringEncodingUTF8)
 	defer C.CFRelease(C.CFTypeRef(cfpath))
 
 	// get bundle url.
@@ -46,11 +43,8 @@ func Open(path string) (*EntryPoint, error) {
 		return nil, fmt.Errorf("failed to create bundle ref at %v", path)
 	}
 
-	// create C string.
-	cvstMain := C.CString(main)
-	defer C.free(unsafe.Pointer(cvstMain))
 	// create CF string.
-	cfvstMain := C.CFStringCreateWithCString(0, cvstMain, C.kCFStringEncodingUTF8)
+	cfvstMain := C.CFStringCreateWithCString(0, stringToCString(main), C.kCFStringEncodingUTF8)
 	defer C.CFRelease(C.CFTypeRef(cfvstMain))
 
 	ep := unsafe.Pointer(C.CFBundleGetFunctionPointerForName(bundle, cfvstMain))
@@ -66,23 +60,27 @@ func Open(path string) (*EntryPoint, error) {
 }
 
 func getName(bundle C.CFBundleRef) string {
-	// create C string.
-	nameKey := C.CString(displayNameKey)
-	defer C.free(unsafe.Pointer(nameKey))
 	// create CF string.
-	cfNameKey := C.CFStringCreateWithCString(0, nameKey, C.kCFStringEncodingUTF8)
+	cfNameKey := C.CFStringCreateWithCString(0, stringToCString(displayNameKey), C.kCFStringEncodingUTF8)
 	defer C.CFRelease(C.CFTypeRef(cfNameKey))
 	cfName := C.CFBundleGetValueForInfoDictionaryKey(bundle, cfNameKey)
 	defer C.CFRelease(cfName)
 
-	return cfStrToStr(C.CFStringRef(cfName))
+	return cfStringRefToString(C.CFStringRef(cfName))
 }
 
-func cfStrToStr(cstr C.CFStringRef) (goString string) {
-	l := C.CFStringGetLength(cstr) //utf-16 length
+// Convert CoreFoundation String to golang string.
+func cfStringRefToString(cfStr C.CFStringRef) (goString string) {
+	l := C.CFStringGetLength(cfStr) //utf-16 length
 	buf := make([]byte, l*2)
-	C.CFStringGetCString(cstr, (*C.char)(unsafe.Pointer(&buf[0])), l*2, C.CFStringGetSystemEncoding())
+	C.CFStringGetCString(cfStr, (*C.char)(unsafe.Pointer(&buf[0])), l*2, C.CFStringGetSystemEncoding())
 	return string(buf)
+}
+
+// Convert golang string to C string without allocations. Result string is
+// not null-terminated.
+func stringToCString(s string) *C.char {
+	return (*C.char)(unsafe.Pointer(&[]byte(s)[0]))
 }
 
 // Close frees plugin handle.

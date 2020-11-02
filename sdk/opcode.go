@@ -2,6 +2,12 @@
 
 package sdk
 
+/*
+#include <stdlib.h>
+*/
+import "C"
+import "unsafe"
+
 // EffectOpcode is sent by host in dispatch call to effect.
 // It reflects AEffectOpcodes and AEffectXOpcodes opcodes values.
 type EffectOpcode uint64
@@ -463,3 +469,124 @@ const (
 	// deprecated in VST v2.4
 	hostGetInputSpeakerArrangement
 )
+
+// Open executes the EffOpen opcode.
+func (e *Effect) Open() {
+	e.Dispatch(EffOpen, 0, 0, nil, 0.0)
+}
+
+// Close cleans up C refs for plugin
+func (e *Effect) Close() {
+	e.Dispatch(EffClose, 0, 0, nil, 0.0)
+	mutex.Lock()
+	delete(callbacks, e)
+	mutex.Unlock()
+}
+
+// Start the plugin.
+func (e *Effect) Start() {
+	e.Dispatch(EffStateChanged, 0, 1, nil, 0)
+}
+
+// Stop the plugin.
+func (e *Effect) Stop() {
+	e.Dispatch(EffStateChanged, 0, 0, nil, 0)
+}
+
+// SetBufferSize sets a buffer size per channel.
+func (e *Effect) SetBufferSize(bufferSize int) {
+	e.Dispatch(EffSetBufferSize, 0, Value(bufferSize), nil, 0)
+}
+
+// SetSampleRate sets a sample rate for plugin.
+func (e *Effect) SetSampleRate(sampleRate int) {
+	e.Dispatch(EffSetSampleRate, 0, 0, nil, Opt(sampleRate))
+}
+
+// SetSpeakerArrangement creates and passes SpeakerArrangement structures to plugin
+func (e *Effect) SetSpeakerArrangement(in, out *SpeakerArrangement) {
+	e.Dispatch(EffSetSpeakerArrangement, 0, in.Value(), out.Ptr(), 0)
+}
+
+// ParamName returns the parameter label: "Release", "Gain", etc.
+func (e *Effect) ParamName(index int, s *ParamString) {
+	e.Dispatch(EffGetParamName, Index(index), 0, Ptr(s), 0)
+}
+
+// ParamValueName returns the parameter value label: "0.5", "HALL", etc.
+func (e *Effect) ParamValueName(index int, s *ParamString) {
+	e.Dispatch(EffGetParamDisplay, Index(index), 0, Ptr(s), 0)
+}
+
+// ParamUnitName returns the parameter unit label: "db", "ms", etc.
+func (e *Effect) ParamUnitName(index int, s *ParamString) {
+	e.Dispatch(EffGetParamLabel, Index(index), 0, Ptr(s), 0)
+}
+
+// CurrentProgramName returns current program name.
+func (e *Effect) CurrentProgramName(s *ProgramString) {
+	e.Dispatch(EffGetProgramName, 0, 0, Ptr(s), 0)
+}
+
+// ProgramName returns program name for provided program index.
+func (e *Effect) ProgramName(index int, s *ProgramString) {
+	e.Dispatch(EffGetProgramNameIndexed, Index(index), 0, Ptr(s), 0)
+}
+
+// SetCurrentProgramName sets new name to the current program.
+func (e *Effect) SetCurrentProgramName(name *ProgramString) {
+	e.Dispatch(EffSetProgramName, 0, 0, Ptr(name), 0)
+}
+
+// Program returns current program number.
+func (e *Effect) Program() int {
+	return int(e.Dispatch(EffGetProgram, 0, 0, nil, 0))
+}
+
+// SetProgram changes current program index.
+func (e *Effect) SetProgram(index int) {
+	e.Dispatch(EffSetProgram, 0, Value(index), nil, 0)
+}
+
+// ParamProperties returns parameter properties for provided parameter
+// index. If opcode is not supported, boolean result is false.
+func (e *Effect) ParamProperties(index int) (*ParameterProperties, bool) {
+	var props ParameterProperties
+	r := e.Dispatch(EffGetParameterProperties, Index(index), 0, Ptr(&props), 0)
+	if r > 0 {
+		return &props, true
+	}
+	return nil, false
+}
+
+// GetProgramData returns current preset data. Plugin allocates required
+// memory, then this function allocates new byte slice of required length
+// where data is copied.
+func (e *Effect) GetProgramData() []byte {
+	var ptr unsafe.Pointer
+	length := C.int(e.Dispatch(EffGetChunk, 1, 0, Ptr(&ptr), 0))
+	return C.GoBytes(ptr, length)
+}
+
+// SetProgramData sets preset data to the plugin. Data is the full preset
+// including chunk header.
+func (e *Effect) SetProgramData(data []byte) {
+	e.Dispatch(EffSetChunk, 1, Value(len(data)), Ptr(&data[0]), 0)
+}
+
+// GetBankData returns current bank data. Plugin allocates required
+// memory, then this function allocates new byte slice of required length
+// where data is copied.
+func (e *Effect) GetBankData() []byte {
+	var ptr unsafe.Pointer
+	length := C.int(e.Dispatch(EffGetChunk, 0, 0, Ptr(&ptr), 0))
+	return C.GoBytes(ptr, length)
+}
+
+// SetBankData sets preset data to the plugin. Data is the full preset
+// including chunk header.
+func (e *Effect) SetBankData(data []byte) {
+	ptr := C.CBytes(data)
+	e.Dispatch(EffSetChunk, 0, Value(len(data)), Ptr(ptr), 0)
+	C.free(ptr)
+}

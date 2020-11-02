@@ -46,12 +46,18 @@ func (v VST) Load(c sdk.HostCallbackFunc) *Plugin {
 	e := v.EntryPoint.Load(c)
 	e.Dispatch(sdk.EffOpen, 0, 0, nil, 0.0)
 
-	// numParams := e.NumParams()
-	// params := make([]Parameter, numParams)
-	// for i := 0; i < numParams; i++ {
-	// 	params = append(params, Parameter{})
-	// }
+	numParams := e.NumParams()
+	params := make([]Parameter, numParams)
+	for i := 0; i < numParams; i++ {
+		params = append(params, Parameter{
+			name:       e.ParamName(i),
+			unit:       e.ParamUnitName(i),
+			value:      e.ParamValue(i),
+			valueLabel: e.ParamValueName(i),
+		})
+	}
 	return &Plugin{
-		Effect: e,
+		Effect:     e,
+		Parameters: params,
 	}
 }

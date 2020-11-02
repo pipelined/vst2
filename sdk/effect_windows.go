@@ -41,6 +41,7 @@ func Open(path string) (*EntryPoint, error) {
 		return &EntryPoint{
 			main:   effectMain(unsafe.Pointer(m)),
 			handle: uintptr(dll.Handle),
+			Name:   dll.Name,
 		}, nil
 	}
 

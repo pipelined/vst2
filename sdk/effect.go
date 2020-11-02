@@ -27,6 +27,7 @@ type (
 	EntryPoint struct {
 		main   effectMain
 		handle uintptr
+		Name   string
 	}
 )
 

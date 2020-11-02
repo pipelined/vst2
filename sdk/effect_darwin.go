@@ -11,6 +11,8 @@ import (
 const (
 	// Extension of Vst2 files
 	Extension = ".vst"
+
+	displayNameKey = "CFBundleDisplayName"
 )
 
 var (
@@ -56,11 +58,31 @@ func Open(path string) (*EntryPoint, error) {
 		C.CFRelease(C.CFTypeRef(C.CFBundleRef(bundle)))
 		return nil, fmt.Errorf("failed to find entry point in bundle %v", path)
 	}
-
 	return &EntryPoint{
 		main:   effectMain(ep),
 		handle: uintptr(bundle),
+		Name:   getName(bundle),
 	}, nil
+}
+
+func getName(bundle C.CFBundleRef) string {
+	// create C string.
+	nameKey := C.CString(displayNameKey)
+	defer C.free(unsafe.Pointer(nameKey))
+	// create CF string.
+	cfNameKey := C.CFStringCreateWithCString(0, nameKey, C.kCFStringEncodingUTF8)
+	defer C.CFRelease(C.CFTypeRef(cfNameKey))
+	cfName := C.CFBundleGetValueForInfoDictionaryKey(bundle, cfNameKey)
+	defer C.CFRelease(cfName)
+
+	return cfStrToStr(C.CFStringRef(cfName))
+}
+
+func cfStrToStr(cstr C.CFStringRef) (goString string) {
+	l := C.CFStringGetLength(cstr) //utf-16 length
+	buf := make([]byte, l*2)
+	C.CFStringGetCString(cstr, (*C.char)(unsafe.Pointer(&buf[0])), l*2, C.CFStringGetSystemEncoding())
+	return string(buf)
 }
 
 // Close frees plugin handle.

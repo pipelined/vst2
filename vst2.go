@@ -56,8 +56,16 @@ func (v VST) Load(c sdk.HostCallbackFunc) *Plugin {
 			valueLabel: e.ParamValueName(i),
 		})
 	}
+	numPresets := e.NumPrograms()
+	presets := make([]Program, numPresets)
+	for i := 0; i < numPresets; i++ {
+		presets = append(presets, Program{
+			name: e.ProgramName(i),
+		})
+	}
 	return &Plugin{
 		Effect:     e,
 		Parameters: params,
+		Programs:   presets,
 	}
 }

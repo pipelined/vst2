@@ -108,6 +108,7 @@ func Example_plugin() {
 		log.Panicf("failed to open VST library: %v", err)
 	}
 	defer vst.Close()
+	fmt.Printf("name: %v\n", vst.EntryPoint.Name)
 
 	// Load VST plugin with example callback.
 	plugin := vst.Load(PrinterHostCallback("Received opcode"))

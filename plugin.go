@@ -8,6 +8,7 @@ import (
 type Plugin struct {
 	*sdk.Effect
 	Parameters []Parameter
+	Programs   []Program
 }
 
 type Parameter struct {
@@ -15,4 +16,8 @@ type Parameter struct {
 	unit       string
 	value      float32
 	valueLabel string
+}
+
+type Program struct {
+	name string
 }

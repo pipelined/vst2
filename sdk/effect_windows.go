@@ -3,6 +3,7 @@ package sdk
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 	"syscall"
 	"unsafe"
 )
@@ -29,10 +30,14 @@ func init() {
 
 // Open loads the plugin entry point into memory. It's DLL in windows.
 func Open(path string) (*EntryPoint, error) {
+	path, err := filepath.Abs(path)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get absolute path for '%s': %w", path, err)
+	}
 	//Load plugin by path
 	dll, err := syscall.LoadDLL(path)
 	if err != nil {
-		return nil, fmt.Errorf("failed to load VST from '%s': %v\n", path, err)
+		return nil, fmt.Errorf("failed to load VST from '%s': %w", path, err)
 	}
 
 	//Get pointer to plugin's Main function
@@ -41,11 +46,11 @@ func Open(path string) (*EntryPoint, error) {
 		return &EntryPoint{
 			main:   effectMain(unsafe.Pointer(m)),
 			handle: uintptr(dll.Handle),
-			Name:   dll.Name,
+			Name:   filepath.Base(path[:len(path)-len(filepath.Ext(path))]),
 		}, nil
 	}
 
-	err = fmt.Errorf("failed to get entry point for plugin '%s': %w\n", path, err)
+	err = fmt.Errorf("failed to get entry point for plugin '%s': %w", path, err)
 	if errRelease := dll.Release(); errRelease != nil {
 		return nil, fmt.Errorf("failed to release DLL '%s': %w after: %v", path, errRelease, err)
 	}

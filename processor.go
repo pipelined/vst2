@@ -59,7 +59,7 @@ func Processor(vst VST, callback HostCallbackAllocator, init ProcessorInitFunc) 
 }
 
 func processor(plugin *Plugin, host *HostProperties) pipe.Processor {
-	if plugin.CanProcessFloat64() {
+	if plugin.Effect.CanProcessFloat64() {
 		return doubleProcessor(plugin, host)
 	}
 	return floatProcessor(plugin, host)

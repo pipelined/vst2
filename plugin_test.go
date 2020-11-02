@@ -51,7 +51,7 @@ func TestPluginParameters(t *testing.T) {
 	t.Run("set program name", testPlugin(func(p *vst2.Plugin) {
 		assertEqual(t, "program name before", p.CurrentProgramName(), "! Startup Juno Osc TAL")
 		newProgName := "test"
-		p.SetProgramName(newProgName)
+		p.SetCurrentProgramName(newProgName)
 		assertEqual(t, "program name after", p.CurrentProgramName(), newProgName)
 	}))
 	t.Run("set program", testPlugin(func(p *vst2.Plugin) {

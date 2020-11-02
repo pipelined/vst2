@@ -45,6 +45,12 @@ func (v VST) Close() error {
 func (v VST) Load(c sdk.HostCallbackFunc) *Plugin {
 	e := v.EntryPoint.Load(c)
 	e.Dispatch(sdk.EffOpen, 0, 0, nil, 0.0)
+
+	// numParams := e.NumParams()
+	// params := make([]Parameter, numParams)
+	// for i := 0; i < numParams; i++ {
+	// 	params = append(params, Parameter{})
+	// }
 	return &Plugin{
 		Effect: e,
 	}

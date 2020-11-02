@@ -104,3 +104,13 @@ func (e *Effect) ParamValue(index int) float32 {
 func (e *Effect) SetParamValue(index int, value float32) {
 	C.setParameter((*C.Effect)(e), C.int32_t(index), C.float(value))
 }
+
+// CanProcessFloat32 checks if plugin can process float32.
+func (e *Effect) CanProcessFloat32() bool {
+	return EffectFlags(e.flags)&EffFlagsCanReplacing == EffFlagsCanReplacing
+}
+
+// CanProcessFloat64 checks if plugin can process float64.
+func (e *Effect) CanProcessFloat64() bool {
+	return EffectFlags(e.flags)&EffFlagsCanDoubleReplacing == EffFlagsCanDoubleReplacing
+}

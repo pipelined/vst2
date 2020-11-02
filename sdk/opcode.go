@@ -509,33 +509,45 @@ func (e *Effect) SetSpeakerArrangement(in, out *SpeakerArrangement) {
 }
 
 // ParamName returns the parameter label: "Release", "Gain", etc.
-func (e *Effect) ParamName(index int, s *ParamString) {
-	e.Dispatch(EffGetParamName, Index(index), 0, Ptr(s), 0)
+func (e *Effect) ParamName(index int) string {
+	var s ParamString
+	e.Dispatch(EffGetParamName, Index(index), 0, Ptr(&s), 0)
+	return s.String()
 }
 
 // ParamValueName returns the parameter value label: "0.5", "HALL", etc.
-func (e *Effect) ParamValueName(index int, s *ParamString) {
-	e.Dispatch(EffGetParamDisplay, Index(index), 0, Ptr(s), 0)
+func (e *Effect) ParamValueName(index int) string {
+	var s ParamString
+	e.Dispatch(EffGetParamDisplay, Index(index), 0, Ptr(&s), 0)
+	return s.String()
 }
 
 // ParamUnitName returns the parameter unit label: "db", "ms", etc.
-func (e *Effect) ParamUnitName(index int, s *ParamString) {
-	e.Dispatch(EffGetParamLabel, Index(index), 0, Ptr(s), 0)
+func (e *Effect) ParamUnitName(index int) string {
+	var s ParamString
+	e.Dispatch(EffGetParamLabel, Index(index), 0, Ptr(&s), 0)
+	return s.String()
 }
 
 // CurrentProgramName returns current program name.
-func (e *Effect) CurrentProgramName(s *ProgramString) {
-	e.Dispatch(EffGetProgramName, 0, 0, Ptr(s), 0)
+func (e *Effect) CurrentProgramName() string {
+	var s ProgramString
+	e.Dispatch(EffGetProgramName, 0, 0, Ptr(&s), 0)
+	return s.String()
 }
 
 // ProgramName returns program name for provided program index.
-func (e *Effect) ProgramName(index int, s *ProgramString) {
-	e.Dispatch(EffGetProgramNameIndexed, Index(index), 0, Ptr(s), 0)
+func (e *Effect) ProgramName(index int) string {
+	var s ProgramString
+	e.Dispatch(EffGetProgramNameIndexed, Index(index), 0, Ptr(&s), 0)
+	return s.String()
 }
 
 // SetCurrentProgramName sets new name to the current program.
-func (e *Effect) SetCurrentProgramName(name *ProgramString) {
-	e.Dispatch(EffSetProgramName, 0, 0, Ptr(name), 0)
+func (e *Effect) SetCurrentProgramName(name string) {
+	var s ProgramString
+	copy(s[:], []byte(name))
+	e.Dispatch(EffSetProgramName, 0, 0, Ptr(&s), 0)
 }
 
 // Program returns current program number.

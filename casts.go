@@ -1,4 +1,4 @@
-package sdk
+package vst2
 
 import "unsafe"
 

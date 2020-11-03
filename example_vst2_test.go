@@ -6,7 +6,6 @@ import (
 	"path/filepath"
 	"runtime"
 
-	"pipelined.dev/audio/vst2"
 	"pipelined.dev/audio/vst2/sdk"
 	"pipelined.dev/signal"
 )
@@ -103,7 +102,7 @@ func Example_plugin() {
 
 	// Open VST library. Library contains a reference to
 	// OS-specific handle, that needs to be freed with Close.
-	vst, err := vst2.Open(pluginPath())
+	vst, err := sdk.Open(pluginPath())
 	if err != nil {
 		log.Panicf("failed to open VST library: %v", err)
 	}

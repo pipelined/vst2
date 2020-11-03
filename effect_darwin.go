@@ -1,4 +1,4 @@
-package sdk
+package vst2
 
 //#cgo darwin LDFLAGS: -framework CoreFoundation
 //#include <CoreFoundation/CoreFoundation.h>

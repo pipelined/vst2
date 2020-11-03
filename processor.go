@@ -4,7 +4,6 @@ import (
 	"context"
 	"time"
 
-	"pipelined.dev/audio/vst2/sdk"
 	"pipelined.dev/pipe"
 	"pipelined.dev/pipe/mutable"
 	"pipelined.dev/signal"
@@ -13,7 +12,7 @@ import (
 type (
 	// Processor is pipe component that wraps.
 	Processor struct {
-		Effect     *sdk.Effect
+		Effect     *Effect
 		Parameters []Parameter
 		Programs   []Program
 	}
@@ -41,11 +40,11 @@ type (
 
 	// HostCallbackAllocator returns new host callback function that uses host
 	// properties to interact with the plugin.
-	HostCallbackAllocator func(*HostProperties) sdk.HostCallbackFunc
+	HostCallbackAllocator func(*HostProperties) HostCallbackFunc
 
 	// ProcessorInitFunc applies configuration on plugin before starting it
 	// in the processor routine.
-	ProcessorInitFunc func(*sdk.Effect)
+	ProcessorInitFunc func(*Effect)
 )
 
 // Processor represents vst2 sound processor. It loads plugin from the
@@ -59,7 +58,7 @@ func (v *VST) Processor(callback HostCallbackAllocator, init ProcessorInitFunc) 
 			Channels:   props.Channels,
 			SampleRate: props.SampleRate,
 		}
-		e := (*sdk.EntryPoint)(v).Load(callback(&host))
+		e := (*EntryPoint)(v).Load(callback(&host))
 		e.SetSampleRate(int(props.SampleRate))
 		e.SetBufferSize(bufferSize)
 		if init != nil {
@@ -76,16 +75,16 @@ func (v *VST) Processor(callback HostCallbackAllocator, init ProcessorInitFunc) 
 	}
 }
 
-func processor(e *sdk.Effect, host *HostProperties) pipe.Processor {
+func processor(e *Effect, host *HostProperties) pipe.Processor {
 	if e.CanProcessFloat64() {
 		return doubleProcessor(e, host)
 	}
 	return floatProcessor(e, host)
 }
 
-func doubleProcessor(e *sdk.Effect, host *HostProperties) pipe.Processor {
-	doubleIn := sdk.NewDoubleBuffer(host.Channels, host.BufferSize)
-	doubleOut := sdk.NewDoubleBuffer(host.Channels, host.BufferSize)
+func doubleProcessor(e *Effect, host *HostProperties) pipe.Processor {
+	doubleIn := NewDoubleBuffer(host.Channels, host.BufferSize)
+	doubleOut := NewDoubleBuffer(host.Channels, host.BufferSize)
 	return pipe.Processor{
 		ProcessFunc: func(in, out signal.Floating) error {
 			doubleIn.CopyFrom(in)
@@ -103,9 +102,9 @@ func doubleProcessor(e *sdk.Effect, host *HostProperties) pipe.Processor {
 	}
 }
 
-func floatProcessor(e *sdk.Effect, host *HostProperties) pipe.Processor {
-	floatIn := sdk.NewFloatBuffer(host.Channels, host.BufferSize)
-	floatOut := sdk.NewFloatBuffer(host.Channels, host.BufferSize)
+func floatProcessor(e *Effect, host *HostProperties) pipe.Processor {
+	floatIn := NewFloatBuffer(host.Channels, host.BufferSize)
+	floatOut := NewFloatBuffer(host.Channels, host.BufferSize)
 	return pipe.Processor{
 		ProcessFunc: func(in, out signal.Floating) error {
 			floatIn.CopyFrom(in)
@@ -124,17 +123,17 @@ func floatProcessor(e *sdk.Effect, host *HostProperties) pipe.Processor {
 }
 
 // DefaultHostCallback returns default vst2 host callback.
-func DefaultHostCallback(props *HostProperties) sdk.HostCallbackFunc {
-	return func(opcode sdk.HostOpcode, index sdk.Index, value sdk.Value, ptr sdk.Ptr, opt sdk.Opt) sdk.Return {
+func DefaultHostCallback(props *HostProperties) HostCallbackFunc {
+	return func(opcode HostOpcode, index Index, value Value, ptr Ptr, opt Opt) Return {
 		switch opcode {
-		case sdk.HostGetCurrentProcessLevel:
-			return sdk.Return(sdk.ProcessLevelRealtime)
-		case sdk.HostGetSampleRate:
-			return sdk.Return(props.SampleRate)
-		case sdk.HostGetBlockSize:
-			return sdk.Return(props.SampleRate)
-		case sdk.HostGetTime:
-			ti := &sdk.TimeInfo{
+		case HostGetCurrentProcessLevel:
+			return Return(ProcessLevelRealtime)
+		case HostGetSampleRate:
+			return Return(props.SampleRate)
+		case HostGetBlockSize:
+			return Return(props.SampleRate)
+		case HostGetTime:
+			ti := &TimeInfo{
 				SampleRate:         float64(props.SampleRate),
 				SamplePos:          float64(props.CurrentPosition),
 				NanoSeconds:        float64(time.Now().UnixNano()),

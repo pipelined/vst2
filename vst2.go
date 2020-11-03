@@ -1,36 +1,22 @@
 // Package vst2 provides interface to VST2 plugins.
 package vst2
 
-import (
-	"fmt"
-
-	"pipelined.dev/audio/vst2/sdk"
-)
-
 type (
 	// VST used to create new instances of plugin.
 	// It also keeps reference to VST handle to clean up on Close.
-	VST sdk.EntryPoint
+	VST EntryPoint
 )
 
 // Open loads the VST into memory and stores entry point func.
-func Open(path string) (*VST, error) {
-	ep, err := sdk.Open(path)
-	if err != nil {
-		return nil, fmt.Errorf("failed to load VST '%s': %w", path, err)
-	}
-
-	return (*VST)(ep), nil
-}
 
 // Close cleans up VST resources.
 func (v *VST) Close() error {
-	return (*sdk.EntryPoint)(v).Close()
+	return (*EntryPoint)(v).Close()
 }
 
 // Load new instance of VST plugin with provided callback.
 // This function also calls dispatch with EffOpen opcode.
-// func (v VST) Load(c sdk.HostCallbackFunc) *Plugin {
+// func (v VST) Load(c HostCallbackFunc) *Plugin {
 // 	e := v.EntryPoint.Load(c)
 // 	e.Dispatch(sdk.EffOpen, 0, 0, nil, 0.0)
 

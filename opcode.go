@@ -1,6 +1,6 @@
 //go:generate stringer -type=EffectOpcode,HostOpcode -output=opcode_string.go
 
-package sdk
+package vst2
 
 /*
 #include <stdlib.h>

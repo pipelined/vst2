@@ -2,7 +2,7 @@ package sdk
 
 /*
 #cgo CFLAGS: -std=gnu99 -I${SRCDIR}/sdk
-#include "vst.h"
+#include "sdk.h"
 */
 import "C"
 import "unsafe"

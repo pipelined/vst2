@@ -11,6 +11,24 @@ import (
 )
 
 type (
+	// Processor is pipe component that wraps.
+	Processor struct {
+		Effect     *sdk.Effect
+		Parameters []Parameter
+		Programs   []Program
+	}
+
+	Parameter struct {
+		name       string
+		unit       string
+		value      float32
+		valueLabel string
+	}
+
+	Program struct {
+		name string
+	}
+
 	// HostProperties contains values required to handle plugin-to-host
 	// callbacks. It must be modified in the processing goroutine, otherwise
 	// race condition might happen.
@@ -27,29 +45,29 @@ type (
 
 	// ProcessorInitFunc applies configuration on plugin before starting it
 	// in the processor routine.
-	ProcessorInitFunc func(*Plugin)
+	ProcessorInitFunc func(*sdk.Effect)
 )
 
 // Processor represents vst2 sound processor. It loads plugin from the
 // provided vst and applies the following configuration: set up sample
 // rate, set up buffer size, calls provided init function and then starts
 // the plugin.
-func Processor(vst VST, callback HostCallbackAllocator, init ProcessorInitFunc) pipe.ProcessorAllocatorFunc {
+func (v *VST) Processor(callback HostCallbackAllocator, init ProcessorInitFunc) pipe.ProcessorAllocatorFunc {
 	return func(mctx mutable.Context, bufferSize int, props pipe.SignalProperties) (pipe.Processor, error) {
 		host := HostProperties{
 			BufferSize: bufferSize,
 			Channels:   props.Channels,
 			SampleRate: props.SampleRate,
 		}
-		plugin := vst.Load(callback(&host))
-		plugin.SetSampleRate(int(props.SampleRate))
-		plugin.SetBufferSize(bufferSize)
+		e := (*sdk.EntryPoint)(v).Load(callback(&host))
+		e.SetSampleRate(int(props.SampleRate))
+		e.SetBufferSize(bufferSize)
 		if init != nil {
-			init(plugin)
+			init(e)
 		}
-		plugin.Start()
+		e.Start()
 
-		p := processor(plugin, &host)
+		p := processor(e, &host)
 		p.Output = pipe.SignalProperties{
 			Channels:   props.Channels,
 			SampleRate: props.SampleRate,
@@ -58,20 +76,20 @@ func Processor(vst VST, callback HostCallbackAllocator, init ProcessorInitFunc) 
 	}
 }
 
-func processor(plugin *Plugin, host *HostProperties) pipe.Processor {
-	if plugin.Effect.CanProcessFloat64() {
-		return doubleProcessor(plugin, host)
+func processor(e *sdk.Effect, host *HostProperties) pipe.Processor {
+	if e.CanProcessFloat64() {
+		return doubleProcessor(e, host)
 	}
-	return floatProcessor(plugin, host)
+	return floatProcessor(e, host)
 }
 
-func doubleProcessor(plugin *Plugin, host *HostProperties) pipe.Processor {
+func doubleProcessor(e *sdk.Effect, host *HostProperties) pipe.Processor {
 	doubleIn := sdk.NewDoubleBuffer(host.Channels, host.BufferSize)
 	doubleOut := sdk.NewDoubleBuffer(host.Channels, host.BufferSize)
 	return pipe.Processor{
 		ProcessFunc: func(in, out signal.Floating) error {
 			doubleIn.CopyFrom(in)
-			plugin.ProcessDouble(doubleIn, doubleOut)
+			e.ProcessDouble(doubleIn, doubleOut)
 			host.CurrentPosition += int64(in.Length())
 			doubleOut.CopyTo(out)
 			return nil
@@ -79,19 +97,19 @@ func doubleProcessor(plugin *Plugin, host *HostProperties) pipe.Processor {
 		FlushFunc: func(context.Context) error {
 			doubleIn.Free()
 			doubleOut.Free()
-			plugin.Stop()
+			e.Stop()
 			return nil
 		},
 	}
 }
 
-func floatProcessor(plugin *Plugin, host *HostProperties) pipe.Processor {
+func floatProcessor(e *sdk.Effect, host *HostProperties) pipe.Processor {
 	floatIn := sdk.NewFloatBuffer(host.Channels, host.BufferSize)
 	floatOut := sdk.NewFloatBuffer(host.Channels, host.BufferSize)
 	return pipe.Processor{
 		ProcessFunc: func(in, out signal.Floating) error {
 			floatIn.CopyFrom(in)
-			plugin.ProcessFloat(floatIn, floatOut)
+			e.ProcessFloat(floatIn, floatOut)
 			host.CurrentPosition += int64(in.Length())
 			floatOut.CopyTo(out)
 			return nil
@@ -99,7 +117,7 @@ func floatProcessor(plugin *Plugin, host *HostProperties) pipe.Processor {
 		FlushFunc: func(context.Context) error {
 			floatIn.Free()
 			floatOut.Free()
-			plugin.Stop()
+			e.Stop()
 			return nil
 		},
 	}

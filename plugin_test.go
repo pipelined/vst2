@@ -21,7 +21,7 @@ func TestPluginParameters(t *testing.T) {
 
 	testPlugin := func(fn func(p *vst2.Effect)) func(*testing.T) {
 		return func(t *testing.T) {
-			p := v.Load(vst2.DefaultHostCallback(&host))
+			p := v.Plugin(vst2.DefaultHostCallback(&host))
 			defer p.Close()
 			fn(p)
 		}

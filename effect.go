@@ -15,29 +15,21 @@ const (
 )
 
 type (
-	// Effect is an alias on C effect type.
+	// Effect is an instance of loaded VST plugin.
 	Effect C.Effect
 
 	// effectMain is a reference to VST main function.
 	// wrapper on C entry point.
 	effectMain C.EntryPoint
-
-	// EntryPoint is a reference to VST main function.
-	// wrapper on C entry point.
-	EntryPoint struct {
-		main   effectMain
-		handle uintptr
-		Name   string
-	}
 )
 
-// Load new instance of VST plugin with provided callback.
+// Plugin new instance of VST plugin with provided callback.
 // This function also calls dispatch with EffOpen opcode.
-func (m *EntryPoint) Load(c HostCallbackFunc) *Effect {
-	if m.main == nil || c == nil {
+func (v *VST) Plugin(c HostCallbackFunc) *Effect {
+	if v.main == nil || c == nil {
 		return nil
 	}
-	e := (*Effect)(C.loadEffect(m.main))
+	e := (*Effect)(C.loadEffect(v.main))
 	mutex.Lock()
 	callbacks[e] = c
 	mutex.Unlock()

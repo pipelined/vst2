@@ -13,14 +13,14 @@ import (
 )
 
 const (
-	MaxVendorStrLen  = 64 // used for #effGetVendorString, #audioMasterGetVendorString
-	MaxProductStrLen = 64 // used for #effGetProductString, #audioMasterGetProductString
-	MaxEffectNameLen = 32 // used for #effGetEffectName
+	maxVendorStrLen  = 64 // used for #effGetVendorString, #audioMasterGetVendorString
+	maxProductStrLen = 64 // used for #effGetProductString, #audioMasterGetProductString
+	maxEffectNameLen = 32 // used for #effGetEffectName
 
-	MaxNameLen       = 64  // used for #MidiProgramName, #MidiProgramCategory, #MidiKeyName, #VstPinProperties
-	MaxLabelLen      = 64  // used for #VstPinProperties->label
-	MaxShortLabelLen = 8   // used for #VstPinProperties->shortLabel
-	MaxFileNameLen   = 100 // used for #VstAudioFile->name
+	maxNameLen       = 64  // used for #MidiProgramName, #MidiProgramCategory, #MidiKeyName, #VstPinProperties
+	maxLabelLen      = 64  // used for #VstPinProperties->label
+	maxShortLabelLen = 8   // used for #VstPinProperties->shortLabel
+	maxFileNameLen   = 100 // used for #VstAudioFile->name
 )
 
 type (

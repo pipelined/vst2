@@ -3,6 +3,7 @@ package vst2
 import (
 	"context"
 	"time"
+	"unsafe"
 
 	"pipelined.dev/pipe"
 	"pipelined.dev/pipe/mutable"
@@ -152,7 +153,7 @@ func floatFns(e *Effect, host *HostProperties) (pipe.ProcessFunc, pipe.FlushFunc
 
 // DefaultHostCallback returns default vst2 host callback.
 func DefaultHostCallback(props *HostProperties) HostCallbackFunc {
-	return func(opcode HostOpcode, index Index, value Value, ptr Ptr, opt Opt) Return {
+	return func(opcode HostOpcode, index Index, value Value, ptr unsafe.Pointer, opt Opt) Return {
 		switch opcode {
 		case HostGetCurrentProcessLevel:
 			return Return(ProcessLevelRealtime)

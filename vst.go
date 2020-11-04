@@ -46,7 +46,7 @@ func (v *VST) Plugin(c HostCallbackFunc) *Effect {
 }
 
 // Dispatch wraps-up C method to dispatch calls to plugin
-func (e *Effect) Dispatch(opcode EffectOpcode, index Index, value Value, ptr Ptr, opt Opt) Return {
+func (e *Effect) Dispatch(opcode EffectOpcode, index Index, value Value, ptr unsafe.Pointer, opt Opt) Return {
 	return Return(C.dispatch((*C.Effect)(e), C.int32_t(opcode), C.int32_t(index), C.int64_t(value), unsafe.Pointer(ptr), C.float(opt)))
 }
 

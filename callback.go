@@ -13,14 +13,12 @@ import (
 type (
 	// HostCallbackFunc used as callback function called by plugin. Use closure
 	// wrapping technique to add more types to callback.
-	HostCallbackFunc func(HostOpcode, Index, Value, Ptr, Opt) Return
+	HostCallbackFunc func(HostOpcode, Index, Value, unsafe.Pointer, Opt) Return
 
 	// Index is index in plugin dispatch/host callback.
 	Index int64
 	// Value is value in plugin dispatch/host callback.
 	Value int64
-	// Ptr is ptr in plugin dispatch/host callback.
-	Ptr unsafe.Pointer
 	// Opt is opt in plugin dispatch/host callback.
 	Opt float64
 	// Return is returned value for dispatch/host callback.
@@ -51,5 +49,5 @@ func hostCallback(e *Effect, opcode int64, index int64, value int64, ptr unsafe.
 	if c == nil {
 		panic("host callback is undefined")
 	}
-	return c(HostOpcode(opcode), Index(index), Value(value), Ptr(ptr), Opt(opt))
+	return c(HostOpcode(opcode), Index(index), Value(value), ptr, Opt(opt))
 }

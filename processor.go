@@ -2,8 +2,6 @@ package vst2
 
 import (
 	"context"
-	"time"
-	"unsafe"
 
 	"pipelined.dev/pipe"
 	"pipelined.dev/pipe/mutable"
@@ -149,30 +147,4 @@ func floatFns(p *Plugin, host *HostProperties) (pipe.ProcessFunc, pipe.FlushFunc
 			p.Suspend()
 			return nil
 		}
-}
-
-// DefaultHostCallback returns default vst2 host callback.
-func DefaultHostCallback(props *HostProperties) HostCallbackFunc {
-	return func(opcode HostOpcode, index Index, value Value, ptr unsafe.Pointer, opt Opt) Return {
-		switch opcode {
-		case HostGetCurrentProcessLevel:
-			return Return(ProcessLevelRealtime)
-		case HostGetSampleRate:
-			return Return(props.SampleRate)
-		case HostGetBlockSize:
-			return Return(props.SampleRate)
-		case HostGetTime:
-			ti := &TimeInfo{
-				SampleRate:         float64(props.SampleRate),
-				SamplePos:          float64(props.CurrentPosition),
-				NanoSeconds:        float64(time.Now().UnixNano()),
-				TimeSigNumerator:   4,
-				TimeSigDenominator: 4,
-			}
-			return ti.Return()
-		default:
-			break
-		}
-		return 0
-	}
 }

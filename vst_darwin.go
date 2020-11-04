@@ -9,8 +9,8 @@ import (
 )
 
 const (
-	// Extension of Vst2 files
-	Extension = ".vst"
+	// FileExtension of VST2 files in macOS.
+	FileExtension = ".vst"
 
 	displayNameKey = "CFBundleDisplayName"
 )

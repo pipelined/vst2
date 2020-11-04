@@ -9,8 +9,8 @@ import (
 )
 
 const (
-	// Extension of Vst2 files
-	Extension = ".dll"
+	// FileExtension of VST2 files in Windows.
+	FileExtension = ".dll"
 )
 
 var (

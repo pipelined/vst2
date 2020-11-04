@@ -17,35 +17,32 @@ const (
 	MaxProductStrLen = 64 // used for #effGetProductString, #audioMasterGetProductString
 	MaxEffectNameLen = 32 // used for #effGetEffectName
 
-	MaxNameLen       = 64  // used for #MidiProgramName, #MidiProgramCategory, #MidiKeyName, #VstSpeakerProperties, #VstPinProperties
-	MaxLabelLen      = 64  // used for #VstParameterProperties->label, #VstPinProperties->label
-	MaxShortLabelLen = 8   // used for #VstParameterProperties->shortLabel, #VstPinProperties->shortLabel
-	MaxCategLabelLen = 24  // used for #VstParameterProperties->label
+	MaxNameLen       = 64  // used for #MidiProgramName, #MidiProgramCategory, #MidiKeyName, #VstPinProperties
+	MaxLabelLen      = 64  // used for #VstPinProperties->label
+	MaxShortLabelLen = 8   // used for #VstPinProperties->shortLabel
 	MaxFileNameLen   = 100 // used for #VstAudioFile->name
 )
 
 type (
-	// paramString used to get parameter string values: name, unit name and
-	// value name.
-	paramString [8]byte
+	// 8 bytes ascii string.
+	ascii8 [8]byte
 
-	// programString used to get and set program name.
-	programString [24]byte
+	// 24 bytes ascii string.
+	ascii24 [24]byte
+
+	// 64 bytes ascii string.
+	ascii64 [64]byte
 )
 
-func (s paramString) String() string {
+func (s ascii8) String() string {
 	return trimNull(string(s[:]))
 }
 
-// ProgramString used to set program name. It contains up to 24 ASCII
-// runes.
-func ProgramString(s string) programString {
-	var ps programString
-	copy(ps[:], []byte(removeNonASCII(s)))
-	return ps
+func (s ascii24) String() string {
+	return trimNull(string(s[:]))
 }
 
-func (s programString) String() string {
+func (s ascii64) String() string {
 	return trimNull(string(s[:]))
 }
 
@@ -553,42 +550,45 @@ func (e *Effect) SetSpeakerArrangement(in, out *SpeakerArrangement) {
 
 // ParamName returns the parameter label: "Release", "Gain", etc.
 func (e *Effect) ParamName(index int) string {
-	var s paramString
+	var s ascii8
 	e.Dispatch(EffGetParamName, Index(index), 0, Ptr(&s), 0)
 	return s.String()
 }
 
 // ParamValueName returns the parameter value label: "0.5", "HALL", etc.
 func (e *Effect) ParamValueName(index int) string {
-	var s paramString
+	var s ascii8
 	e.Dispatch(EffGetParamDisplay, Index(index), 0, Ptr(&s), 0)
 	return s.String()
 }
 
 // ParamUnitName returns the parameter unit label: "db", "ms", etc.
 func (e *Effect) ParamUnitName(index int) string {
-	var s paramString
+	var s ascii8
 	e.Dispatch(EffGetParamLabel, Index(index), 0, Ptr(&s), 0)
 	return s.String()
 }
 
 // CurrentProgramName returns current program name.
 func (e *Effect) CurrentProgramName() string {
-	var s programString
+	var s ascii24
 	e.Dispatch(EffGetProgramName, 0, 0, Ptr(&s), 0)
 	return s.String()
 }
 
 // ProgramName returns program name for provided program index.
 func (e *Effect) ProgramName(index int) string {
-	var s programString
+	var s ascii24
 	e.Dispatch(EffGetProgramNameIndexed, Index(index), 0, Ptr(&s), 0)
 	return s.String()
 }
 
-// SetCurrentProgramName sets new name to the current program.
-func (e *Effect) SetCurrentProgramName(s programString) {
-	e.Dispatch(EffSetProgramName, 0, 0, Ptr(&s), 0)
+// SetCurrentProgramName sets new name to the current program. It will use
+// up to 24 ASCII characters. Non-ASCII characters are ignored.
+func (e *Effect) SetCurrentProgramName(s string) {
+	var ps ascii24
+	copy(ps[:], []byte(removeNonASCII(s)))
+	e.Dispatch(EffSetProgramName, 0, 0, Ptr(&ps), 0)
 }
 
 // Program returns current program number.

@@ -12,9 +12,10 @@ import (
 type (
 	// Processor is pipe component that wraps.
 	Processor struct {
+		host       *HostProperties
 		Effect     *Effect
 		Parameters []Parameter
-		Programs   []Program
+		Presets    []Preset
 	}
 
 	Parameter struct {
@@ -24,7 +25,7 @@ type (
 		valueLabel string
 	}
 
-	Program struct {
+	Preset struct {
 		name string
 	}
 
@@ -47,79 +48,104 @@ type (
 	ProcessorInitFunc func(*Effect)
 )
 
-// Processor represents vst2 sound processor. It loads plugin from the
-// provided vst and applies the following configuration: set up sample
-// rate, set up buffer size, calls provided init function and then starts
-// the plugin.
-func (v *VST) Processor(callback HostCallbackAllocator, init ProcessorInitFunc) pipe.ProcessorAllocatorFunc {
+// Processor represents vst2 sound processor.
+func (v *VST) Processor(callback HostCallbackAllocator) Processor {
+	host := &HostProperties{}
+	e := v.Plugin(callback(host))
+	numParams := e.NumParams()
+	params := make([]Parameter, numParams)
+	for i := 0; i < numParams; i++ {
+		params = append(params, Parameter{
+			name:       e.ParamName(i),
+			unit:       e.ParamUnitName(i),
+			value:      e.ParamValue(i),
+			valueLabel: e.ParamValueName(i),
+		})
+	}
+	numPresets := e.NumPrograms()
+	presets := make([]Preset, numPresets)
+	for i := 0; i < numPresets; i++ {
+		presets = append(presets, Preset{
+			name: e.ProgramName(i),
+		})
+	}
+	return Processor{
+		Effect:     e,
+		host:       host,
+		Parameters: params,
+		Presets:    presets,
+	}
+}
+
+// Allocator returns pipe processor allocator that can be plugged into line.
+func (p *Processor) Allocator(init ProcessorInitFunc) pipe.ProcessorAllocatorFunc {
 	return func(mctx mutable.Context, bufferSize int, props pipe.SignalProperties) (pipe.Processor, error) {
-		host := HostProperties{
-			BufferSize: bufferSize,
-			Channels:   props.Channels,
-			SampleRate: props.SampleRate,
-		}
-		e := (*EntryPoint)(v).Load(callback(&host))
-		e.SetSampleRate(int(props.SampleRate))
-		e.SetBufferSize(bufferSize)
+		p.host.BufferSize = bufferSize
+		p.host.Channels = props.Channels
+		p.host.SampleRate = props.SampleRate
+		p.Effect.Start()
+		p.Effect.SetSampleRate(int(props.SampleRate))
+		p.Effect.SetBufferSize(bufferSize)
 		if init != nil {
-			init(e)
+			init(p.Effect)
 		}
-		e.Start()
-
-		p := processor(e, &host)
-		p.Output = pipe.SignalProperties{
-			Channels:   props.Channels,
-			SampleRate: props.SampleRate,
-		}
-		return p, nil
+		processFn, flushFn := processorFns(p.Effect, p.host)
+		return pipe.Processor{
+			Output: pipe.SignalProperties{
+				Channels:   props.Channels,
+				SampleRate: props.SampleRate,
+			},
+			StartFunc: func(context.Context) error {
+				p.Effect.Resume()
+				return nil
+			},
+			ProcessFunc: processFn,
+			FlushFunc:   flushFn,
+		}, nil
 	}
 }
 
-func processor(e *Effect, host *HostProperties) pipe.Processor {
+func processorFns(e *Effect, host *HostProperties) (pipe.ProcessFunc, pipe.FlushFunc) {
 	if e.CanProcessFloat64() {
-		return doubleProcessor(e, host)
+		return doubleFns(e, host)
 	}
-	return floatProcessor(e, host)
+	return floatFns(e, host)
 }
 
-func doubleProcessor(e *Effect, host *HostProperties) pipe.Processor {
+func doubleFns(e *Effect, host *HostProperties) (pipe.ProcessFunc, pipe.FlushFunc) {
 	doubleIn := NewDoubleBuffer(host.Channels, host.BufferSize)
 	doubleOut := NewDoubleBuffer(host.Channels, host.BufferSize)
-	return pipe.Processor{
-		ProcessFunc: func(in, out signal.Floating) error {
+	return func(in, out signal.Floating) error {
 			doubleIn.CopyFrom(in)
 			e.ProcessDouble(doubleIn, doubleOut)
 			host.CurrentPosition += int64(in.Length())
 			doubleOut.CopyTo(out)
 			return nil
 		},
-		FlushFunc: func(context.Context) error {
+		func(context.Context) error {
 			doubleIn.Free()
 			doubleOut.Free()
-			e.Stop()
+			e.Suspend()
 			return nil
-		},
-	}
+		}
 }
 
-func floatProcessor(e *Effect, host *HostProperties) pipe.Processor {
+func floatFns(e *Effect, host *HostProperties) (pipe.ProcessFunc, pipe.FlushFunc) {
 	floatIn := NewFloatBuffer(host.Channels, host.BufferSize)
 	floatOut := NewFloatBuffer(host.Channels, host.BufferSize)
-	return pipe.Processor{
-		ProcessFunc: func(in, out signal.Floating) error {
+	return func(in, out signal.Floating) error {
 			floatIn.CopyFrom(in)
 			e.ProcessFloat(floatIn, floatOut)
 			host.CurrentPosition += int64(in.Length())
 			floatOut.CopyTo(out)
 			return nil
 		},
-		FlushFunc: func(context.Context) error {
+		func(context.Context) error {
 			floatIn.Free()
 			floatOut.Free()
-			e.Stop()
+			e.Suspend()
 			return nil
-		},
-	}
+		}
 }
 
 // DefaultHostCallback returns default vst2 host callback.

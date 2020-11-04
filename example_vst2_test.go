@@ -109,9 +109,10 @@ func Example_plugin() {
 	defer vst.Close()
 
 	// Load VST plugin with example callback.
-	plugin := vst.Load(PrinterHostCallback("Received opcode"))
+	plugin := vst.Plugin(PrinterHostCallback("Received opcode"))
 	defer plugin.Close()
 
+	plugin.Start()
 	// Set sample rate in Hertz.
 	plugin.SetSampleRate(44100)
 	// Set channels information.
@@ -128,7 +129,7 @@ func Example_plugin() {
 	// Set buffer size.
 	plugin.SetBufferSize(buffer.Length())
 	// Start the plugin.
-	plugin.Start()
+	plugin.Resume()
 
 	// To process data with plugin, we need to use VST2 buffers.
 	// It's needed because VST SDK was written in C and expected

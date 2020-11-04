@@ -52,48 +52,48 @@ type EffectOpcode uint64
 
 const (
 	// EffOpen passed to open the plugin.
-	EffOpen EffectOpcode = iota
+	effOpen EffectOpcode = iota
 	// EffClose passed to close the plugin.
-	EffClose
+	effClose
 
 	// EffSetProgram passed to set program.
 	// Value: new program number.
-	EffSetProgram
+	effSetProgram
 	// EffGetProgram passed to get program.
 	// Return: current program number.
-	EffGetProgram
+	effGetProgram
 	// EffSetProgramName passed to set new program name.
 	// Ptr: *[maxProgNameLen]byte buffer with new program name.
-	EffSetProgramName
+	effSetProgramName
 	// EffGetProgramName passed to get current program name.
 	// Ptr: *[maxProgNameLen]byte buffer for current program name.
-	EffGetProgramName
+	effGetProgramName
 
 	// EffGetParamLabel passed to get parameter unit label: "db", "ms", etc.
 	// Index: parameter index.
 	// Ptr: *[maxParamStrLen]byte buffer for parameter unit label.
-	EffGetParamLabel
+	effGetParamLabel
 	// EffGetParamDisplay passed to get parameter value label: "0.5", "HALL", etc.
 	// Index: parameter index.
 	// Ptr: *[maxParamStrLen]byte buffer for parameter value label.
-	EffGetParamDisplay
+	effGetParamDisplay
 	// EffGetParamName passed to get parameter label: "Release", "Gain", etc.
 	// Index: parameter index.
 	// Ptr: *[maxParamStrLen]byte buffer for parameter label.
-	EffGetParamName
+	effGetParamName
 
 	// deprecated in VST v2.4
 	effGetVu
 
 	// EffSetSampleRate passed to set new sample rate.
 	// Opt: new sample rate value.
-	EffSetSampleRate
+	effSetSampleRate
 	// EffSetBufferSize passed to set new buffer size.
 	// Value: new buffer size value.
-	EffSetBufferSize
+	effSetBufferSize
 	// EffStateChanged passed when plugin's state changed.
 	// Value: 0 means disabled, 1 means enabled.
-	EffStateChanged
+	effStateChanged
 
 	// EffEditGetRect passed to get editor size.
 	// Ptr: ERect** receiving pointer to editor size.
@@ -125,12 +125,12 @@ const (
 	// Ptr: pointer for chunk data address (void**) uint8.
 	// Index: 0 for bank, 1 for program.
 	// Return: length of data.
-	EffGetChunk
+	effGetChunk
 	// EffSetChunk passed to set chunk data.
 	// Ptr: pointer for chunk data address (void*).
 	// Value: data size in bytes.
 	// Index: 0 for bank, 1 for program.
-	EffSetChunk
+	effSetChunk
 
 	// EffProcessEvents passed to communicate events.
 	// Ptr: *Events.
@@ -152,7 +152,7 @@ const (
 	// Index: program index.
 	// Ptr: *[maxProgNameLen]byte buffer for program name.
 	// Return: true for success.
-	EffGetProgramNameIndexed
+	effGetProgramNameIndexed
 
 	// deprecated in VST v2.4
 	effCopyProgram
@@ -200,7 +200,7 @@ const (
 	// EffSetSpeakerArrangement passed to set speakers configuration.
 	// Value: input *SpeakerArrangement.
 	// Ptr: output *SpeakerArrangement.
-	EffSetSpeakerArrangement
+	effSetSpeakerArrangement
 
 	// deprecated in VST v2.4
 	effSetBlockSizeAndSampleRate
@@ -247,7 +247,7 @@ const (
 	// Index: parameter index.
 	// Ptr: *ParameterProperties.
 	// Return: 1 if supported
-	EffGetParameterProperties
+	effGetParameterProperties
 
 	// deprecated in VST v2.4
 	effKeysRequired
@@ -510,12 +510,12 @@ const (
 
 // Start executes the EffOpen opcode.
 func (e *Effect) Start() {
-	e.Dispatch(EffOpen, 0, 0, nil, 0.0)
+	e.Dispatch(effOpen, 0, 0, nil, 0.0)
 }
 
 // Close stops the plugin and cleans up C refs for plugin.
 func (e *Effect) Close() {
-	e.Dispatch(EffClose, 0, 0, nil, 0.0)
+	e.Dispatch(effClose, 0, 0, nil, 0.0)
 	mutex.Lock()
 	delete(callbacks, e)
 	mutex.Unlock()
@@ -524,62 +524,62 @@ func (e *Effect) Close() {
 // Resume the plugin processing. It must be called before processing is
 // done.
 func (e *Effect) Resume() {
-	e.Dispatch(EffStateChanged, 0, 1, nil, 0)
+	e.Dispatch(effStateChanged, 0, 1, nil, 0)
 }
 
 // Suspend the plugin processing. It must be called after processing is
 // done and no new signal is expected at this moment.
 func (e *Effect) Suspend() {
-	e.Dispatch(EffStateChanged, 0, 0, nil, 0)
+	e.Dispatch(effStateChanged, 0, 0, nil, 0)
 }
 
 // SetBufferSize sets a buffer size per channel.
 func (e *Effect) SetBufferSize(bufferSize int) {
-	e.Dispatch(EffSetBufferSize, 0, Value(bufferSize), nil, 0)
+	e.Dispatch(effSetBufferSize, 0, Value(bufferSize), nil, 0)
 }
 
 // SetSampleRate sets a sample rate for plugin.
 func (e *Effect) SetSampleRate(sampleRate int) {
-	e.Dispatch(EffSetSampleRate, 0, 0, nil, Opt(sampleRate))
+	e.Dispatch(effSetSampleRate, 0, 0, nil, Opt(sampleRate))
 }
 
 // SetSpeakerArrangement creates and passes SpeakerArrangement structures to plugin
 func (e *Effect) SetSpeakerArrangement(in, out *SpeakerArrangement) {
-	e.Dispatch(EffSetSpeakerArrangement, 0, in.Value(), out.Ptr(), 0)
+	e.Dispatch(effSetSpeakerArrangement, 0, in.Value(), out.Ptr(), 0)
 }
 
 // ParamName returns the parameter label: "Release", "Gain", etc.
 func (e *Effect) ParamName(index int) string {
 	var s ascii8
-	e.Dispatch(EffGetParamName, Index(index), 0, Ptr(&s), 0)
+	e.Dispatch(effGetParamName, Index(index), 0, Ptr(&s), 0)
 	return s.String()
 }
 
 // ParamValueName returns the parameter value label: "0.5", "HALL", etc.
 func (e *Effect) ParamValueName(index int) string {
 	var s ascii8
-	e.Dispatch(EffGetParamDisplay, Index(index), 0, Ptr(&s), 0)
+	e.Dispatch(effGetParamDisplay, Index(index), 0, Ptr(&s), 0)
 	return s.String()
 }
 
 // ParamUnitName returns the parameter unit label: "db", "ms", etc.
 func (e *Effect) ParamUnitName(index int) string {
 	var s ascii8
-	e.Dispatch(EffGetParamLabel, Index(index), 0, Ptr(&s), 0)
+	e.Dispatch(effGetParamLabel, Index(index), 0, Ptr(&s), 0)
 	return s.String()
 }
 
 // CurrentProgramName returns current program name.
 func (e *Effect) CurrentProgramName() string {
 	var s ascii24
-	e.Dispatch(EffGetProgramName, 0, 0, Ptr(&s), 0)
+	e.Dispatch(effGetProgramName, 0, 0, Ptr(&s), 0)
 	return s.String()
 }
 
 // ProgramName returns program name for provided program index.
 func (e *Effect) ProgramName(index int) string {
 	var s ascii24
-	e.Dispatch(EffGetProgramNameIndexed, Index(index), 0, Ptr(&s), 0)
+	e.Dispatch(effGetProgramNameIndexed, Index(index), 0, Ptr(&s), 0)
 	return s.String()
 }
 
@@ -588,24 +588,24 @@ func (e *Effect) ProgramName(index int) string {
 func (e *Effect) SetCurrentProgramName(s string) {
 	var ps ascii24
 	copy(ps[:], []byte(removeNonASCII(s)))
-	e.Dispatch(EffSetProgramName, 0, 0, Ptr(&ps), 0)
+	e.Dispatch(effSetProgramName, 0, 0, Ptr(&ps), 0)
 }
 
 // Program returns current program number.
 func (e *Effect) Program() int {
-	return int(e.Dispatch(EffGetProgram, 0, 0, nil, 0))
+	return int(e.Dispatch(effGetProgram, 0, 0, nil, 0))
 }
 
 // SetProgram changes current program index.
 func (e *Effect) SetProgram(index int) {
-	e.Dispatch(EffSetProgram, 0, Value(index), nil, 0)
+	e.Dispatch(effSetProgram, 0, Value(index), nil, 0)
 }
 
 // ParamProperties returns parameter properties for provided parameter
 // index. If opcode is not supported, boolean result is false.
 func (e *Effect) ParamProperties(index int) (*ParameterProperties, bool) {
 	var props ParameterProperties
-	r := e.Dispatch(EffGetParameterProperties, Index(index), 0, Ptr(&props), 0)
+	r := e.Dispatch(effGetParameterProperties, Index(index), 0, Ptr(&props), 0)
 	if r > 0 {
 		return &props, true
 	}
@@ -617,14 +617,14 @@ func (e *Effect) ParamProperties(index int) (*ParameterProperties, bool) {
 // where data is copied.
 func (e *Effect) GetProgramData() []byte {
 	var ptr unsafe.Pointer
-	length := C.int(e.Dispatch(EffGetChunk, 1, 0, Ptr(&ptr), 0))
+	length := C.int(e.Dispatch(effGetChunk, 1, 0, Ptr(&ptr), 0))
 	return C.GoBytes(ptr, length)
 }
 
 // SetProgramData sets preset data to the plugin. Data is the full preset
 // including chunk header.
 func (e *Effect) SetProgramData(data []byte) {
-	e.Dispatch(EffSetChunk, 1, Value(len(data)), Ptr(&data[0]), 0)
+	e.Dispatch(effSetChunk, 1, Value(len(data)), Ptr(&data[0]), 0)
 }
 
 // GetBankData returns current bank data. Plugin allocates required
@@ -632,7 +632,7 @@ func (e *Effect) SetProgramData(data []byte) {
 // where data is copied.
 func (e *Effect) GetBankData() []byte {
 	var ptr unsafe.Pointer
-	length := C.int(e.Dispatch(EffGetChunk, 0, 0, Ptr(&ptr), 0))
+	length := C.int(e.Dispatch(effGetChunk, 0, 0, Ptr(&ptr), 0))
 	return C.GoBytes(ptr, length)
 }
 
@@ -640,7 +640,7 @@ func (e *Effect) GetBankData() []byte {
 // including chunk header.
 func (e *Effect) SetBankData(data []byte) {
 	ptr := C.CBytes(data)
-	e.Dispatch(EffSetChunk, 0, Value(len(data)), Ptr(ptr), 0)
+	e.Dispatch(effSetChunk, 0, Value(len(data)), Ptr(ptr), 0)
 	C.free(ptr)
 }
 

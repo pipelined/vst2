@@ -5,6 +5,7 @@ import (
 	"log"
 	"path/filepath"
 	"runtime"
+	"unsafe"
 
 	"pipelined.dev/audio/vst2"
 	"pipelined.dev/signal"
@@ -14,7 +15,7 @@ import (
 // provided prefix. This technique allows to provide callback with any
 // context needed.
 func PrinterHostCallback(prefix string) vst2.HostCallbackFunc {
-	return func(code vst2.HostOpcode, _ vst2.Index, _ vst2.Value, _ vst2.Ptr, _ vst2.Opt) vst2.Return {
+	return func(code vst2.HostOpcode, _ vst2.Index, _ vst2.Value, _ unsafe.Pointer, _ vst2.Opt) vst2.Return {
 		fmt.Printf("%s: %v\n", prefix, code)
 		return 0
 	}
@@ -109,9 +110,10 @@ func Example_plugin() {
 	defer vst.Close()
 
 	// Load VST plugin with example callback.
-	plugin := vst.Load(PrinterHostCallback("Received opcode"))
+	plugin := vst.Plugin(PrinterHostCallback("Received opcode"))
 	defer plugin.Close()
 
+	plugin.Start()
 	// Set sample rate in Hertz.
 	plugin.SetSampleRate(44100)
 	// Set channels information.
@@ -128,7 +130,7 @@ func Example_plugin() {
 	// Set buffer size.
 	plugin.SetBufferSize(buffer.Length())
 	// Start the plugin.
-	plugin.Start()
+	plugin.Resume()
 
 	// To process data with plugin, we need to use VST2 buffers.
 	// It's needed because VST SDK was written in C and expected

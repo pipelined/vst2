@@ -1,23 +1,9 @@
 package vst2
 
-const (
-	maxProgNameLen   = 24 // used for #effGetProgramName, #effSetProgramName, #effGetProgramNameIndexed
-	maxParamStrLen   = 8  // used for #effGetParamLabel, #effGetParamDisplay, #effGetParamName
-	maxVendorStrLen  = 64 // used for #effGetVendorString, #audioMasterGetVendorString
-	maxProductStrLen = 64 // used for #effGetProductString, #audioMasterGetProductString
-	maxEffectNameLen = 32 // used for #effGetEffectName
+import "strings"
 
-	maxNameLen       = 64  // used for #MidiProgramName, #MidiProgramCategory, #MidiKeyName, #VstSpeakerProperties, #VstPinProperties
-	maxLabelLen      = 64  // used for #VstParameterProperties->label, #VstPinProperties->label
-	maxShortLabelLen = 8   // used for #VstParameterProperties->shortLabel, #VstPinProperties->shortLabel
-	maxCategLabelLen = 24  // used for #VstParameterProperties->label
-	maxFileNameLen   = 100 // used for #VstAudioFile->name
-)
-
-const (
-	// EffectMagic is constant in every plugin.
-	EffectMagic = "VstP"
-)
+// EffectMagic is constant in every plugin.
+const EffectMagic = "VstP"
 
 type (
 	// ParameterProperties contains the information about parameter.
@@ -27,7 +13,7 @@ type (
 		SmallStepFloat float32
 		LargeStepFloat float32
 
-		Label [maxLabelLen]byte
+		Label ascii64
 		Flags ParameterFlag
 
 		// valid if ParameterUsesIntegerMinMax is set
@@ -37,7 +23,7 @@ type (
 		// valid if ParameterUsesIntStep is set
 		StepInteger      int32
 		LargeStepInteger int32
-		ShortLabel       [maxShortLabelLen]byte
+		ShortLabel       ascii8
 
 		// valid if ParameterSupportsDisplayIndex is set
 		DisplayIndex int16 // Index where parameter should be displayed, starts with 0
@@ -46,7 +32,7 @@ type (
 		Category             int16
 		ParametersInCategory int16
 		reserved             int16 // always zero
-		CategoryLabel        [maxCategLabelLen]byte
+		CategoryLabel        ascii24
 
 		future [16]byte //Reserved for future.
 	}
@@ -202,7 +188,7 @@ type (
 		Elevation float32
 		Radius    float32
 		Reserved  float32
-		Name      [64]byte
+		Name      ascii64
 		Type      SpeakerType
 		Future    [28]byte
 	}
@@ -384,3 +370,7 @@ const (
 	// in user thread.
 	ProcessLevelOffline
 )
+
+func trimNull(s string) string {
+	return strings.Trim(s, "\x00")
+}

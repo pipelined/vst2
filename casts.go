@@ -11,11 +11,11 @@ func (sa *SpeakerArrangement) Value() Value {
 }
 
 // Ptr cast used in EffSetSpeakerArrangement call.
-func (sa *SpeakerArrangement) Ptr() Ptr {
+func (sa *SpeakerArrangement) Ptr() unsafe.Pointer {
 	if sa == nil {
 		return nil
 	}
-	return Ptr(unsafe.Pointer(sa))
+	return unsafe.Pointer(unsafe.Pointer(sa))
 }
 
 // Return cast used in HostGetTime call.

@@ -551,35 +551,35 @@ func (e *Effect) SetSpeakerArrangement(in, out *SpeakerArrangement) {
 // ParamName returns the parameter label: "Release", "Gain", etc.
 func (e *Effect) ParamName(index int) string {
 	var s ascii8
-	e.Dispatch(effGetParamName, Index(index), 0, Ptr(&s), 0)
+	e.Dispatch(effGetParamName, Index(index), 0, unsafe.Pointer(&s), 0)
 	return s.String()
 }
 
 // ParamValueName returns the parameter value label: "0.5", "HALL", etc.
 func (e *Effect) ParamValueName(index int) string {
 	var s ascii8
-	e.Dispatch(effGetParamDisplay, Index(index), 0, Ptr(&s), 0)
+	e.Dispatch(effGetParamDisplay, Index(index), 0, unsafe.Pointer(&s), 0)
 	return s.String()
 }
 
 // ParamUnitName returns the parameter unit label: "db", "ms", etc.
 func (e *Effect) ParamUnitName(index int) string {
 	var s ascii8
-	e.Dispatch(effGetParamLabel, Index(index), 0, Ptr(&s), 0)
+	e.Dispatch(effGetParamLabel, Index(index), 0, unsafe.Pointer(&s), 0)
 	return s.String()
 }
 
 // CurrentProgramName returns current program name.
 func (e *Effect) CurrentProgramName() string {
 	var s ascii24
-	e.Dispatch(effGetProgramName, 0, 0, Ptr(&s), 0)
+	e.Dispatch(effGetProgramName, 0, 0, unsafe.Pointer(&s), 0)
 	return s.String()
 }
 
 // ProgramName returns program name for provided program index.
 func (e *Effect) ProgramName(index int) string {
 	var s ascii24
-	e.Dispatch(effGetProgramNameIndexed, Index(index), 0, Ptr(&s), 0)
+	e.Dispatch(effGetProgramNameIndexed, Index(index), 0, unsafe.Pointer(&s), 0)
 	return s.String()
 }
 
@@ -588,7 +588,7 @@ func (e *Effect) ProgramName(index int) string {
 func (e *Effect) SetCurrentProgramName(s string) {
 	var ps ascii24
 	copy(ps[:], []byte(removeNonASCII(s)))
-	e.Dispatch(effSetProgramName, 0, 0, Ptr(&ps), 0)
+	e.Dispatch(effSetProgramName, 0, 0, unsafe.Pointer(&ps), 0)
 }
 
 // Program returns current program number.
@@ -605,7 +605,7 @@ func (e *Effect) SetProgram(index int) {
 // index. If opcode is not supported, boolean result is false.
 func (e *Effect) ParamProperties(index int) (*ParameterProperties, bool) {
 	var props ParameterProperties
-	r := e.Dispatch(effGetParameterProperties, Index(index), 0, Ptr(&props), 0)
+	r := e.Dispatch(effGetParameterProperties, Index(index), 0, unsafe.Pointer(&props), 0)
 	if r > 0 {
 		return &props, true
 	}
@@ -617,14 +617,14 @@ func (e *Effect) ParamProperties(index int) (*ParameterProperties, bool) {
 // where data is copied.
 func (e *Effect) GetProgramData() []byte {
 	var ptr unsafe.Pointer
-	length := C.int(e.Dispatch(effGetChunk, 1, 0, Ptr(&ptr), 0))
+	length := C.int(e.Dispatch(effGetChunk, 1, 0, unsafe.Pointer(&ptr), 0))
 	return C.GoBytes(ptr, length)
 }
 
 // SetProgramData sets preset data to the plugin. Data is the full preset
 // including chunk header.
 func (e *Effect) SetProgramData(data []byte) {
-	e.Dispatch(effSetChunk, 1, Value(len(data)), Ptr(&data[0]), 0)
+	e.Dispatch(effSetChunk, 1, Value(len(data)), unsafe.Pointer(&data[0]), 0)
 }
 
 // GetBankData returns current bank data. Plugin allocates required
@@ -632,7 +632,7 @@ func (e *Effect) SetProgramData(data []byte) {
 // where data is copied.
 func (e *Effect) GetBankData() []byte {
 	var ptr unsafe.Pointer
-	length := C.int(e.Dispatch(effGetChunk, 0, 0, Ptr(&ptr), 0))
+	length := C.int(e.Dispatch(effGetChunk, 0, 0, unsafe.Pointer(&ptr), 0))
 	return C.GoBytes(ptr, length)
 }
 
@@ -640,7 +640,7 @@ func (e *Effect) GetBankData() []byte {
 // including chunk header.
 func (e *Effect) SetBankData(data []byte) {
 	ptr := C.CBytes(data)
-	e.Dispatch(effSetChunk, 0, Value(len(data)), Ptr(ptr), 0)
+	e.Dispatch(effSetChunk, 0, Value(len(data)), unsafe.Pointer(ptr), 0)
 	C.free(ptr)
 }
 

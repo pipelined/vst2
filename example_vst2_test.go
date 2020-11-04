@@ -5,6 +5,7 @@ import (
 	"log"
 	"path/filepath"
 	"runtime"
+	"unsafe"
 
 	"pipelined.dev/audio/vst2"
 	"pipelined.dev/signal"
@@ -14,7 +15,7 @@ import (
 // provided prefix. This technique allows to provide callback with any
 // context needed.
 func PrinterHostCallback(prefix string) vst2.HostCallbackFunc {
-	return func(code vst2.HostOpcode, _ vst2.Index, _ vst2.Value, _ vst2.Ptr, _ vst2.Opt) vst2.Return {
+	return func(code vst2.HostOpcode, _ vst2.Index, _ vst2.Value, _ unsafe.Pointer, _ vst2.Opt) vst2.Return {
 		fmt.Printf("%s: %v\n", prefix, code)
 		return 0
 	}

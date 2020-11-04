@@ -12,6 +12,43 @@ import (
 	"unsafe"
 )
 
+const (
+	MaxVendorStrLen  = 64 // used for #effGetVendorString, #audioMasterGetVendorString
+	MaxProductStrLen = 64 // used for #effGetProductString, #audioMasterGetProductString
+	MaxEffectNameLen = 32 // used for #effGetEffectName
+
+	MaxNameLen       = 64  // used for #MidiProgramName, #MidiProgramCategory, #MidiKeyName, #VstSpeakerProperties, #VstPinProperties
+	MaxLabelLen      = 64  // used for #VstParameterProperties->label, #VstPinProperties->label
+	MaxShortLabelLen = 8   // used for #VstParameterProperties->shortLabel, #VstPinProperties->shortLabel
+	MaxCategLabelLen = 24  // used for #VstParameterProperties->label
+	MaxFileNameLen   = 100 // used for #VstAudioFile->name
+)
+
+type (
+	// paramString used to get parameter string values: name, unit name and
+	// value name.
+	paramString [8]byte
+
+	// programString used to get and set program name.
+	programString [24]byte
+)
+
+func (s paramString) String() string {
+	return trimNull(string(s[:]))
+}
+
+// ProgramString used to set program name. It contains up to 24 ASCII
+// runes.
+func ProgramString(s string) programString {
+	var ps programString
+	copy(ps[:], []byte(removeNonASCII(s)))
+	return ps
+}
+
+func (s programString) String() string {
+	return trimNull(string(s[:]))
+}
+
 // EffectOpcode is sent by host in dispatch call to effect.
 // It reflects AEffectOpcodes and AEffectXOpcodes opcodes values.
 type EffectOpcode uint64
@@ -516,43 +553,41 @@ func (e *Effect) SetSpeakerArrangement(in, out *SpeakerArrangement) {
 
 // ParamName returns the parameter label: "Release", "Gain", etc.
 func (e *Effect) ParamName(index int) string {
-	var s ParamString
+	var s paramString
 	e.Dispatch(EffGetParamName, Index(index), 0, Ptr(&s), 0)
 	return s.String()
 }
 
 // ParamValueName returns the parameter value label: "0.5", "HALL", etc.
 func (e *Effect) ParamValueName(index int) string {
-	var s ParamString
+	var s paramString
 	e.Dispatch(EffGetParamDisplay, Index(index), 0, Ptr(&s), 0)
 	return s.String()
 }
 
 // ParamUnitName returns the parameter unit label: "db", "ms", etc.
 func (e *Effect) ParamUnitName(index int) string {
-	var s ParamString
+	var s paramString
 	e.Dispatch(EffGetParamLabel, Index(index), 0, Ptr(&s), 0)
 	return s.String()
 }
 
 // CurrentProgramName returns current program name.
 func (e *Effect) CurrentProgramName() string {
-	var s ProgramString
+	var s programString
 	e.Dispatch(EffGetProgramName, 0, 0, Ptr(&s), 0)
 	return s.String()
 }
 
 // ProgramName returns program name for provided program index.
 func (e *Effect) ProgramName(index int) string {
-	var s ProgramString
+	var s programString
 	e.Dispatch(EffGetProgramNameIndexed, Index(index), 0, Ptr(&s), 0)
 	return s.String()
 }
 
 // SetCurrentProgramName sets new name to the current program.
-func (e *Effect) SetCurrentProgramName(name string) {
-	var s ProgramString
-	copy(s[:], []byte(removeNonASCII(name)))
+func (e *Effect) SetCurrentProgramName(s programString) {
 	e.Dispatch(EffSetProgramName, 0, 0, Ptr(&s), 0)
 }
 

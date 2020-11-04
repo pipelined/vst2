@@ -2,39 +2,8 @@ package vst2
 
 import "strings"
 
-const (
-	MaxVendorStrLen  = 64 // used for #effGetVendorString, #audioMasterGetVendorString
-	MaxProductStrLen = 64 // used for #effGetProductString, #audioMasterGetProductString
-	MaxEffectNameLen = 32 // used for #effGetEffectName
-
-	MaxNameLen       = 64  // used for #MidiProgramName, #MidiProgramCategory, #MidiKeyName, #VstSpeakerProperties, #VstPinProperties
-	MaxLabelLen      = 64  // used for #VstParameterProperties->label, #VstPinProperties->label
-	MaxShortLabelLen = 8   // used for #VstParameterProperties->shortLabel, #VstPinProperties->shortLabel
-	MaxCategLabelLen = 24  // used for #VstParameterProperties->label
-	MaxFileNameLen   = 100 // used for #VstAudioFile->name
-)
-
-type (
-	// ParamString used to get parameter string values: name, unit name and
-	// value name.
-	ParamString [8]byte
-
-	// ProgramString used to get and set program name.
-	ProgramString [24]byte
-)
-
-func (s ParamString) String() string {
-	return trimNull(string(s[:]))
-}
-
-func (s ProgramString) String() string {
-	return trimNull(string(s[:]))
-}
-
-const (
-	// EffectMagic is constant in every plugin.
-	EffectMagic = "VstP"
-)
+// EffectMagic is constant in every plugin.
+const EffectMagic = "VstP"
 
 type (
 	// ParameterProperties contains the information about parameter.

@@ -470,12 +470,12 @@ const (
 	hostGetInputSpeakerArrangement
 )
 
-// Open executes the EffOpen opcode.
-func (e *Effect) Open() {
+// Start executes the EffOpen opcode.
+func (e *Effect) Start() {
 	e.Dispatch(EffOpen, 0, 0, nil, 0.0)
 }
 
-// Close cleans up C refs for plugin
+// Close stops the plugin and cleans up C refs for plugin.
 func (e *Effect) Close() {
 	e.Dispatch(EffClose, 0, 0, nil, 0.0)
 	mutex.Lock()
@@ -483,13 +483,15 @@ func (e *Effect) Close() {
 	mutex.Unlock()
 }
 
-// Start the plugin.
-func (e *Effect) Start() {
+// Resume the plugin processing. It must be called before processing is
+// done.
+func (e *Effect) Resume() {
 	e.Dispatch(EffStateChanged, 0, 1, nil, 0)
 }
 
-// Stop the plugin.
-func (e *Effect) Stop() {
+// Suspend the plugin processing. It must be called after processing is
+// done and no new signal is expected at this moment.
+func (e *Effect) Suspend() {
 	e.Dispatch(EffStateChanged, 0, 0, nil, 0)
 }
 

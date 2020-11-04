@@ -29,7 +29,7 @@ func init() {
 }
 
 // Open loads the plugin entry point into memory. It's DLL in windows.
-func Open(path string) (*EntryPoint, error) {
+func Open(path string) (*VST, error) {
 	path, err := filepath.Abs(path)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get absolute path for '%s': %w", path, err)
@@ -43,8 +43,8 @@ func Open(path string) (*EntryPoint, error) {
 	//Get pointer to plugin's Main function
 	m, err := syscall.GetProcAddress(dll.Handle, main)
 	if err == nil {
-		return &EntryPoint{
-			main:   effectMain(unsafe.Pointer(m)),
+		return &VST{
+			main:   pluginMain(unsafe.Pointer(m)),
 			handle: uintptr(dll.Handle),
 			Name:   filepath.Base(path[:len(path)-len(filepath.Ext(path))]),
 		}, nil
@@ -58,7 +58,7 @@ func Open(path string) (*EntryPoint, error) {
 }
 
 // Close frees plugin handle.
-func (m *EntryPoint) Close() error {
+func (m *VST) Close() error {
 	if err := syscall.FreeLibrary(syscall.Handle(m.handle)); err != nil {
 		return fmt.Errorf("failed to release VST handle: %w", err)
 	}

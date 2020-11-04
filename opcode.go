@@ -6,7 +6,11 @@ package vst2
 #include <stdlib.h>
 */
 import "C"
-import "unsafe"
+import (
+	"strings"
+	"unicode"
+	"unsafe"
+)
 
 // EffectOpcode is sent by host in dispatch call to effect.
 // It reflects AEffectOpcodes and AEffectXOpcodes opcodes values.
@@ -548,7 +552,7 @@ func (e *Effect) ProgramName(index int) string {
 // SetCurrentProgramName sets new name to the current program.
 func (e *Effect) SetCurrentProgramName(name string) {
 	var s ProgramString
-	copy(s[:], []byte(name))
+	copy(s[:], []byte(removeNonASCII(name)))
 	e.Dispatch(EffSetProgramName, 0, 0, Ptr(&s), 0)
 }
 
@@ -603,4 +607,13 @@ func (e *Effect) SetBankData(data []byte) {
 	ptr := C.CBytes(data)
 	e.Dispatch(EffSetChunk, 0, Value(len(data)), Ptr(ptr), 0)
 	C.free(ptr)
+}
+
+func removeNonASCII(s string) string {
+	return strings.Map(func(r rune) rune {
+		if r > unicode.MaxASCII {
+			return -1
+		}
+		return r
+	}, s)
 }

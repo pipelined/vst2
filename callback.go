@@ -7,6 +7,7 @@ package vst2
 import "C"
 import (
 	"sync"
+	"time"
 	"unsafe"
 )
 
@@ -50,4 +51,30 @@ func hostCallback(p *Plugin, opcode int64, index int64, value int64, ptr unsafe.
 		panic("host callback is undefined")
 	}
 	return c(HostOpcode(opcode), Index(index), Value(value), ptr, Opt(opt))
+}
+
+// DefaultHostCallback returns default vst2 host callback.
+func DefaultHostCallback(props *HostProperties) HostCallbackFunc {
+	return func(opcode HostOpcode, index Index, value Value, ptr unsafe.Pointer, opt Opt) Return {
+		switch opcode {
+		case HostGetCurrentProcessLevel:
+			return Return(ProcessLevelRealtime)
+		case HostGetSampleRate:
+			return Return(props.SampleRate)
+		case HostGetBlockSize:
+			return Return(props.SampleRate)
+		case HostGetTime:
+			ti := &TimeInfo{
+				SampleRate:         float64(props.SampleRate),
+				SamplePos:          float64(props.CurrentPosition),
+				NanoSeconds:        float64(time.Now().UnixNano()),
+				TimeSigNumerator:   4,
+				TimeSigDenominator: 4,
+			}
+			return ti.Return()
+		default:
+			break
+		}
+		return 0
+	}
 }

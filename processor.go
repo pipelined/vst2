@@ -14,7 +14,7 @@ type (
 	// Processor is pipe component that wraps.
 	Processor struct {
 		host       *HostProperties
-		Effect     *Effect
+		Plugin     *Plugin
 		Parameters []Parameter
 		Presets    []Preset
 	}
@@ -48,32 +48,32 @@ type (
 
 	// ProcessorInitFunc applies configuration on plugin before starting it
 	// in the processor routine.
-	ProcessorInitFunc func(*Effect)
+	ProcessorInitFunc func(*Plugin)
 )
 
 // Processor represents vst2 sound processor.
 func (v *VST) Processor(callback HostCallbackAllocator) Processor {
 	host := &HostProperties{}
-	e := v.Plugin(callback(host))
-	numParams := e.NumParams()
+	p := v.Plugin(callback(host))
+	numParams := p.NumParams()
 	params := make([]Parameter, numParams)
 	for i := 0; i < numParams; i++ {
 		params = append(params, Parameter{
-			name:       e.ParamName(i),
-			unit:       e.ParamUnitName(i),
-			value:      e.ParamValue(i),
-			valueLabel: e.ParamValueName(i),
+			name:       p.ParamName(i),
+			unit:       p.ParamUnitName(i),
+			value:      p.ParamValue(i),
+			valueLabel: p.ParamValueName(i),
 		})
 	}
-	numPresets := e.NumPrograms()
+	numPresets := p.NumPrograms()
 	presets := make([]Preset, numPresets)
 	for i := 0; i < numPresets; i++ {
 		presets = append(presets, Preset{
-			name: e.ProgramName(i),
+			name: p.ProgramName(i),
 		})
 	}
 	return Processor{
-		Effect:     e,
+		Plugin:     p,
 		host:       host,
 		Parameters: params,
 		Presets:    presets,
@@ -86,20 +86,20 @@ func (p *Processor) Allocator(init ProcessorInitFunc) pipe.ProcessorAllocatorFun
 		p.host.BufferSize = bufferSize
 		p.host.Channels = props.Channels
 		p.host.SampleRate = props.SampleRate
-		p.Effect.Start()
-		p.Effect.SetSampleRate(int(props.SampleRate))
-		p.Effect.SetBufferSize(bufferSize)
+		p.Plugin.Start()
+		p.Plugin.SetSampleRate(int(props.SampleRate))
+		p.Plugin.SetBufferSize(bufferSize)
 		if init != nil {
-			init(p.Effect)
+			init(p.Plugin)
 		}
-		processFn, flushFn := processorFns(p.Effect, p.host)
+		processFn, flushFn := processorFns(p.Plugin, p.host)
 		return pipe.Processor{
 			Output: pipe.SignalProperties{
 				Channels:   props.Channels,
 				SampleRate: props.SampleRate,
 			},
 			StartFunc: func(context.Context) error {
-				p.Effect.Resume()
+				p.Plugin.Resume()
 				return nil
 			},
 			ProcessFunc: processFn,
@@ -108,19 +108,19 @@ func (p *Processor) Allocator(init ProcessorInitFunc) pipe.ProcessorAllocatorFun
 	}
 }
 
-func processorFns(e *Effect, host *HostProperties) (pipe.ProcessFunc, pipe.FlushFunc) {
-	if e.CanProcessFloat64() {
-		return doubleFns(e, host)
+func processorFns(p *Plugin, host *HostProperties) (pipe.ProcessFunc, pipe.FlushFunc) {
+	if p.CanProcessFloat64() {
+		return doubleFns(p, host)
 	}
-	return floatFns(e, host)
+	return floatFns(p, host)
 }
 
-func doubleFns(e *Effect, host *HostProperties) (pipe.ProcessFunc, pipe.FlushFunc) {
+func doubleFns(p *Plugin, host *HostProperties) (pipe.ProcessFunc, pipe.FlushFunc) {
 	doubleIn := NewDoubleBuffer(host.Channels, host.BufferSize)
 	doubleOut := NewDoubleBuffer(host.Channels, host.BufferSize)
 	return func(in, out signal.Floating) error {
 			doubleIn.CopyFrom(in)
-			e.ProcessDouble(doubleIn, doubleOut)
+			p.ProcessDouble(doubleIn, doubleOut)
 			host.CurrentPosition += int64(in.Length())
 			doubleOut.CopyTo(out)
 			return nil
@@ -128,17 +128,17 @@ func doubleFns(e *Effect, host *HostProperties) (pipe.ProcessFunc, pipe.FlushFun
 		func(context.Context) error {
 			doubleIn.Free()
 			doubleOut.Free()
-			e.Suspend()
+			p.Suspend()
 			return nil
 		}
 }
 
-func floatFns(e *Effect, host *HostProperties) (pipe.ProcessFunc, pipe.FlushFunc) {
+func floatFns(p *Plugin, host *HostProperties) (pipe.ProcessFunc, pipe.FlushFunc) {
 	floatIn := NewFloatBuffer(host.Channels, host.BufferSize)
 	floatOut := NewFloatBuffer(host.Channels, host.BufferSize)
 	return func(in, out signal.Floating) error {
 			floatIn.CopyFrom(in)
-			e.ProcessFloat(floatIn, floatOut)
+			p.ProcessFloat(floatIn, floatOut)
 			host.CurrentPosition += int64(in.Length())
 			floatOut.CopyTo(out)
 			return nil
@@ -146,7 +146,7 @@ func floatFns(e *Effect, host *HostProperties) (pipe.ProcessFunc, pipe.FlushFunc
 		func(context.Context) error {
 			floatIn.Free()
 			floatOut.Free()
-			e.Suspend()
+			p.Suspend()
 			return nil
 		}
 }

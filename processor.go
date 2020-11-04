@@ -3,6 +3,7 @@ package vst2
 import (
 	"context"
 	"time"
+	"unsafe"
 
 	"pipelined.dev/pipe"
 	"pipelined.dev/pipe/mutable"
@@ -10,6 +11,27 @@ import (
 )
 
 type (
+	// Processor is pipe component that wraps.
+	Processor struct {
+		host       *HostProperties
+		Effect     *Effect
+		Parameters []Parameter
+		Presets    []Preset
+	}
+
+	// Parameter refers to plugin parameter that can be mutated in the pipe.
+	Parameter struct {
+		name       string
+		unit       string
+		value      float32
+		valueLabel string
+	}
+
+	// Preset refers to plugin presets.
+	Preset struct {
+		name string
+	}
+
 	// HostProperties contains values required to handle plugin-to-host
 	// callbacks. It must be modified in the processing goroutine, otherwise
 	// race condition might happen.
@@ -26,87 +48,112 @@ type (
 
 	// ProcessorInitFunc applies configuration on plugin before starting it
 	// in the processor routine.
-	ProcessorInitFunc func(*Plugin)
+	ProcessorInitFunc func(*Effect)
 )
 
-// Processor represents vst2 sound processor. It loads plugin from the
-// provided vst and applies the following configuration: set up sample
-// rate, set up buffer size, calls provided init function and then starts
-// the plugin.
-func Processor(vst VST, callback HostCallbackAllocator, init ProcessorInitFunc) pipe.ProcessorAllocatorFunc {
+// Processor represents vst2 sound processor.
+func (v *VST) Processor(callback HostCallbackAllocator) Processor {
+	host := &HostProperties{}
+	e := v.Plugin(callback(host))
+	numParams := e.NumParams()
+	params := make([]Parameter, numParams)
+	for i := 0; i < numParams; i++ {
+		params = append(params, Parameter{
+			name:       e.ParamName(i),
+			unit:       e.ParamUnitName(i),
+			value:      e.ParamValue(i),
+			valueLabel: e.ParamValueName(i),
+		})
+	}
+	numPresets := e.NumPrograms()
+	presets := make([]Preset, numPresets)
+	for i := 0; i < numPresets; i++ {
+		presets = append(presets, Preset{
+			name: e.ProgramName(i),
+		})
+	}
+	return Processor{
+		Effect:     e,
+		host:       host,
+		Parameters: params,
+		Presets:    presets,
+	}
+}
+
+// Allocator returns pipe processor allocator that can be plugged into line.
+func (p *Processor) Allocator(init ProcessorInitFunc) pipe.ProcessorAllocatorFunc {
 	return func(mctx mutable.Context, bufferSize int, props pipe.SignalProperties) (pipe.Processor, error) {
-		host := HostProperties{
-			BufferSize: bufferSize,
-			Channels:   props.Channels,
-			SampleRate: props.SampleRate,
-		}
-		plugin := vst.Load(callback(&host))
-		plugin.SetSampleRate(int(props.SampleRate))
-		plugin.SetBufferSize(bufferSize)
+		p.host.BufferSize = bufferSize
+		p.host.Channels = props.Channels
+		p.host.SampleRate = props.SampleRate
+		p.Effect.Start()
+		p.Effect.SetSampleRate(int(props.SampleRate))
+		p.Effect.SetBufferSize(bufferSize)
 		if init != nil {
-			init(plugin)
+			init(p.Effect)
 		}
-		plugin.Start()
-
-		p := processor(plugin, &host)
-		p.Output = pipe.SignalProperties{
-			Channels:   props.Channels,
-			SampleRate: props.SampleRate,
-		}
-		return p, nil
+		processFn, flushFn := processorFns(p.Effect, p.host)
+		return pipe.Processor{
+			Output: pipe.SignalProperties{
+				Channels:   props.Channels,
+				SampleRate: props.SampleRate,
+			},
+			StartFunc: func(context.Context) error {
+				p.Effect.Resume()
+				return nil
+			},
+			ProcessFunc: processFn,
+			FlushFunc:   flushFn,
+		}, nil
 	}
 }
 
-func processor(plugin *Plugin, host *HostProperties) pipe.Processor {
-	if plugin.CanProcessFloat64() {
-		return doubleProcessor(plugin, host)
+func processorFns(e *Effect, host *HostProperties) (pipe.ProcessFunc, pipe.FlushFunc) {
+	if e.CanProcessFloat64() {
+		return doubleFns(e, host)
 	}
-	return floatProcessor(plugin, host)
+	return floatFns(e, host)
 }
 
-func doubleProcessor(plugin *Plugin, host *HostProperties) pipe.Processor {
+func doubleFns(e *Effect, host *HostProperties) (pipe.ProcessFunc, pipe.FlushFunc) {
 	doubleIn := NewDoubleBuffer(host.Channels, host.BufferSize)
 	doubleOut := NewDoubleBuffer(host.Channels, host.BufferSize)
-	return pipe.Processor{
-		ProcessFunc: func(in, out signal.Floating) error {
+	return func(in, out signal.Floating) error {
 			doubleIn.CopyFrom(in)
-			plugin.ProcessDouble(doubleIn, doubleOut)
+			e.ProcessDouble(doubleIn, doubleOut)
 			host.CurrentPosition += int64(in.Length())
 			doubleOut.CopyTo(out)
 			return nil
 		},
-		FlushFunc: func(context.Context) error {
+		func(context.Context) error {
 			doubleIn.Free()
 			doubleOut.Free()
-			plugin.Stop()
+			e.Suspend()
 			return nil
-		},
-	}
+		}
 }
 
-func floatProcessor(plugin *Plugin, host *HostProperties) pipe.Processor {
+func floatFns(e *Effect, host *HostProperties) (pipe.ProcessFunc, pipe.FlushFunc) {
 	floatIn := NewFloatBuffer(host.Channels, host.BufferSize)
 	floatOut := NewFloatBuffer(host.Channels, host.BufferSize)
-	return pipe.Processor{
-		ProcessFunc: func(in, out signal.Floating) error {
+	return func(in, out signal.Floating) error {
 			floatIn.CopyFrom(in)
-			plugin.ProcessFloat(floatIn, floatOut)
+			e.ProcessFloat(floatIn, floatOut)
 			host.CurrentPosition += int64(in.Length())
 			floatOut.CopyTo(out)
 			return nil
 		},
-		FlushFunc: func(context.Context) error {
+		func(context.Context) error {
 			floatIn.Free()
 			floatOut.Free()
-			plugin.Stop()
+			e.Suspend()
 			return nil
-		},
-	}
+		}
 }
 
 // DefaultHostCallback returns default vst2 host callback.
 func DefaultHostCallback(props *HostProperties) HostCallbackFunc {
-	return func(opcode HostOpcode, index Index, value Value, ptr Ptr, opt Opt) Return {
+	return func(opcode HostOpcode, index Index, value Value, ptr unsafe.Pointer, opt Opt) Return {
 		switch opcode {
 		case HostGetCurrentProcessLevel:
 			return Return(ProcessLevelRealtime)

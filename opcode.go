@@ -2,54 +2,98 @@
 
 package vst2
 
+/*
+#include <stdlib.h>
+*/
+import "C"
+import (
+	"strings"
+	"unicode"
+	"unsafe"
+)
+
+const (
+	maxVendorStrLen  = 64 // used for #effGetVendorString, #audioMasterGetVendorString
+	maxProductStrLen = 64 // used for #effGetProductString, #audioMasterGetProductString
+	maxEffectNameLen = 32 // used for #effGetEffectName
+
+	maxNameLen       = 64  // used for #MidiProgramName, #MidiProgramCategory, #MidiKeyName, #VstPinProperties
+	maxLabelLen      = 64  // used for #VstPinProperties->label
+	maxShortLabelLen = 8   // used for #VstPinProperties->shortLabel
+	maxFileNameLen   = 100 // used for #VstAudioFile->name
+)
+
+type (
+	// 8 bytes ascii string.
+	ascii8 [8]byte
+
+	// 24 bytes ascii string.
+	ascii24 [24]byte
+
+	// 64 bytes ascii string.
+	ascii64 [64]byte
+)
+
+func (s ascii8) String() string {
+	return trimNull(string(s[:]))
+}
+
+func (s ascii24) String() string {
+	return trimNull(string(s[:]))
+}
+
+func (s ascii64) String() string {
+	return trimNull(string(s[:]))
+}
+
 // EffectOpcode is sent by host in dispatch call to effect.
 // It reflects AEffectOpcodes and AEffectXOpcodes opcodes values.
 type EffectOpcode uint64
 
 const (
 	// EffOpen passed to open the plugin.
-	EffOpen EffectOpcode = iota
+	effOpen EffectOpcode = iota
 	// EffClose passed to close the plugin.
-	EffClose
+	effClose
 
 	// EffSetProgram passed to set program.
 	// Value: new program number.
-	EffSetProgram
+	effSetProgram
 	// EffGetProgram passed to get program.
 	// Return: current program number.
-	EffGetProgram
+	effGetProgram
 	// EffSetProgramName passed to set new program name.
 	// Ptr: *[maxProgNameLen]byte buffer with new program name.
-	EffSetProgramName
+	effSetProgramName
 	// EffGetProgramName passed to get current program name.
 	// Ptr: *[maxProgNameLen]byte buffer for current program name.
-	EffGetProgramName
+	effGetProgramName
 
 	// EffGetParamLabel passed to get parameter unit label: "db", "ms", etc.
 	// Index: parameter index.
 	// Ptr: *[maxParamStrLen]byte buffer for parameter unit label.
-	EffGetParamLabel
+	effGetParamLabel
 	// EffGetParamDisplay passed to get parameter value label: "0.5", "HALL", etc.
 	// Index: parameter index.
 	// Ptr: *[maxParamStrLen]byte buffer for parameter value label.
-	EffGetParamDisplay
+	effGetParamDisplay
 	// EffGetParamName passed to get parameter label: "Release", "Gain", etc.
 	// Index: parameter index.
 	// Ptr: *[maxParamStrLen]byte buffer for parameter label.
-	EffGetParamName
+	effGetParamName
 
 	// deprecated in VST v2.4
 	effGetVu
 
 	// EffSetSampleRate passed to set new sample rate.
 	// Opt: new sample rate value.
-	EffSetSampleRate
+	effSetSampleRate
 	// EffSetBufferSize passed to set new buffer size.
 	// Value: new buffer size value.
-	EffSetBufferSize
+	effSetBufferSize
 	// EffStateChanged passed when plugin's state changed.
 	// Value: 0 means disabled, 1 means enabled.
-	EffStateChanged
+	effStateChanged
 
 	// EffEditGetRect passed to get editor size.
 	// Ptr: ERect** receiving pointer to editor size.
@@ -81,12 +125,12 @@ const (
 	// Ptr: pointer for chunk data address (void**) uint8.
 	// Index: 0 for bank, 1 for program.
 	// Return: length of data.
-	EffGetChunk
+	effGetChunk
 	// EffSetChunk passed to set chunk data.
 	// Ptr: pointer for chunk data address (void*).
 	// Value: data size in bytes.
 	// Index: 0 for bank, 1 for program.
-	EffSetChunk
+	effSetChunk
 
 	// EffProcessEvents passed to communicate events.
 	// Ptr: *Events.
@@ -108,7 +152,7 @@ const (
 	// Index: program index.
 	// Ptr: *[maxProgNameLen]byte buffer for program name.
 	// Return: true for success.
-	EffGetProgramNameIndexed
+	effGetProgramNameIndexed
 
 	// deprecated in VST v2.4
 	effCopyProgram
@@ -156,7 +200,7 @@ const (
 	// EffSetSpeakerArrangement passed to set speakers configuration.
 	// Value: input *SpeakerArrangement.
 	// Ptr: output *SpeakerArrangement.
-	EffSetSpeakerArrangement
+	effSetSpeakerArrangement
 
 	// deprecated in VST v2.4
 	effSetBlockSizeAndSampleRate
@@ -203,7 +247,7 @@ const (
 	// Index: parameter index.
 	// Ptr: *ParameterProperties.
 	// Return: 1 if supported
-	EffGetParameterProperties
+	effGetParameterProperties
 
 	// deprecated in VST v2.4
 	effKeysRequired
@@ -463,3 +507,148 @@ const (
 	// deprecated in VST v2.4
 	hostGetInputSpeakerArrangement
 )
+
+// Start executes the EffOpen opcode.
+func (e *Effect) Start() {
+	e.Dispatch(effOpen, 0, 0, nil, 0.0)
+}
+
+// Close stops the plugin and cleans up C refs for plugin.
+func (e *Effect) Close() {
+	e.Dispatch(effClose, 0, 0, nil, 0.0)
+	mutex.Lock()
+	delete(callbacks, e)
+	mutex.Unlock()
+}
+
+// Resume the plugin processing. It must be called before processing is
+// done.
+func (e *Effect) Resume() {
+	e.Dispatch(effStateChanged, 0, 1, nil, 0)
+}
+
+// Suspend the plugin processing. It must be called after processing is
+// done and no new signal is expected at this moment.
+func (e *Effect) Suspend() {
+	e.Dispatch(effStateChanged, 0, 0, nil, 0)
+}
+
+// SetBufferSize sets a buffer size per channel.
+func (e *Effect) SetBufferSize(bufferSize int) {
+	e.Dispatch(effSetBufferSize, 0, Value(bufferSize), nil, 0)
+}
+
+// SetSampleRate sets a sample rate for plugin.
+func (e *Effect) SetSampleRate(sampleRate int) {
+	e.Dispatch(effSetSampleRate, 0, 0, nil, Opt(sampleRate))
+}
+
+// SetSpeakerArrangement creates and passes SpeakerArrangement structures to plugin
+func (e *Effect) SetSpeakerArrangement(in, out *SpeakerArrangement) {
+	e.Dispatch(effSetSpeakerArrangement, 0, in.Value(), out.Ptr(), 0)
+}
+
+// ParamName returns the parameter label: "Release", "Gain", etc.
+func (e *Effect) ParamName(index int) string {
+	var s ascii8
+	e.Dispatch(effGetParamName, Index(index), 0, unsafe.Pointer(&s), 0)
+	return s.String()
+}
+
+// ParamValueName returns the parameter value label: "0.5", "HALL", etc.
+func (e *Effect) ParamValueName(index int) string {
+	var s ascii8
+	e.Dispatch(effGetParamDisplay, Index(index), 0, unsafe.Pointer(&s), 0)
+	return s.String()
+}
+
+// ParamUnitName returns the parameter unit label: "db", "ms", etc.
+func (e *Effect) ParamUnitName(index int) string {
+	var s ascii8
+	e.Dispatch(effGetParamLabel, Index(index), 0, unsafe.Pointer(&s), 0)
+	return s.String()
+}
+
+// CurrentProgramName returns current program name.
+func (e *Effect) CurrentProgramName() string {
+	var s ascii24
+	e.Dispatch(effGetProgramName, 0, 0, unsafe.Pointer(&s), 0)
+	return s.String()
+}
+
+// ProgramName returns program name for provided program index.
+func (e *Effect) ProgramName(index int) string {
+	var s ascii24
+	e.Dispatch(effGetProgramNameIndexed, Index(index), 0, unsafe.Pointer(&s), 0)
+	return s.String()
+}
+
+// SetCurrentProgramName sets new name to the current program. It will use
+// up to 24 ASCII characters. Non-ASCII characters are ignored.
+func (e *Effect) SetCurrentProgramName(s string) {
+	var ps ascii24
+	copy(ps[:], []byte(removeNonASCII(s)))
+	e.Dispatch(effSetProgramName, 0, 0, unsafe.Pointer(&ps), 0)
+}
+
+// Program returns current program number.
+func (e *Effect) Program() int {
+	return int(e.Dispatch(effGetProgram, 0, 0, nil, 0))
+}
+
+// SetProgram changes current program index.
+func (e *Effect) SetProgram(index int) {
+	e.Dispatch(effSetProgram, 0, Value(index), nil, 0)
+}
+
+// ParamProperties returns parameter properties for provided parameter
+// index. If opcode is not supported, boolean result is false.
+func (e *Effect) ParamProperties(index int) (*ParameterProperties, bool) {
+	var props ParameterProperties
+	r := e.Dispatch(effGetParameterProperties, Index(index), 0, unsafe.Pointer(&props), 0)
+	if r > 0 {
+		return &props, true
+	}
+	return nil, false
+}
+
+// GetProgramData returns current preset data. Plugin allocates required
+// memory, then this function allocates new byte slice of required length
+// where data is copied.
+func (e *Effect) GetProgramData() []byte {
+	var ptr unsafe.Pointer
+	length := C.int(e.Dispatch(effGetChunk, 1, 0, unsafe.Pointer(&ptr), 0))
+	return C.GoBytes(ptr, length)
+}
+
+// SetProgramData sets preset data to the plugin. Data is the full preset
+// including chunk header.
+func (e *Effect) SetProgramData(data []byte) {
+	e.Dispatch(effSetChunk, 1, Value(len(data)), unsafe.Pointer(&data[0]), 0)
+}
+
+// GetBankData returns current bank data. Plugin allocates required
+// memory, then this function allocates new byte slice of required length
+// where data is copied.
+func (e *Effect) GetBankData() []byte {
+	var ptr unsafe.Pointer
+	length := C.int(e.Dispatch(effGetChunk, 0, 0, unsafe.Pointer(&ptr), 0))
+	return C.GoBytes(ptr, length)
+}
+
+// SetBankData sets preset data to the plugin. Data is the full preset
+// including chunk header.
+func (e *Effect) SetBankData(data []byte) {
+	ptr := C.CBytes(data)
+	e.Dispatch(effSetChunk, 0, Value(len(data)), unsafe.Pointer(ptr), 0)
+	C.free(ptr)
+}
+
+func removeNonASCII(s string) string {
+	return strings.Map(func(r rune) rune {
+		if r > unicode.MaxASCII {
+			return -1
+		}
+		return r
+	}, s)
+}

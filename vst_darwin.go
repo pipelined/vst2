@@ -24,7 +24,7 @@ var (
 )
 
 // Open loads the plugin entry point into memory. It's CFBundle in OS X.
-func Open(path string) (*EntryPoint, error) {
+func Open(path string) (*VST, error) {
 	// convert to CF string.
 	cfpath := C.CFStringCreateWithCString(0, stringToCString(path), C.kCFStringEncodingUTF8)
 	defer C.CFRelease(C.CFTypeRef(cfpath))
@@ -52,7 +52,7 @@ func Open(path string) (*EntryPoint, error) {
 		C.CFRelease(C.CFTypeRef(C.CFBundleRef(bundle)))
 		return nil, fmt.Errorf("failed to find entry point in bundle %v", path)
 	}
-	return &EntryPoint{
+	return &VST{
 		main:   effectMain(ep),
 		handle: uintptr(bundle),
 		Name:   getName(bundle),
@@ -84,7 +84,7 @@ func stringToCString(s string) *C.char {
 }
 
 // Close frees plugin handle.
-func (m *EntryPoint) Close() error {
-	C.CFRelease(C.CFTypeRef(C.CFBundleRef(m.handle)))
+func (v *VST) Close() error {
+	C.CFRelease(C.CFTypeRef(C.CFBundleRef(v.handle)))
 	return nil
 }

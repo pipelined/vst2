@@ -2,17 +2,16 @@
 package vst2
 
 type (
-	// VST used to create new instances of plugin.
+	// VST is a reference to VST main function.
 	// It also keeps reference to VST handle to clean up on Close.
-	VST EntryPoint
+	VST struct {
+		main   effectMain
+		handle uintptr
+		Name   string
+	}
 )
 
 // Open loads the VST into memory and stores entry point func.
-
-// Close cleans up VST resources.
-func (v *VST) Close() error {
-	return (*EntryPoint)(v).Close()
-}
 
 // Load new instance of VST plugin with provided callback.
 // This function also calls dispatch with EffOpen opcode.

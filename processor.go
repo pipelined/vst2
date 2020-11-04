@@ -18,6 +18,7 @@ type (
 		Presets    []Preset
 	}
 
+	// Parameter refers to plugin parameter that can be mutated in the pipe.
 	Parameter struct {
 		name       string
 		unit       string
@@ -25,6 +26,7 @@ type (
 		valueLabel string
 	}
 
+	// Preset refers to plugin presets.
 	Preset struct {
 		name string
 	}

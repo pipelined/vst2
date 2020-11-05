@@ -46,7 +46,7 @@ func (v *VST) Plugin(c HostCallbackFunc) *Plugin {
 }
 
 // Dispatch wraps-up C method to dispatch calls to plugin
-func (p *Plugin) Dispatch(opcode PluginOpcode, index Index, value Value, ptr unsafe.Pointer, opt Opt) uintptr {
+func (p *Plugin) Dispatch(opcode PluginOpcode, index int32, value int64, ptr unsafe.Pointer, opt float32) uintptr {
 	return uintptr(C.dispatch((*C.Plugin)(p), C.int32_t(opcode), C.int32_t(index), C.int64_t(value), unsafe.Pointer(ptr), C.float(opt)))
 }
 

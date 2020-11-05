@@ -6,24 +6,11 @@ package vst2
 */
 import "C"
 import (
+	"fmt"
 	"sync"
-	"time"
 	"unsafe"
-)
 
-type (
-	// HostCallbackFunc used as callback function called by plugin. Use closure
-	// wrapping technique to add more types to callback.
-	HostCallbackFunc func(HostOpcode, Index, Value, unsafe.Pointer, Opt) Return
-
-	// Index is index in plugin dispatch/host callback.
-	Index int64
-	// Value is value in plugin dispatch/host callback.
-	Value int64
-	// Opt is opt in plugin dispatch/host callback.
-	Opt float64
-	// Return is returned value for dispatch/host callback.
-	Return int64
+	"pipelined.dev/signal"
 )
 
 // global state for callbacks.
@@ -34,7 +21,7 @@ var (
 
 //export hostCallback
 // global hostCallback, calls real callback.
-func hostCallback(p *Plugin, opcode int64, index int64, value int64, ptr unsafe.Pointer, opt float64) Return {
+func hostCallback(p *Plugin, opcode int64, index int64, value int64, ptr unsafe.Pointer, opt float64) uintptr {
 	// HostVersion is requested when plugin is created
 	// It's never in map
 	if HostOpcode(opcode) == HostVersion {
@@ -53,28 +40,67 @@ func hostCallback(p *Plugin, opcode int64, index int64, value int64, ptr unsafe.
 	return c(HostOpcode(opcode), Index(index), Value(value), ptr, Opt(opt))
 }
 
-// DefaultHostCallback returns default vst2 host callback.
-func DefaultHostCallback(props *HostProperties) HostCallbackFunc {
-	return func(opcode HostOpcode, index Index, value Value, ptr unsafe.Pointer, opt Opt) Return {
+type (
+	// HostCallbackFunc used as callback function called by plugin. Use closure
+	// wrapping technique to add more types to callback.
+	HostCallbackFunc func(HostOpcode, Index, Value, unsafe.Pointer, Opt) uintptr
+
+	// Index is index in plugin dispatch/host callback.
+	Index int64
+	// Value is value in plugin dispatch/host callback.
+	Value int64
+	// Opt is opt in plugin dispatch/host callback.
+	Opt float64
+	// // Return is returned value for dispatch/host callback.
+	// Return uintptr
+
+	// HostCallbackAllocator returns new host callback function that does
+	// proper casting of plugin calls.
+	HostCallbackAllocator struct {
+		GetSampleRate   HostGetSampleRateFunc
+		GetBufferSize   HostGetBufferSizeFunc
+		GetProcessLevel HostGetProcessLevel
+		GetTimeInfo     HostGetTimeInfo
+	}
+
+	// HostGetSampleRateFunc returns host sample rate.
+	HostGetSampleRateFunc func() signal.Frequency
+	// HostGetBufferSizeFunc returns host buffer size.
+	HostGetBufferSizeFunc func() int
+	// HostGetProcessLevel returns the context of execution.
+	HostGetProcessLevel func() ProcessLevel
+	// HostGetTimeInfo returns current time info.
+	HostGetTimeInfo func() *TimeInfo
+)
+
+func HostCallback(h HostCallbackAllocator) HostCallbackFunc {
+	return func(opcode HostOpcode, index Index, value Value, ptr unsafe.Pointer, opt Opt) uintptr {
 		switch opcode {
 		case HostGetCurrentProcessLevel:
-			return Return(ProcessLevelRealtime)
-		case HostGetSampleRate:
-			return Return(props.SampleRate)
-		case HostGetBlockSize:
-			return Return(props.SampleRate)
-		case HostGetTime:
-			ti := &TimeInfo{
-				SampleRate:         float64(props.SampleRate),
-				SamplePos:          float64(props.CurrentPosition),
-				NanoSeconds:        float64(time.Now().UnixNano()),
-				TimeSigNumerator:   4,
-				TimeSigDenominator: 4,
+			if h.GetProcessLevel != nil {
+				return uintptr(h.GetProcessLevel())
 			}
-			return ti.Return()
-		default:
-			break
+		case HostGetSampleRate:
+			if h.GetSampleRate != nil {
+				return uintptr(h.GetSampleRate())
+			}
+		case HostGetBlockSize:
+			if h.GetBufferSize != nil {
+				return uintptr(h.GetBufferSize())
+			}
+		case HostGetTime:
+			if h.GetTimeInfo != nil {
+				return uintptr(unsafe.Pointer(h.GetTimeInfo()))
+			}
 		}
+		return 0
+	}
+}
+
+// DefaultHostCallback returns default vst2 host callback.
+func DefaultHostCallback() HostCallbackFunc {
+	return func(opcode HostOpcode, index Index, value Value, ptr unsafe.Pointer, opt Opt) uintptr {
+		fmt.Printf("host received opcode: %v\n", opcode)
 		return 0
 	}
 }

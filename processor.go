@@ -11,7 +11,7 @@ import (
 type (
 	// Processor is pipe component that wraps.
 	Processor struct {
-		host       *HostProperties
+		host       processorHost
 		Plugin     *Plugin
 		Parameters []Parameter
 		Presets    []Preset
@@ -30,29 +30,39 @@ type (
 		name string
 	}
 
-	// HostProperties contains values required to handle plugin-to-host
+	// ProcessorHost contains values required to handle plugin-to-host
 	// callbacks. It must be modified in the processing goroutine, otherwise
 	// race condition might happen.
-	HostProperties struct {
+	processorHost struct {
 		BufferSize      int
 		Channels        int
 		SampleRate      signal.Frequency
 		CurrentPosition int64
 	}
 
-	// HostCallbackAllocator returns new host callback function that uses host
-	// properties to interact with the plugin.
-	HostCallbackAllocator func(*HostProperties) HostCallbackFunc
-
 	// ProcessorInitFunc applies configuration on plugin before starting it
 	// in the processor routine.
 	ProcessorInitFunc func(*Plugin)
 )
 
+func (h *processorHost) callback() HostCallbackFunc {
+	return HostCallback(HostCallbackAllocator{
+		GetSampleRate: func() signal.Frequency {
+			return h.SampleRate
+		},
+		GetBufferSize: func() int {
+			return h.BufferSize
+		},
+		GetProcessLevel: func() ProcessLevel {
+			return ProcessLevelRealtime
+		},
+	})
+}
+
 // Processor represents vst2 sound processor.
-func (v *VST) Processor(callback HostCallbackAllocator) Processor {
-	host := &HostProperties{}
-	p := v.Plugin(callback(host))
+func (v *VST) Processor() Processor {
+	host := processorHost{}
+	p := v.Plugin(host.callback())
 	numParams := p.NumParams()
 	params := make([]Parameter, numParams)
 	for i := 0; i < numParams; i++ {
@@ -71,8 +81,8 @@ func (v *VST) Processor(callback HostCallbackAllocator) Processor {
 		})
 	}
 	return Processor{
-		Plugin:     p,
 		host:       host,
+		Plugin:     p,
 		Parameters: params,
 		Presets:    presets,
 	}
@@ -90,7 +100,7 @@ func (p *Processor) Allocator(init ProcessorInitFunc) pipe.ProcessorAllocatorFun
 		if init != nil {
 			init(p.Plugin)
 		}
-		processFn, flushFn := processorFns(p.Plugin, p.host)
+		processFn, flushFn := processorFns(p.Plugin, &p.host)
 		return pipe.Processor{
 			Output: pipe.SignalProperties{
 				Channels:   props.Channels,
@@ -106,14 +116,14 @@ func (p *Processor) Allocator(init ProcessorInitFunc) pipe.ProcessorAllocatorFun
 	}
 }
 
-func processorFns(p *Plugin, host *HostProperties) (pipe.ProcessFunc, pipe.FlushFunc) {
+func processorFns(p *Plugin, host *processorHost) (pipe.ProcessFunc, pipe.FlushFunc) {
 	if p.CanProcessFloat64() {
 		return doubleFns(p, host)
 	}
 	return floatFns(p, host)
 }
 
-func doubleFns(p *Plugin, host *HostProperties) (pipe.ProcessFunc, pipe.FlushFunc) {
+func doubleFns(p *Plugin, host *processorHost) (pipe.ProcessFunc, pipe.FlushFunc) {
 	doubleIn := NewDoubleBuffer(host.Channels, host.BufferSize)
 	doubleOut := NewDoubleBuffer(host.Channels, host.BufferSize)
 	return func(in, out signal.Floating) error {
@@ -131,7 +141,7 @@ func doubleFns(p *Plugin, host *HostProperties) (pipe.ProcessFunc, pipe.FlushFun
 		}
 }
 
-func floatFns(p *Plugin, host *HostProperties) (pipe.ProcessFunc, pipe.FlushFunc) {
+func floatFns(p *Plugin, host *processorHost) (pipe.ProcessFunc, pipe.FlushFunc) {
 	floatIn := NewFloatBuffer(host.Channels, host.BufferSize)
 	floatOut := NewFloatBuffer(host.Channels, host.BufferSize)
 	return func(in, out signal.Floating) error {

@@ -17,11 +17,3 @@ func (sa *SpeakerArrangement) Ptr() unsafe.Pointer {
 	}
 	return unsafe.Pointer(unsafe.Pointer(sa))
 }
-
-// Return cast used in HostGetTime call.
-func (ti *TimeInfo) Return() Return {
-	if ti == nil {
-		return 0
-	}
-	return Return(uintptr(unsafe.Pointer(ti)))
-}

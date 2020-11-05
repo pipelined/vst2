@@ -64,6 +64,8 @@ type (
 	HostGetTimeInfo func() *TimeInfo
 )
 
+// HostCallback returns HostCallbackFunc that handles all vst types casts
+// and allows to write handlers without usage of unsafe package.
 func HostCallback(h HostCallbackAllocator) HostCallbackFunc {
 	return func(op HostOpcode, index int32, value int64, ptr unsafe.Pointer, opt float32) uintptr {
 		switch op {
@@ -88,8 +90,9 @@ func HostCallback(h HostCallbackAllocator) HostCallbackFunc {
 	}
 }
 
-// DefaultHostCallback returns default vst2 host callback.
-func DefaultHostCallback() HostCallbackFunc {
+// NoopHostCallback returns dummy host callback that just prints received
+// opcodes.
+func NoopHostCallback() HostCallbackFunc {
 	return func(op HostOpcode, index int32, value int64, ptr unsafe.Pointer, opt float32) uintptr {
 		fmt.Printf("host received opcode: %v\n", op)
 		return 0

@@ -28,19 +28,19 @@ type (
 // global state for callbacks.
 var (
 	mutex     sync.RWMutex
-	callbacks = make(map[*Effect]HostCallbackFunc)
+	callbacks = make(map[*Plugin]HostCallbackFunc)
 )
 
 //export hostCallback
 // global hostCallback, calls real callback.
-func hostCallback(e *Effect, opcode int64, index int64, value int64, ptr unsafe.Pointer, opt float64) Return {
+func hostCallback(p *Plugin, opcode int64, index int64, value int64, ptr unsafe.Pointer, opt float64) Return {
 	// HostVersion is requested when plugin is created
 	// It's never in map
 	if HostOpcode(opcode) == HostVersion {
 		return version
 	}
 	mutex.RLock()
-	c, ok := callbacks[e]
+	c, ok := callbacks[p]
 	mutex.RUnlock()
 	if !ok {
 		panic("plugin was closed")

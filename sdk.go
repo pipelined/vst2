@@ -311,44 +311,43 @@ const (
 	SpeakerLfe2
 )
 
-// EffectFlags values.
-type EffectFlags int32
+// PluginFlags values.
+type PluginFlags int32
 
 const (
-	// EffFlagsHasEditor is set if the plugin provides a custom editor.
-	EffFlagsHasEditor EffectFlags = 1 << iota
+	// PluginHasEditor is set if the plugin provides a custom editor.
+	PluginHasEditor PluginFlags = 1 << iota
 	_
 	_
 	_
-	// EffFlagsCanReplacing is set if plugin supports replacing process
-	// mode.
-	EffFlagsCanReplacing
-	// EffFlagsProgramChunks is set if preset data is handled in formatless
+	// PluginFloatProcessing is set if plugin supports replacing process mode.
+	PluginFloatProcessing
+	// PluginProgramChunks is set if preset data is handled in formatless
 	// chunks.
-	EffFlagsProgramChunks
+	PluginProgramChunks
 	_
 	_
-	// EffFlagsIsSynth is set if plugin is a synth.
-	EffFlagsIsSynth
-	// EffFlagsNoSoundInStop is set if plugin does not produce sound when
+	// PluginIsSynth is set if plugin is a synth.
+	PluginIsSynth
+	// PluginNoSoundInStop is set if plugin does not produce sound when
 	// input is silence.
-	EffFlagsNoSoundInStop
+	PluginNoSoundInStop
 	_
 	_
-	// EffFlagsCanDoubleReplacing is set if plugin supports double
-	// precision processing.
-	EffFlagsCanDoubleReplacing
+	// PluginDoubleProcessing is set if plugin supports double precision
+	// processing.
+	PluginDoubleProcessing
 
 	// deprecated in VST v2.4
-	effFlagsHasClip
+	pluginHasClip
 	// deprecated in VST v2.4
-	effFlagsHasVu
+	pluginHasVu
 	// deprecated in VST v2.4
-	effFlagsCanMono
+	pluginCanMono
 	// deprecated in VST v2.4
-	effFlagsExtIsAsync
+	pluginExtIsAsync
 	// deprecated in VST v2.4
-	effFlagsExtHasBuffer
+	pluginExtHasBuffer
 )
 
 // ProcessLevels are used as result for in HostGetCurrentProcessLevel call.

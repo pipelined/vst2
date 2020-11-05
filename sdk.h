@@ -1,15 +1,15 @@
 #include <stdint.h>
 
-typedef struct Effect Effect;
+typedef struct Plugin Plugin;
 
-typedef	int64_t (*HostCallback) (Effect* effect, int32_t opcode, int32_t index, int64_t value, void* ptr, float opt);
-typedef int64_t (*DispatchProc) (Effect* effect, int32_t opcode, int32_t index, int64_t value, void* ptr, float opt);
-typedef void (*EffectProcessProc) (Effect* effect, float** inputs, float** outputs, int32_t sampleFrames);
-typedef void (*EffectProcessDoubleProc) (Effect* effect, double** inputs, double** outputs, int32_t sampleFrames);
-typedef void (*SetParameterProc) (Effect* effect, int32_t index, float parameter);
-typedef float (*GetParameterProc) (Effect* effect, int32_t index);
+typedef	int64_t (*HostCallback) (Plugin* plugin, int32_t opcode, int32_t index, int64_t value, void* ptr, float opt);
+typedef int64_t (*DispatchProc) (Plugin* plugin, int32_t opcode, int32_t index, int64_t value, void* ptr, float opt);
+typedef void (*FloatProcessProc) (Plugin* plugin, float** inputs, float** outputs, int32_t sampleFrames);
+typedef void (*DoubleProcessProc) (Plugin* plugin, double** inputs, double** outputs, int32_t sampleFrames);
+typedef void (*SetParameterProc) (Plugin* plugin, int32_t index, float parameter);
+typedef float (*GetParameterProc) (Plugin* plugin, int32_t index);
 
-struct Effect
+struct Plugin
 {
 	// EffectMagic value.
 	int32_t magic;
@@ -17,7 +17,7 @@ struct Effect
 	DispatchProc dispatcher;
 
 	// Deprecated.
-	EffectProcessProc process;
+	FloatProcessProc process;
 
 	// Set new value of automatable parameter.
 	SetParameterProc setParameter;
@@ -64,31 +64,31 @@ struct Effect
 	int32_t version;
 
 	// Process audio samples in replacing mode with single precision.
-	EffectProcessProc processReplacing;
+	FloatProcessProc processReplacing;
 	// Process audio samples in replacing mode with double precision.
-	EffectProcessDoubleProc processDoubleReplacing;
+	DoubleProcessProc processDoubleReplacing;
 
 	// Reserved for extension.
 	char future[56];
 };
 
 // Plugin's entry point
-typedef Effect* (*EntryPoint)(HostCallback host);
+typedef Plugin* (*EntryPoint)(HostCallback host);
 
 // Bridge function to call entry point on Effect
-Effect* loadEffect(EntryPoint load);
+Plugin* loadPlugin(EntryPoint load);
 
 // Bridge to call dispatch function of loaded plugin
-int64_t dispatch(Effect *effect, int32_t opcode, int32_t index, int64_t value, void *ptr, float opt);
+int64_t dispatch(Plugin *plugin, int32_t opcode, int32_t index, int64_t value, void *ptr, float opt);
 
 // Bridge to call process replacing function of loaded plugin
-void processDouble(Effect *effect, int32_t numChannels, int32_t blocksize, double **inputs, double **outputs);
+void processDouble(Plugin *plugin, int32_t numChannels, int32_t blocksize, double **inputs, double **outputs);
 
 // Bridge to call process replacing function of loaded plugin
-void processFloat(Effect *effect, int32_t numChannels, int32_t blocksize, float **inputs, float **outputs);
+void processFloat(Plugin *plugin, int32_t numChannels, int32_t blocksize, float **inputs, float **outputs);
 
 // Bridge to call get parameter fucntion of loaded plugin
-float getParameter(Effect *effect, int32_t paramIndex);
+float getParameter(Plugin *plugin, int32_t paramIndex);
 
 // Bridge to call set parameter fucntion of loaded plugin
-void setParameter(Effect *effect, int32_t paramIndex, float value);
+void setParameter(Plugin *plugin, int32_t paramIndex, float value);

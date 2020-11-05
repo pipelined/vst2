@@ -53,7 +53,7 @@ func Open(path string) (*VST, error) {
 		return nil, fmt.Errorf("failed to find entry point in bundle %v", path)
 	}
 	return &VST{
-		main:   effectMain(ep),
+		main:   pluginMain(ep),
 		handle: uintptr(bundle),
 		Name:   getName(bundle),
 	}, nil

@@ -1,5 +1,9 @@
 name: Test
-on: [push, pull_request]
+on:
+  push:
+    branches:
+      - master
+  pull_request:
 jobs:
   test:
     strategy:
@@ -14,7 +18,7 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v2
     - name: Test
-      run: go test -race -coverprofile=coverage.txt -covermode=atomic ./...
+      run: go test --race --coverprofile=coverage.txt --covermode=atomic ./...
     - name: Upload coverage
       uses: codecov/codecov-action@v1
       with:

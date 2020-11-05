@@ -15,7 +15,7 @@ import (
 // provided prefix. This technique allows to provide callback with any
 // context needed.
 func PrinterHostCallback(prefix string) vst2.HostCallbackFunc {
-	return func(code vst2.HostOpcode, _ vst2.Index, _ vst2.Value, _ unsafe.Pointer, _ vst2.Opt) uintptr {
+	return func(code vst2.HostOpcode, index int32, value int64, ptr unsafe.Pointer, opt float32) uintptr {
 		fmt.Printf("%s: %v\n", prefix, code)
 		return 0
 	}

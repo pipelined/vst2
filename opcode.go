@@ -10,6 +10,8 @@ import (
 	"strings"
 	"unicode"
 	"unsafe"
+
+	"pipelined.dev/signal"
 )
 
 const (
@@ -535,37 +537,37 @@ func (p *Plugin) Suspend() {
 
 // SetBufferSize sets a buffer size per channel.
 func (p *Plugin) SetBufferSize(bufferSize int) {
-	p.Dispatch(plugSetBufferSize, 0, Value(bufferSize), nil, 0)
+	p.Dispatch(plugSetBufferSize, 0, int64(bufferSize), nil, 0)
 }
 
 // SetSampleRate sets a sample rate for plugin.
-func (p *Plugin) SetSampleRate(sampleRate int) {
-	p.Dispatch(plugSetSampleRate, 0, 0, nil, Opt(sampleRate))
+func (p *Plugin) SetSampleRate(sampleRate signal.Frequency) {
+	p.Dispatch(plugSetSampleRate, 0, 0, nil, float32(sampleRate))
 }
 
 // SetSpeakerArrangement creates and passes SpeakerArrangement structures to plugin
 func (p *Plugin) SetSpeakerArrangement(in, out *SpeakerArrangement) {
-	p.Dispatch(plugSetSpeakerArrangement, 0, in.Value(), out.Ptr(), 0)
+	p.Dispatch(plugSetSpeakerArrangement, 0, int64(uintptr(unsafe.Pointer(in))), unsafe.Pointer(out), 0)
 }
 
 // ParamName returns the parameter label: "Release", "Gain", etc.
 func (p *Plugin) ParamName(index int) string {
 	var s ascii8
-	p.Dispatch(plugGetParamName, Index(index), 0, unsafe.Pointer(&s), 0)
+	p.Dispatch(plugGetParamName, int32(index), 0, unsafe.Pointer(&s), 0)
 	return s.String()
 }
 
 // ParamValueName returns the parameter value label: "0.5", "HALL", etc.
 func (p *Plugin) ParamValueName(index int) string {
 	var s ascii8
-	p.Dispatch(plugGetParamDisplay, Index(index), 0, unsafe.Pointer(&s), 0)
+	p.Dispatch(plugGetParamDisplay, int32(index), 0, unsafe.Pointer(&s), 0)
 	return s.String()
 }
 
 // ParamUnitName returns the parameter unit label: "db", "ms", etc.
 func (p *Plugin) ParamUnitName(index int) string {
 	var s ascii8
-	p.Dispatch(plugGetParamLabel, Index(index), 0, unsafe.Pointer(&s), 0)
+	p.Dispatch(plugGetParamLabel, int32(index), 0, unsafe.Pointer(&s), 0)
 	return s.String()
 }
 
@@ -579,7 +581,7 @@ func (p *Plugin) CurrentProgramName() string {
 // ProgramName returns program name for provided program index.
 func (p *Plugin) ProgramName(index int) string {
 	var s ascii24
-	p.Dispatch(plugGetProgramNameIndexed, Index(index), 0, unsafe.Pointer(&s), 0)
+	p.Dispatch(plugGetProgramNameIndexed, int32(index), 0, unsafe.Pointer(&s), 0)
 	return s.String()
 }
 
@@ -598,14 +600,14 @@ func (p *Plugin) Program() int {
 
 // SetProgram changes current program index.
 func (p *Plugin) SetProgram(index int) {
-	p.Dispatch(plugSetProgram, 0, Value(index), nil, 0)
+	p.Dispatch(plugSetProgram, 0, int64(index), nil, 0)
 }
 
 // ParamProperties returns parameter properties for provided parameter
 // index. If opcode is not supported, boolean result is false.
 func (p *Plugin) ParamProperties(index int) (*ParameterProperties, bool) {
 	var props ParameterProperties
-	r := p.Dispatch(plugGetParameterProperties, Index(index), 0, unsafe.Pointer(&props), 0)
+	r := p.Dispatch(plugGetParameterProperties, int32(index), 0, unsafe.Pointer(&props), 0)
 	if r > 0 {
 		return &props, true
 	}
@@ -624,7 +626,7 @@ func (p *Plugin) GetProgramData() []byte {
 // SetProgramData sets preset data to the plugin. Data is the full preset
 // including chunk header.
 func (p *Plugin) SetProgramData(data []byte) {
-	p.Dispatch(plugSetChunk, 1, Value(len(data)), unsafe.Pointer(&data[0]), 0)
+	p.Dispatch(plugSetChunk, 1, int64(len(data)), unsafe.Pointer(&data[0]), 0)
 }
 
 // GetBankData returns current bank data. Plugin allocates required
@@ -640,7 +642,7 @@ func (p *Plugin) GetBankData() []byte {
 // including chunk header.
 func (p *Plugin) SetBankData(data []byte) {
 	ptr := C.CBytes(data)
-	p.Dispatch(plugSetChunk, 0, Value(len(data)), unsafe.Pointer(ptr), 0)
+	p.Dispatch(plugSetChunk, 0, int64(len(data)), unsafe.Pointer(ptr), 0)
 	C.free(ptr)
 }
 

@@ -95,7 +95,7 @@ func (p *Processor) Allocator(init ProcessorInitFunc) pipe.ProcessorAllocatorFun
 		p.host.Channels = props.Channels
 		p.host.SampleRate = props.SampleRate
 		p.Plugin.Start()
-		p.Plugin.SetSampleRate(int(props.SampleRate))
+		p.Plugin.SetSampleRate(props.SampleRate)
 		p.Plugin.SetBufferSize(bufferSize)
 		if init != nil {
 			init(p.Plugin)

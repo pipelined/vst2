@@ -21,7 +21,7 @@ var (
 
 //export hostCallback
 // global hostCallback, calls real callback.
-func hostCallback(p *Plugin, opcode int64, index int64, value int64, ptr unsafe.Pointer, opt float64) uintptr {
+func hostCallback(p *Plugin, opcode int64, index int32, value int64, ptr unsafe.Pointer, opt float32) uintptr {
 	// HostVersion is requested when plugin is created
 	// It's never in map
 	if HostOpcode(opcode) == HostVersion {
@@ -37,22 +37,13 @@ func hostCallback(p *Plugin, opcode int64, index int64, value int64, ptr unsafe.
 	if c == nil {
 		panic("host callback is undefined")
 	}
-	return c(HostOpcode(opcode), Index(index), Value(value), ptr, Opt(opt))
+	return c(HostOpcode(opcode), index, value, ptr, opt)
 }
 
 type (
 	// HostCallbackFunc used as callback function called by plugin. Use closure
 	// wrapping technique to add more types to callback.
-	HostCallbackFunc func(HostOpcode, Index, Value, unsafe.Pointer, Opt) uintptr
-
-	// Index is index in plugin dispatch/host callback.
-	Index int64
-	// Value is value in plugin dispatch/host callback.
-	Value int64
-	// Opt is opt in plugin dispatch/host callback.
-	Opt float64
-	// // Return is returned value for dispatch/host callback.
-	// Return uintptr
+	HostCallbackFunc func(op HostOpcode, index int32, value int64, ptr unsafe.Pointer, opt float32) uintptr
 
 	// HostCallbackAllocator returns new host callback function that does
 	// proper casting of plugin calls.
@@ -74,8 +65,8 @@ type (
 )
 
 func HostCallback(h HostCallbackAllocator) HostCallbackFunc {
-	return func(opcode HostOpcode, index Index, value Value, ptr unsafe.Pointer, opt Opt) uintptr {
-		switch opcode {
+	return func(op HostOpcode, index int32, value int64, ptr unsafe.Pointer, opt float32) uintptr {
+		switch op {
 		case HostGetCurrentProcessLevel:
 			if h.GetProcessLevel != nil {
 				return uintptr(h.GetProcessLevel())
@@ -99,8 +90,8 @@ func HostCallback(h HostCallbackAllocator) HostCallbackFunc {
 
 // DefaultHostCallback returns default vst2 host callback.
 func DefaultHostCallback() HostCallbackFunc {
-	return func(opcode HostOpcode, index Index, value Value, ptr unsafe.Pointer, opt Opt) uintptr {
-		fmt.Printf("host received opcode: %v\n", opcode)
+	return func(op HostOpcode, index int32, value int64, ptr unsafe.Pointer, opt float32) uintptr {
+		fmt.Printf("host received opcode: %v\n", op)
 		return 0
 	}
 }

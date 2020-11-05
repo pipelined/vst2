@@ -95,11 +95,11 @@ type (
 		// (nearest clock).
 		SamplesToNextClock int32
 		// TimeInfoFlags values.
-		Flags TimeInfoFlags
+		Flags TimeInfoFlag
 	}
 
-	// TimeInfoFlags used in TimeInfo.
-	TimeInfoFlags int32
+	// TimeInfoFlag used in TimeInfo.
+	TimeInfoFlag int32
 
 	// SMPTEFrameRate values, used in TimeInfo.
 	SMPTEFrameRate int32
@@ -107,7 +107,7 @@ type (
 
 const (
 	// TransportChanged is set if play, cycle or record state has changed.
-	TransportChanged TimeInfoFlags = 1 << iota
+	TransportChanged TimeInfoFlag = 1 << iota
 	// TransportPlaying is set if Host sequencer is currently playing
 	TransportPlaying
 	// TransportCycleActive is set if Host sequencer is in cycle mode.
@@ -350,13 +350,13 @@ const (
 	pluginExtHasBuffer
 )
 
-// ProcessLevels are used as result for in HostGetCurrentProcessLevel call.
+// ProcessLevel is used as result for in HostGetCurrentProcessLevel call.
 // It tells the plugin in which thread host is right now.
-type ProcessLevels int32
+type ProcessLevel int32
 
 const (
 	// ProcessLevelUnknown is returned when not supported by host.
-	ProcessLevelUnknown ProcessLevels = iota
+	ProcessLevelUnknown ProcessLevel = iota
 	// ProcessLevelUser is returned when in user thread (GUI).
 	ProcessLevelUser
 	// ProcessLevelRealtime is returned when in audio thread (where process

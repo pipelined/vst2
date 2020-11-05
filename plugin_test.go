@@ -13,15 +13,9 @@ func TestPluginParameters(t *testing.T) {
 	assertEqual(t, "vst error", err, nil)
 	defer v.Close()
 
-	host := vst2.HostProperties{
-		BufferSize: 512,
-		Channels:   2,
-		SampleRate: 44100,
-	}
-
 	testPlugin := func(fn func(p *vst2.Plugin)) func(*testing.T) {
 		return func(t *testing.T) {
-			p := v.Plugin(vst2.DefaultHostCallback(&host))
+			p := v.Plugin(vst2.NoopHostCallback())
 			defer p.Close()
 			fn(p)
 		}

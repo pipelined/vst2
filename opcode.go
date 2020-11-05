@@ -1,4 +1,4 @@
-//go:generate stringer -type=EffectOpcode,HostOpcode -output=opcode_string.go
+//go:generate stringer -type=PlugectOpcode,HostOpcode -output=opcode_string.go
 
 package vst2
 
@@ -13,9 +13,9 @@ import (
 )
 
 const (
-	maxVendorStrLen  = 64 // used for #effGetVendorString, #audioMasterGetVendorString
-	maxProductStrLen = 64 // used for #effGetProductString, #audioMasterGetProductString
-	maxEffectNameLen = 32 // used for #effGetEffectName
+	maxVendorStrLen   = 64 // used for #plugGetVendorString, #audioMasterGetVendorString
+	maxProductStrLen  = 64 // used for #plugGetProductString, #audioMasterGetProductString
+	maxPlugectNameLen = 32 // used for #plugGetPlugectName
 
 	maxNameLen       = 64  // used for #MidiProgramName, #MidiProgramCategory, #MidiKeyName, #VstPinProperties
 	maxLabelLen      = 64  // used for #VstPinProperties->label
@@ -46,302 +46,302 @@ func (s ascii64) String() string {
 	return trimNull(string(s[:]))
 }
 
-// EffectOpcode is sent by host in dispatch call to effect.
-// It reflects AEffectOpcodes and AEffectXOpcodes opcodes values.
-type EffectOpcode uint64
+// PluginOpcode is sent by host in dispatch call to plugin.
+// It reflects APlugectOpcodes and APlugectXOpcodes opcodes values.
+type PluginOpcode uint64
 
 const (
-	// EffOpen passed to open the plugin.
-	effOpen EffectOpcode = iota
-	// EffClose passed to close the plugin.
-	effClose
+	// PlugOpen passed to open the plugin.
+	plugOpen PluginOpcode = iota
+	// PlugClose passed to close the plugin.
+	plugClose
 
-	// EffSetProgram passed to set program.
+	// PlugSetProgram passed to set program.
 	// Value: new program number.
-	effSetProgram
-	// EffGetProgram passed to get program.
+	plugSetProgram
+	// PlugGetProgram passed to get program.
 	// Return: current program number.
-	effGetProgram
-	// EffSetProgramName passed to set new program name.
+	plugGetProgram
+	// PlugSetProgramName passed to set new program name.
 	// Ptr: *[maxProgNameLen]byte buffer with new program name.
-	effSetProgramName
-	// EffGetProgramName passed to get current program name.
+	plugSetProgramName
+	// PlugGetProgramName passed to get current program name.
 	// Ptr: *[maxProgNameLen]byte buffer for current program name.
-	effGetProgramName
+	plugGetProgramName
 
-	// EffGetParamLabel passed to get parameter unit label: "db", "ms", etc.
+	// PlugGetParamLabel passed to get parameter unit label: "db", "ms", etc.
 	// Index: parameter index.
 	// Ptr: *[maxParamStrLen]byte buffer for parameter unit label.
-	effGetParamLabel
-	// EffGetParamDisplay passed to get parameter value label: "0.5", "HALL", etc.
+	plugGetParamLabel
+	// PlugGetParamDisplay passed to get parameter value label: "0.5", "HALL", etc.
 	// Index: parameter index.
 	// Ptr: *[maxParamStrLen]byte buffer for parameter value label.
-	effGetParamDisplay
-	// EffGetParamName passed to get parameter label: "Release", "Gain", etc.
+	plugGetParamDisplay
+	// PlugGetParamName passed to get parameter label: "Release", "Gain", etc.
 	// Index: parameter index.
 	// Ptr: *[maxParamStrLen]byte buffer for parameter label.
-	effGetParamName
+	plugGetParamName
 
 	// deprecated in VST v2.4
-	effGetVu
+	plugGetVu
 
-	// EffSetSampleRate passed to set new sample rate.
+	// PlugSetSampleRate passed to set new sample rate.
 	// Opt: new sample rate value.
-	effSetSampleRate
-	// EffSetBufferSize passed to set new buffer size.
+	plugSetSampleRate
+	// PlugSetBufferSize passed to set new buffer size.
 	// Value: new buffer size value.
-	effSetBufferSize
-	// EffStateChanged passed when plugin's state changed.
+	plugSetBufferSize
+	// PlugStateChanged passed when plugin's state changed.
 	// Value: 0 means disabled, 1 means enabled.
-	effStateChanged
+	plugStateChanged
 
-	// EffEditGetRect passed to get editor size.
+	// PlugEditGetRect passed to get editor size.
 	// Ptr: ERect** receiving pointer to editor size.
-	EffEditGetRect
-	// EffEditOpen passed to get system dependent window pointer, eg HWND on Windows.
+	PlugEditGetRect
+	// PlugEditOpen passed to get system dependent window pointer, eg HWND on Windows.
 	// Ptr: window pointer.
-	EffEditOpen
-	// EffEditClose passed to close editor window.
-	EffEditClose
+	PlugEditOpen
+	// PlugEditClose passed to close editor window.
+	PlugEditClose
 
 	// deprecated in VST v2.4
-	effEditDraw
+	plugEditDraw
 	// deprecated in VST v2.4
-	effEditMouse
+	plugEditMouse
 	// deprecated in VST v2.4
-	effEditKey
+	plugEditKey
 
-	// EffEditIdle passed to notify effect that host goes idle.
-	EffEditIdle
+	// PlugEditIdle passed to notify plugin that host goes idle.
+	PlugEditIdle
 
 	// deprecated in VST v2.4
-	effEditTop
+	plugEditTop
 	// deprecated in VST v2.4
-	effEditSleep
+	plugEditSleep
 	// deprecated in VST v2.4
-	effIdentify
+	plugIdentify
 
-	// EffGetChunk passed to get chunk data.
+	// PlugGetChunk passed to get chunk data.
 	// Ptr: pointer for chunk data address (void**) uint8.
 	// Index: 0 for bank, 1 for program.
 	// Return: length of data.
-	effGetChunk
-	// EffSetChunk passed to set chunk data.
+	plugGetChunk
+	// PlugSetChunk passed to set chunk data.
 	// Ptr: pointer for chunk data address (void*).
 	// Value: data size in bytes.
 	// Index: 0 for bank, 1 for program.
-	effSetChunk
+	plugSetChunk
 
-	// EffProcessEvents passed to communicate events.
+	// PlugProcessEvents passed to communicate events.
 	// Ptr: *Events.
-	EffProcessEvents
-	// EffCanBeAutomated passed to check if parameter could be automated.
+	PlugProcessEvents
+	// PlugCanBeAutomated passed to check if parameter could be automated.
 	// Index: parameter index.
 	// Return: 1 for true, 0 for false.
-	EffCanBeAutomated
-	// EffString2Parameter passed to convert parameter value to string: "mono" to "1".
+	PlugCanBeAutomated
+	// PlugString2Parameter passed to convert parameter value to string: "mono" to "1".
 	// Index: parameter index.
 	// Ptr: parameter string.
 	// Return: true for success.
-	EffString2Parameter
+	PlugString2Parameter
 
 	// deprecated in VST v2.4
-	effGetNumProgramCategories
+	plugGetNumProgramCategories
 
-	// EffGetProgramNameIndexed passed to get program name by index.
+	// PlugGetProgramNameIndexed passed to get program name by index.
 	// Index: program index.
 	// Ptr: *[maxProgNameLen]byte buffer for program name.
 	// Return: true for success.
-	effGetProgramNameIndexed
+	plugGetProgramNameIndexed
 
 	// deprecated in VST v2.4
-	effCopyProgram
+	plugCopyProgram
 	// deprecated in VST v2.4
-	effConnectInput
+	plugConnectInput
 	// deprecated in VST v2.4
-	effConnectOutput
+	plugConnectOutput
 
-	// EffGetInputProperties passed to check if certain input configuration is supported.
+	// PlugGetInputProperties passed to check if certain input configuration is supported.
 	// Index: input index.
 	// Ptr: *PinProperties.
 	// Return: 1 if supported.
-	EffGetInputProperties
-	// EffGetOutputProperties passed to check if certain output configuration is supported.
+	PlugGetInputProperties
+	// PlugGetOutputProperties passed to check if certain output configuration is supported.
 	// Index: output index.
 	// Ptr: *PinProperties.
 	// Return: 1 if supported.
-	EffGetOutputProperties
-	// EffGetPlugCategory passed to get plugin's category.
+	PlugGetOutputProperties
+	// PlugGetPlugCategory passed to get plugin's category.
 	// Return: VstPlugCategory value.
-	EffGetPlugCategory
+	PlugGetPlugCategory
 
 	// deprecated in VST v2.4
-	effGetCurrentPosition
+	plugGetCurrentPosition
 	// deprecated in VST v2.4
-	effGetDestinationBuffer
+	plugGetDestinationBuffer
 
-	// EffOfflineNotify passed to notify about offline file processing.
+	// PlugOfflineNotify passed to notify about offline file processing.
 	// Ptr: []AudioFile.
 	// Value: count.
 	// Index: start flag.
-	EffOfflineNotify
-	// EffOfflinePrepare passed to trigger offline processing preparation.
+	PlugOfflineNotify
+	// PlugOfflinePrepare passed to trigger offline processing preparation.
 	// Ptr: []OfflineTask.
 	// Value: count.
-	EffOfflinePrepare
-	// EffOfflineRun passed to trigger offline processing execution.
+	PlugOfflinePrepare
+	// PlugOfflineRun passed to trigger offline processing execution.
 	// Ptr: []OfflineTask.
 	// Value: count.
-	EffOfflineRun
+	PlugOfflineRun
 
-	// EffProcessVarIo passed to provide variable I/O processing (offline e.g. timestretching).
+	// PlugProcessVarIo passed to provide variable I/O processing (offline p.g. timestretching).
 	// Ptr: *VariableIo.
-	EffProcessVarIo
-	// EffSetSpeakerArrangement passed to set speakers configuration.
+	PlugProcessVarIo
+	// PlugSetSpeakerArrangement passed to set speakers configuration.
 	// Value: input *SpeakerArrangement.
 	// Ptr: output *SpeakerArrangement.
-	effSetSpeakerArrangement
+	plugSetSpeakerArrangement
 
 	// deprecated in VST v2.4
-	effSetBlockSizeAndSampleRate
+	plugSetBlockSizeAndSampleRate
 
-	// EffSetBypass passed to make effect bypassed.
+	// PlugSetBypass passed to make plugin bypassed.
 	// Value: 1 is bypass, 0 is no bypass.
-	EffSetBypass
-	// EffGetEffectName passed to get a name of the effect.
-	// Ptr: *[maxEffectNameLen]byte buffer for effect name.
-	EffGetEffectName
+	PlugSetBypass
+	// PlugGetPlugectName passed to get a name of the plugin.
+	// Ptr: *[maxPlugectNameLen]byte buffer for plugin name.
+	PlugGetPlugectName
 
 	// deprecated in VST v2.4
-	effGetErrorText
+	plugGetErrorText
 
-	// EffGetVendorString passed to get vendor string.
-	// *[maxVendorStrLen]byte buffer for effect vendor string.
-	EffGetVendorString
-	// EffGetProductString passed to get product string.
-	// *[maxProductStrLen]byte buffer for effect product string.
-	EffGetProductString
-	// EffGetVendorVersion passed to get vendor-specific version.
+	// PlugGetVendorString passed to get vendor string.
+	// *[maxVendorStrLen]byte buffer for plugin vendor string.
+	PlugGetVendorString
+	// PlugGetProductString passed to get product string.
+	// *[maxProductStrLen]byte buffer for plugin product string.
+	PlugGetProductString
+	// PlugGetVendorVersion passed to get vendor-specific version.
 	// Return: vendor-specific version.
-	EffGetVendorVersion
-	// EffVendorSpecific passed to get vendor-specific string.
+	PlugGetVendorVersion
+	// PlugVendorSpecific passed to get vendor-specific string.
 	// No definition, vendor specific handling.
-	EffVendorSpecific
-	// EffCanDo passed to check capabilities of effect.
+	PlugVendorSpecific
+	// PlugCanDo passed to check capabilities of plugin.
 	// Ptr: "can do" string
 	// Return: 0 is don't know, -1 is no, 1 is yes.
-	EffCanDo
+	PlugCanDo
 
-	// EffGetTailSize passed to check if "tail" data is expected.
-	// Return: tail size (e.g. reverb time). 0 is default, 1 means no tail.
-	EffGetTailSize
+	// PlugGetTailSize passed to check if "tail" data is expected.
+	// Return: tail size (p.g. reverb time). 0 is default, 1 means no tail.
+	PlugGetTailSize
 
 	// deprecated in VST v2.4
-	effIdle
+	plugIdle
 	// deprecated in VST v2.4
-	effGetIcon
+	plugGetIcon
 	// deprecated in VST v2.4
-	effSetViewPosition
+	plugSetViewPosition
 
-	// EffGetParameterProperties passed to get parameter's properties.
+	// PlugGetParameterProperties passed to get parameter's properties.
 	// Index: parameter index.
 	// Ptr: *ParameterProperties.
 	// Return: 1 if supported
-	effGetParameterProperties
+	plugGetParameterProperties
 
 	// deprecated in VST v2.4
-	effKeysRequired
+	plugKeysRequired
 
-	// EffGetVstVersion passed to get VST version of effect.
+	// PlugGetVstVersion passed to get VST version of plugin.
 	// Return: VST version, 2400 for VST 2.4.
-	EffGetVstVersion
+	PlugGetVstVersion
 
-	// EffEditKeyDown passed when key is pressed.
+	// PlugEditKeyDown passed when key is pressed.
 	// Index: ASCII character.
 	// Value: virtual key.
 	// Opt: ModifierKey flags.
 	// Return: 1 if key used.
-	EffEditKeyDown
-	// EffEditKeyUp passed when key is released.
+	PlugEditKeyDown
+	// PlugEditKeyUp passed when key is released.
 	// Index: ASCII character.
 	// Value: virtual key.
 	// Opt: ModifierKey flags.
 	// Return: 1 if key used.
-	EffEditKeyUp
-	// EffSetEditKnobMode passed to set knob Mode.
+	PlugEditKeyUp
+	// PlugSetEditKnobMode passed to set knob Mode.
 	// Value: knob mode 0 is circular, 1 is circular relative, 2 is linear.
-	EffSetEditKnobMode
+	PlugSetEditKnobMode
 
-	// EffGetMidiProgramName passed to get a name of used MIDI program.
+	// PlugGetMidiProgramName passed to get a name of used MIDI program.
 	// Index: MIDI channel.
 	// Ptr: *MidiProgramName.
 	// Return: number of used programs, 0 if unsupported.
-	EffGetMidiProgramName
-	// EffGetCurrentMidiProgram passed to get a name of current MIDI program.
+	PlugGetMidiProgramName
+	// PlugGetCurrentMidiProgram passed to get a name of current MIDI program.
 	// Index: MIDI channel.
 	// Ptr: *MidiProgramName.
 	// Return: index of current program .
-	EffGetCurrentMidiProgram
-	// EffGetMidiProgramCategory passed to get a category of MIDI program.
+	PlugGetCurrentMidiProgram
+	// PlugGetMidiProgramCategory passed to get a category of MIDI program.
 	// Index: MIDI channel.
 	// Ptr: *MidiProgramCategory.
 	// Return: number of used categories, 0 if unsupported.
-	EffGetMidiProgramCategory
-	// EffHasMidiProgramsChanged passed to check if MIDI program has changed.
+	PlugGetMidiProgramCategory
+	// PlugHasMidiProgramsChanged passed to check if MIDI program has changed.
 	// Index: MIDI channel.
 	// Return: 1 if the MidiProgramNames or MidiKeyNames have changed.
-	EffHasMidiProgramsChanged
-	// EffGetMidiKeyName passed to
+	PlugHasMidiProgramsChanged
+	// PlugGetMidiKeyName passed to
 	// Index: MIDI channel.
 	// Ptr: *MidiKeyName.
 	// Return: true if supported, false otherwise.
-	EffGetMidiKeyName
+	PlugGetMidiKeyName
 
-	// EffBeginSetProgram passed before preset is loaded.
-	EffBeginSetProgram
-	// EffEndSetProgram passed after preset is loaded.
-	EffEndSetProgram
+	// PlugBeginSetProgram passed before preset is loaded.
+	PlugBeginSetProgram
+	// PlugEndSetProgram passed after preset is loaded.
+	PlugEndSetProgram
 
-	// EffGetSpeakerArrangement passed to get a speaker configuration of plugin.
+	// PlugGetSpeakerArrangement passed to get a speaker configuration of plugin.
 	// Value: input *SpeakerArrangement.
 	// Ptr: output *SpeakerArrangement.
-	EffGetSpeakerArrangement
-	// EffShellGetNextPlugin passed to get unique id of next plugin.
+	PlugGetSpeakerArrangement
+	// PlugShellGetNextPlugin passed to get unique id of next plugin.
 	// Ptr: *[maxProductStrLen]byte buffer for plug-in name.
 	// Return: next plugin's unique ID.
-	EffShellGetNextPlugin
+	PlugShellGetNextPlugin
 
-	// EffStartProcess passed to indicate that the process call might be interrupted.
-	EffStartProcess
-	// EffStopProcess passed to indicate that process call is stopped.
-	EffStopProcess
-	// EffSetTotalSampleToProcess passed to identify a number of samples to process.
+	// PlugStartProcess passed to indicate that the process call might be interrupted.
+	PlugStartProcess
+	// PlugStopProcess passed to indicate that process call is stopped.
+	PlugStopProcess
+	// PlugSetTotalSampleToProcess passed to identify a number of samples to process.
 	// Value: number of samples to process. Called in offline mode before processing.
-	EffSetTotalSampleToProcess
-	// EffSetPanLaw passed to set pan law type and gain values.
+	PlugSetTotalSampleToProcess
+	// PlugSetPanLaw passed to set pan law type and gain values.
 	// Value: PanLawType value.
 	// Opt: gain value.
-	EffSetPanLaw
+	PlugSetPanLaw
 
-	// EffBeginLoadBank is passed when VST bank loaded.
+	// PlugBeginLoadBank is passed when VST bank loaded.
 	// Ptr: *PatchChunkInfo.
 	// Return: -1 is bank can't be loaded, 1 is bank can be loaded, 0 is unsupported.
-	EffBeginLoadBank
-	// EffBeginLoadProgram is passed when VST preset loaded.
+	PlugBeginLoadBank
+	// PlugBeginLoadProgram is passed when VST preset loaded.
 	// Ptr: *PatchChunkInfo.
 	// Return: -1 is bank can't be loaded, 1 is bank can be loaded, 0 is unsupported.
-	EffBeginLoadProgram
+	PlugBeginLoadProgram
 
-	// EffSetProcessPrecision passed to set processing precision.
+	// PlugSetProcessPrecision passed to set processing precision.
 	// Value: 0 if 32 bit, anything else if 64 bit.
-	EffSetProcessPrecision
+	PlugSetProcessPrecision
 
-	// EffGetNumMidiInputChannels passed to get a number of used MIDI inputs.
+	// PlugGetNumMidiInputChannels passed to get a number of used MIDI inputs.
 	// Return: number of used MIDI input channels (1-15).
-	EffGetNumMidiInputChannels
-	// EffGetNumMidiOutputChannels passed to get a number of used MIDI outputs.
+	PlugGetNumMidiInputChannels
+	// PlugGetNumMidiOutputChannels passed to get a number of used MIDI outputs.
 	// Return: number of used MIDI output channels (1-15).
-	EffGetNumMidiOutputChannels
+	PlugGetNumMidiOutputChannels
 )
 
 // HostOpcode is sent by plugin in dispatch call to host.
@@ -508,104 +508,104 @@ const (
 	hostGetInputSpeakerArrangement
 )
 
-// Start executes the EffOpen opcode.
-func (e *Effect) Start() {
-	e.Dispatch(effOpen, 0, 0, nil, 0.0)
+// Start executes the PlugOpen opcode.
+func (p *Plugin) Start() {
+	p.Dispatch(plugOpen, 0, 0, nil, 0.0)
 }
 
 // Close stops the plugin and cleans up C refs for plugin.
-func (e *Effect) Close() {
-	e.Dispatch(effClose, 0, 0, nil, 0.0)
+func (p *Plugin) Close() {
+	p.Dispatch(plugClose, 0, 0, nil, 0.0)
 	mutex.Lock()
-	delete(callbacks, e)
+	delete(callbacks, p)
 	mutex.Unlock()
 }
 
 // Resume the plugin processing. It must be called before processing is
 // done.
-func (e *Effect) Resume() {
-	e.Dispatch(effStateChanged, 0, 1, nil, 0)
+func (p *Plugin) Resume() {
+	p.Dispatch(plugStateChanged, 0, 1, nil, 0)
 }
 
 // Suspend the plugin processing. It must be called after processing is
 // done and no new signal is expected at this moment.
-func (e *Effect) Suspend() {
-	e.Dispatch(effStateChanged, 0, 0, nil, 0)
+func (p *Plugin) Suspend() {
+	p.Dispatch(plugStateChanged, 0, 0, nil, 0)
 }
 
 // SetBufferSize sets a buffer size per channel.
-func (e *Effect) SetBufferSize(bufferSize int) {
-	e.Dispatch(effSetBufferSize, 0, Value(bufferSize), nil, 0)
+func (p *Plugin) SetBufferSize(bufferSize int) {
+	p.Dispatch(plugSetBufferSize, 0, Value(bufferSize), nil, 0)
 }
 
 // SetSampleRate sets a sample rate for plugin.
-func (e *Effect) SetSampleRate(sampleRate int) {
-	e.Dispatch(effSetSampleRate, 0, 0, nil, Opt(sampleRate))
+func (p *Plugin) SetSampleRate(sampleRate int) {
+	p.Dispatch(plugSetSampleRate, 0, 0, nil, Opt(sampleRate))
 }
 
 // SetSpeakerArrangement creates and passes SpeakerArrangement structures to plugin
-func (e *Effect) SetSpeakerArrangement(in, out *SpeakerArrangement) {
-	e.Dispatch(effSetSpeakerArrangement, 0, in.Value(), out.Ptr(), 0)
+func (p *Plugin) SetSpeakerArrangement(in, out *SpeakerArrangement) {
+	p.Dispatch(plugSetSpeakerArrangement, 0, in.Value(), out.Ptr(), 0)
 }
 
 // ParamName returns the parameter label: "Release", "Gain", etc.
-func (e *Effect) ParamName(index int) string {
+func (p *Plugin) ParamName(index int) string {
 	var s ascii8
-	e.Dispatch(effGetParamName, Index(index), 0, unsafe.Pointer(&s), 0)
+	p.Dispatch(plugGetParamName, Index(index), 0, unsafe.Pointer(&s), 0)
 	return s.String()
 }
 
 // ParamValueName returns the parameter value label: "0.5", "HALL", etc.
-func (e *Effect) ParamValueName(index int) string {
+func (p *Plugin) ParamValueName(index int) string {
 	var s ascii8
-	e.Dispatch(effGetParamDisplay, Index(index), 0, unsafe.Pointer(&s), 0)
+	p.Dispatch(plugGetParamDisplay, Index(index), 0, unsafe.Pointer(&s), 0)
 	return s.String()
 }
 
 // ParamUnitName returns the parameter unit label: "db", "ms", etc.
-func (e *Effect) ParamUnitName(index int) string {
+func (p *Plugin) ParamUnitName(index int) string {
 	var s ascii8
-	e.Dispatch(effGetParamLabel, Index(index), 0, unsafe.Pointer(&s), 0)
+	p.Dispatch(plugGetParamLabel, Index(index), 0, unsafe.Pointer(&s), 0)
 	return s.String()
 }
 
 // CurrentProgramName returns current program name.
-func (e *Effect) CurrentProgramName() string {
+func (p *Plugin) CurrentProgramName() string {
 	var s ascii24
-	e.Dispatch(effGetProgramName, 0, 0, unsafe.Pointer(&s), 0)
+	p.Dispatch(plugGetProgramName, 0, 0, unsafe.Pointer(&s), 0)
 	return s.String()
 }
 
 // ProgramName returns program name for provided program index.
-func (e *Effect) ProgramName(index int) string {
+func (p *Plugin) ProgramName(index int) string {
 	var s ascii24
-	e.Dispatch(effGetProgramNameIndexed, Index(index), 0, unsafe.Pointer(&s), 0)
+	p.Dispatch(plugGetProgramNameIndexed, Index(index), 0, unsafe.Pointer(&s), 0)
 	return s.String()
 }
 
 // SetCurrentProgramName sets new name to the current program. It will use
 // up to 24 ASCII characters. Non-ASCII characters are ignored.
-func (e *Effect) SetCurrentProgramName(s string) {
+func (p *Plugin) SetCurrentProgramName(s string) {
 	var ps ascii24
 	copy(ps[:], []byte(removeNonASCII(s)))
-	e.Dispatch(effSetProgramName, 0, 0, unsafe.Pointer(&ps), 0)
+	p.Dispatch(plugSetProgramName, 0, 0, unsafe.Pointer(&ps), 0)
 }
 
 // Program returns current program number.
-func (e *Effect) Program() int {
-	return int(e.Dispatch(effGetProgram, 0, 0, nil, 0))
+func (p *Plugin) Program() int {
+	return int(p.Dispatch(plugGetProgram, 0, 0, nil, 0))
 }
 
 // SetProgram changes current program index.
-func (e *Effect) SetProgram(index int) {
-	e.Dispatch(effSetProgram, 0, Value(index), nil, 0)
+func (p *Plugin) SetProgram(index int) {
+	p.Dispatch(plugSetProgram, 0, Value(index), nil, 0)
 }
 
 // ParamProperties returns parameter properties for provided parameter
 // index. If opcode is not supported, boolean result is false.
-func (e *Effect) ParamProperties(index int) (*ParameterProperties, bool) {
+func (p *Plugin) ParamProperties(index int) (*ParameterProperties, bool) {
 	var props ParameterProperties
-	r := e.Dispatch(effGetParameterProperties, Index(index), 0, unsafe.Pointer(&props), 0)
+	r := p.Dispatch(plugGetParameterProperties, Index(index), 0, unsafe.Pointer(&props), 0)
 	if r > 0 {
 		return &props, true
 	}
@@ -615,32 +615,32 @@ func (e *Effect) ParamProperties(index int) (*ParameterProperties, bool) {
 // GetProgramData returns current preset data. Plugin allocates required
 // memory, then this function allocates new byte slice of required length
 // where data is copied.
-func (e *Effect) GetProgramData() []byte {
+func (p *Plugin) GetProgramData() []byte {
 	var ptr unsafe.Pointer
-	length := C.int(e.Dispatch(effGetChunk, 1, 0, unsafe.Pointer(&ptr), 0))
+	length := C.int(p.Dispatch(plugGetChunk, 1, 0, unsafe.Pointer(&ptr), 0))
 	return C.GoBytes(ptr, length)
 }
 
 // SetProgramData sets preset data to the plugin. Data is the full preset
 // including chunk header.
-func (e *Effect) SetProgramData(data []byte) {
-	e.Dispatch(effSetChunk, 1, Value(len(data)), unsafe.Pointer(&data[0]), 0)
+func (p *Plugin) SetProgramData(data []byte) {
+	p.Dispatch(plugSetChunk, 1, Value(len(data)), unsafe.Pointer(&data[0]), 0)
 }
 
 // GetBankData returns current bank data. Plugin allocates required
 // memory, then this function allocates new byte slice of required length
 // where data is copied.
-func (e *Effect) GetBankData() []byte {
+func (p *Plugin) GetBankData() []byte {
 	var ptr unsafe.Pointer
-	length := C.int(e.Dispatch(effGetChunk, 0, 0, unsafe.Pointer(&ptr), 0))
+	length := C.int(p.Dispatch(plugGetChunk, 0, 0, unsafe.Pointer(&ptr), 0))
 	return C.GoBytes(ptr, length)
 }
 
 // SetBankData sets preset data to the plugin. Data is the full preset
 // including chunk header.
-func (e *Effect) SetBankData(data []byte) {
+func (p *Plugin) SetBankData(data []byte) {
 	ptr := C.CBytes(data)
-	e.Dispatch(effSetChunk, 0, Value(len(data)), unsafe.Pointer(ptr), 0)
+	p.Dispatch(plugSetChunk, 0, Value(len(data)), unsafe.Pointer(ptr), 0)
 	C.free(ptr)
 }
 

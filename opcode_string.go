@@ -53,7 +53,7 @@ func _() {
 	_ = x[plugSetSpeakerArrangement-42]
 	_ = x[plugSetBlockSizeAndSampleRate-43]
 	_ = x[PlugSetBypass-44]
-	_ = x[PlugGetPlugectName-45]
+	_ = x[PlugGetPluginName-45]
 	_ = x[plugGetErrorText-46]
 	_ = x[PlugGetVendorString-47]
 	_ = x[PlugGetProductString-48]

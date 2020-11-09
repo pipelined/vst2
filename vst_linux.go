@@ -50,6 +50,7 @@ func Open(path string) (*VST, error) {
 	return &VST{
 		main:   pluginMain(m),
 		handle: uintptr(handle),
+		Name:   filepath.Base(path[:len(path)-len(filepath.Ext(path))]),
 	}, nil
 }
 

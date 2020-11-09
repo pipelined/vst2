@@ -5,7 +5,9 @@ package vst2
 #include "sdk.h"
 */
 import "C"
-import "unsafe"
+import (
+	"unsafe"
+)
 
 const (
 	// VST main function namp.
@@ -113,4 +115,10 @@ func (p *Plugin) CanProcessFloat32() bool {
 // CanProcessFloat64 checks if plugin can process float64.
 func (p *Plugin) CanProcessFloat64() bool {
 	return PluginFlags(p.flags)&PluginDoubleProcessing == PluginDoubleProcessing
+}
+
+// Convert golang string to C string without allocations. Result string is
+// not null-terminated.
+func stringToCString(s string) *C.char {
+	return (*C.char)(unsafe.Pointer(&[]byte(s)[0]))
 }

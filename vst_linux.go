@@ -1,8 +1,14 @@
 package vst2
 
+// #cgo LDFLAGS: -ldl
+// #include <dlfcn.h>
+// #include <stdlib.h>
+import "C"
 import (
+	"fmt"
 	"os"
 	"path/filepath"
+	"unsafe"
 )
 
 const (
@@ -26,11 +32,37 @@ func init() {
 	)
 }
 
+// Open loads the plugin entry point into memory. It's SO in linux.
 func Open(path string) (*VST, error) {
-	return nil, nil
+	handle := C.dlopen(stringToCString(path), C.RTLD_LAZY)
+	if handle == nil {
+		return nil, fmt.Errorf("failed loading vst: %v", dlerror())
+	}
+
+	// clear previous errors as stated in the man.
+	C.dlerror()
+
+	m := C.dlsym(handle, stringToCString(main))
+	if m == nil {
+		return nil, fmt.Errorf("failed finding vst main: %v", dlerror())
+	}
+
+	return &VST{
+		main:   pluginMain(m),
+		handle: uintptr(handle),
+	}, nil
+}
+
+func dlerror() string {
+	CError := C.dlerror()
+	defer C.free(unsafe.Pointer(CError))
+	return C.GoString(CError)
 }
 
 // Close frees plugin handle.
 func (m *VST) Close() error {
+	if C.dlclose(unsafe.Pointer(m.handle)) != 0 {
+		return fmt.Errorf("error unloading vst: %v", dlerror())
+	}
 	return nil
 }

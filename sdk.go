@@ -370,6 +370,33 @@ const (
 	ProcessLevelOffline
 )
 
+type (
+	// Event represents an event tied to a timestamp.
+	Event struct {
+		EventType
+		DataSize int32 // size of this event, excluding type and size
+		Delta    int32 // samples related to the current block start sample position
+		flags    int32 // not used
+
+		Data [16]byte ///< data size may vary, depending on event type
+	}
+
+	// EventType denotes the type of event.
+	EventType int32
+)
+
+const (
+	// Midi event.
+	Midi EventType = iota + 1
+	audio
+	video
+	parameter
+	trigger
+	// SystemExclusive event means that event can be casted to
+	// SystemExclusiveMidiEvent
+	SystemExclusive
+)
+
 func trimNull(s string) string {
 	return strings.Trim(s, "\x00")
 }

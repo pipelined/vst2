@@ -311,12 +311,12 @@ const (
 	SpeakerLfe2
 )
 
-// PluginFlags values.
-type PluginFlags int32
+// PluginFlag values.
+type PluginFlag int32
 
 const (
 	// PluginHasEditor is set if the plugin provides a custom editor.
-	PluginHasEditor PluginFlags = 1 << iota
+	PluginHasEditor PluginFlag = 1 << iota
 	_
 	_
 	_

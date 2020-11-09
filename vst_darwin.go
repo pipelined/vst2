@@ -12,7 +12,7 @@ const (
 	// FileExtension of VST2 files in macOS.
 	FileExtension = ".vst"
 
-	displayNameKey = "CFBundleDisplayName"
+	displayNameKey = "CFBundleName"
 )
 
 var (
@@ -75,12 +75,6 @@ func cfStringRefToString(cfStr C.CFStringRef) (goString string) {
 	buf := make([]byte, l*2)
 	C.CFStringGetCString(cfStr, (*C.char)(unsafe.Pointer(&buf[0])), l*2, C.CFStringGetSystemEncoding())
 	return string(buf)
-}
-
-// Convert golang string to C string without allocations. Result string is
-// not null-terminated.
-func stringToCString(s string) *C.char {
-	return (*C.char)(unsafe.Pointer(&[]byte(s)[0]))
 }
 
 // Close frees plugin handle.

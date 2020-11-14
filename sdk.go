@@ -386,15 +386,41 @@ type (
 )
 
 const (
-	// Midi event.
-	Midi EventType = iota + 1
+	// MIDI event.
+	MIDI EventType = iota + 1
 	audio
 	video
 	parameter
 	trigger
-	// SystemExclusive event means that event can be casted to
-	// SystemExclusiveMidiEvent
-	SystemExclusive
+	// SysExMIDI system exclusive midi event.
+	SysExMIDI
+)
+
+type (
+	// MIDIEvent contains midi information.
+	MIDIEvent struct {
+		EventType       // always MIDI
+		ByteSize        int32
+		DeltaFrames     int32 // number of sample frames into the current processing block that this event occurs on
+		Flags           MIDIEventFlag
+		NoteLength      int32   // in sample frames, 0 if not available
+		NoteOffset      int32   // in sample frames from note start, 0 if not available
+		Data            [3]byte // 1 to 3 MIDI bytes
+		dataReserved    byte
+		Detune          uint8 // between -64 to +63 cents, for scales other than 'well-tempered' e.g. 'microtuning'
+		NoteOffVelocity uint8 // between 0 and 127
+		reserved1       uint8 // zero (Reserved for future use)
+		reserved2       uint8 // zero (Reserved for future use)
+	}
+
+	// MIDIEventFlag is set in midi event.
+	MIDIEventFlag int32
+)
+
+const (
+	// MIDIEventRealtime means that this event is played and not coming
+	// from sequencer.
+	MIDIEventRealtime MIDIEventFlag = 1
 )
 
 func trimNull(s string) string {

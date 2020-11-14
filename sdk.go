@@ -374,11 +374,10 @@ type (
 	// Event represents an event tied to a timestamp.
 	Event struct {
 		EventType
-		DataSize int32 // size of this event, excluding type and size
-		Delta    int32 // samples related to the current block start sample position
-		flags    int32 // not used
-
-		Data [16]byte ///< data size may vary, depending on event type
+		DataSize int32    // Size of this event, excluding type and size.
+		Delta    int32    // Samples related to the current block start sample position.
+		flags    int32    // Generic flags, not used.
+		Data     [16]byte // Data size may vary, depending on event type.
 	}
 
 	// EventType denotes the type of event.
@@ -399,18 +398,18 @@ const (
 type (
 	// MIDIEvent contains midi information.
 	MIDIEvent struct {
-		EventType       // always MIDI
+		EventType       // Always MIDI.
 		ByteSize        int32
-		DeltaFrames     int32 // number of sample frames into the current processing block that this event occurs on
+		DeltaFrames     int32 // Number of sample frames into the current processing block that this event occurs on.
 		Flags           MIDIEventFlag
-		NoteLength      int32   // in sample frames, 0 if not available
-		NoteOffset      int32   // in sample frames from note start, 0 if not available
-		Data            [3]byte // 1 to 3 MIDI bytes
+		NoteLength      int32   // In sample frames, 0 if not available.
+		NoteOffset      int32   // In sample frames from note start, 0 if not available.
+		Data            [3]byte // 1 to 3 MIDI bytes.
 		dataReserved    byte
-		Detune          uint8 // between -64 to +63 cents, for scales other than 'well-tempered' e.g. 'microtuning'
-		NoteOffVelocity uint8 // between 0 and 127
-		reserved1       uint8 // zero (Reserved for future use)
-		reserved2       uint8 // zero (Reserved for future use)
+		Detune          uint8 // Between -64 to +63 cents, for scales other than 'well-tempered' e.g. 'microtuning'.
+		NoteOffVelocity uint8 // Between 0 and 127.
+		reserved1       uint8 // Not used.
+		reserved2       uint8 // Not used.
 	}
 
 	// MIDIEventFlag is set in midi event.

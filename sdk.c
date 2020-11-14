@@ -35,3 +35,27 @@ float getParameter(Plugin *plugin, int32_t paramIndex) {
 void setParameter(Plugin *plugin, int32_t paramIndex, float value) {
 	plugin->setParameter(plugin, paramIndex, value);
 }
+
+typedef struct Event
+{
+	int32_t type;
+	int32_t byteSize;
+} Event;
+
+void testEvents(Events* e) {
+	for (int i = 0; i < e->numEvents; i++) {
+		Event* event = ((Event *)e->events[i]);
+		printf("event: %d %d\n",i, event->type);
+	}
+}
+
+Events* newEvents(int32_t numEvents) {
+	Events *e = malloc(sizeof(Events *));
+	e->numEvents = numEvents;
+	e->events = malloc(sizeof(void *) * numEvents);
+	return e;
+}
+
+void setEvent(Events *events, void *event, int32_t pos) {
+	events->events[pos] = event;
+}

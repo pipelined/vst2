@@ -371,22 +371,13 @@ const (
 )
 
 type (
-	// Event represents an event tied to a timestamp.
-	Event struct {
-		EventType
-		DataSize int32    // Size of this event, excluding type and size.
-		Delta    int32    // Samples related to the current block start sample position.
-		flags    int32    // Generic flags, not used.
-		Data     [16]byte // Data size may vary, depending on event type.
-	}
-
 	// EventType denotes the type of event.
-	EventType int32
+	eventType int32
 )
 
 const (
 	// MIDI event.
-	MIDI EventType = iota + 1
+	MIDI eventType = iota + 1
 	audio
 	video
 	parameter
@@ -398,7 +389,7 @@ const (
 type (
 	// MIDIEvent contains midi information.
 	MIDIEvent struct {
-		EventType       // Always MIDI.
+		eventType       // Always MIDI.
 		ByteSize        int32
 		DeltaFrames     int32 // Number of sample frames into the current processing block that this event occurs on.
 		Flags           MIDIEventFlag

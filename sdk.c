@@ -50,9 +50,9 @@ void testEvents(Events* e) {
 }
 
 Events* newEvents(int32_t numEvents) {
-	Events *e = malloc(sizeof(Events *));
+	Events *e = malloc(sizeof(*e));
 	e->numEvents = numEvents;
-	e->events = malloc(sizeof(void *) * numEvents);
+	e->events = malloc(sizeof(e->events) * numEvents);
 	return e;
 }
 

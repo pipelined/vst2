@@ -13,6 +13,22 @@ const (
 	sysExEventSize = 44
 )
 
+type (
+	// EventType denotes the type of event.
+	eventType int32
+)
+
+const (
+	// MIDI event.
+	MIDI eventType = iota + 1
+	audio
+	video
+	parameter
+	trigger
+	// SysExMIDI system exclusive midi event.
+	SysExMIDI
+)
+
 // EventsPtr is a container for events to be processed by plugin or host.
 type EventsPtr C.Events
 
@@ -102,10 +118,10 @@ type (
 	SysExMIDIEvent struct {
 		eventType         // Always SysExMIDI.
 		byteSize    int32 // Always 44
-		DeltaFrames int32 ///< sample frames related to the current block start sample position
-		flags       int32 ///< none defined yet (should be zero)
+		DeltaFrames int32 // Number of sample frames into the current processing block that this event occurs on.
+		flags       int32 // Not used.
 		SysExDump   SysExDataPtr
-		resvd2      int64 ///< zero (Reserved for future use)
+		resvd2      int64 // Not used.
 	}
 
 	// SysExDataPtr holds sysex dump data.

@@ -370,6 +370,24 @@ const (
 	ProcessLevelOffline
 )
 
+// HostLanguage is the language of the host.
+type HostLanguage uintptr
+
+const (
+	// HostLanguageEnglish English.
+	HostLanguageEnglish HostLanguage = iota + 1
+	// HostLanguageGerman German.
+	HostLanguageGerman
+	// HostLanguageFrench French.
+	HostLanguageFrench
+	// HostLanguageItalian Italian.
+	HostLanguageItalian
+	// HostLanguageSpanish Spanish.
+	HostLanguageSpanish
+	// HostLanguageJapanese Japanese.
+	HostLanguageJapanese
+)
+
 func trimNull(s string) string {
 	return strings.Trim(s, "\x00")
 }

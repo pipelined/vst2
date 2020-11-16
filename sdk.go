@@ -370,22 +370,6 @@ const (
 	ProcessLevelOffline
 )
 
-type (
-	// EventType denotes the type of event.
-	eventType int32
-)
-
-const (
-	// MIDI event.
-	MIDI eventType = iota + 1
-	audio
-	video
-	parameter
-	trigger
-	// SysExMIDI system exclusive midi event.
-	SysExMIDI
-)
-
 func trimNull(s string) string {
 	return strings.Trim(s, "\x00")
 }

@@ -7,7 +7,7 @@ import (
 )
 
 func TestEvents(t *testing.T) {
-	dump := vst2.SysExDump([]byte("this is a test"))
+	dump := vst2.SysExData([]byte("this is a test"))
 	defer dump.Free()
 	events := vst2.Events(
 		&vst2.SysExMIDIEvent{

@@ -84,29 +84,29 @@ type (
 		byteSize    int32 // Always 44
 		DeltaFrames int32 ///< sample frames related to the current block start sample position
 		flags       int32 ///< none defined yet (should be zero)
-		SysExDump   SysExDumpPtr
+		SysExDump   SysExDataPtr
 		resvd2      int64 ///< zero (Reserved for future use)
 	}
 
-	// SysExDumpPtr holds sysex dump data.
-	SysExDumpPtr struct {
+	// SysExDataPtr holds sysex dump data.
+	SysExDataPtr struct {
 		length   int32
 		reserved int64
 		data     *C.char
 	}
 )
 
-// SysExDump allocates new SysExDumpPtr with provided bytes. It must be
+// SysExData allocates new SysExDumpPtr with provided bytes. It must be
 // freed after use.
-func SysExDump(b []byte) SysExDumpPtr {
-	return SysExDumpPtr{
+func SysExData(b []byte) SysExDataPtr {
+	return SysExDataPtr{
 		length: int32(len(b)),
 		data:   (*C.char)(C.CBytes(b)),
 	}
 }
 
 // Free releases allocated memory.
-func (s SysExDumpPtr) Free() {
+func (s SysExDataPtr) Free() {
 	C.free(unsafe.Pointer(unsafe.Pointer(s.data)))
 }
 

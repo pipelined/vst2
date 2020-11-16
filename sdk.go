@@ -388,6 +388,30 @@ const (
 	HostLanguageJapanese
 )
 
+type (
+	// PinProperties provides info about about plugin connectivity.
+	PinProperties struct {
+		Label ascii64
+		Flags PinPropertiesFlag
+		SpeakerArrangementType
+		ShortLabel ascii8   // Short name, recommended 6 chars + delimiter.
+		future     [48]byte // Not used.
+	}
+
+	// PinPropertiesFlag values.
+	PinPropertiesFlag int32
+)
+
+const (
+	// PinIsActive is ignored by Host.
+	PinIsActive PinPropertiesFlag = 1 << iota
+	// PinIsStereo means that pin is first of a stereo pair.
+	PinIsStereo
+	// PinUseSpeaker means that arrangement type is valid and pin can be
+	// used for arrangement setup.
+	PinUseSpeaker
+)
+
 func trimNull(s string) string {
 	return strings.Trim(s, "\x00")
 }

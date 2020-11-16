@@ -26,7 +26,7 @@ func TestEvents(t *testing.T) {
 		switch ev := events.Event(i).(type) {
 		case *vst2.MIDIEvent:
 		case *vst2.SysExMIDIEvent:
-			fmt.Printf("dump %v\n", ev.SysExDump)
+			fmt.Printf("dump %v\n", string(ev.SysExDump.Bytes()))
 		}
 	}
 }

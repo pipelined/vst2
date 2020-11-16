@@ -125,6 +125,11 @@ func SysExData(b []byte) SysExDataPtr {
 	}
 }
 
+// Bytes returns bytes representation of sysex data.
+func (s SysExDataPtr) Bytes() []byte {
+	return C.GoBytes(unsafe.Pointer(s.data), C.int(s.length))
+}
+
 // Free releases allocated memory.
 func (s SysExDataPtr) Free() {
 	C.free(unsafe.Pointer(unsafe.Pointer(s.data)))

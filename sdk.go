@@ -443,6 +443,16 @@ const (
 	pluginCategoryMaxCount
 )
 
+// ProcessPrecision allows to set processing precision of plugin.
+type ProcessPrecision int64
+
+const (
+	// ProcessFloat is 32 bits processing.
+	ProcessFloat ProcessPrecision = iota
+	// ProcessDouble is 64 bits processing.
+	ProcessDouble
+)
+
 func trimNull(s string) string {
 	return strings.Trim(s, "\x00")
 }

@@ -386,33 +386,6 @@ const (
 	SysExMIDI
 )
 
-type (
-	// MIDIEvent contains midi information.
-	MIDIEvent struct {
-		eventType             // Always MIDI.
-		byteSize        int32 // Always 32.
-		DeltaFrames     int32 // Number of sample frames into the current processing block that this event occurs on.
-		Flags           MIDIEventFlag
-		NoteLength      int32   // In sample frames, 0 if not available.
-		NoteOffset      int32   // In sample frames from note start, 0 if not available.
-		Data            [3]byte // 1 to 3 MIDI bytes.
-		dataReserved    byte
-		Detune          uint8 // Between -64 to +63 cents, for scales other than 'well-tempered' e.g. 'microtuning'.
-		NoteOffVelocity uint8 // Between 0 and 127.
-		reserved1       uint8 // Not used.
-		reserved2       uint8 // Not used.
-	}
-
-	// MIDIEventFlag is set in midi event.
-	MIDIEventFlag int32
-)
-
-const (
-	// MIDIEventRealtime means that this event is played and not coming
-	// from sequencer.
-	MIDIEventRealtime MIDIEventFlag = 1
-)
-
 func trimNull(s string) string {
 	return strings.Trim(s, "\x00")
 }

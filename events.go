@@ -35,6 +35,26 @@ func Events(events ...Event) *EventsPtr {
 	return (*EventsPtr)(CEvents)
 }
 
+// NumEvents returns number of events within container.
+func (e *EventsPtr) NumEvents() int {
+	return int(e.numEvents)
+}
+
+// Event returns an event from the container.
+func (e *EventsPtr) Event(i int) Event {
+	type event struct {
+		eventType
+	}
+	ev := (*event)(C.getEvent((*C.Events)(e), C.int32_t(i)))
+	switch ev.eventType {
+	case MIDI:
+		return (*MIDIEvent)(unsafe.Pointer(ev))
+	case SysExMIDI:
+		return (*SysExMIDIEvent)(unsafe.Pointer(ev))
+	}
+	return nil
+}
+
 // Free memory allocated for container.
 func (e *EventsPtr) Free() {
 	C.free(unsafe.Pointer(e.events))

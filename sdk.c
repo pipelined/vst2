@@ -40,12 +40,25 @@ typedef struct Event
 {
 	int32_t type;
 	int32_t byteSize;
+	int32_t deltaFrames;	///< sample frames related to the current block start sample position
+	int32_t flags;			///< none defined yet (should be zero)
+	int32_t dumpBytes;		///< byte size of sysexDump
+	int64_t resvd1;		///< zero (Reserved for future use)
+	char* sysexDump;		///< sysex dump
+	int64_t resvd2;		///< zero (Reserved for future use)
 } Event;
 
 void testEvents(Events* e) {
 	for (int i = 0; i < e->numEvents; i++) {
 		Event* event = ((Event *)e->events[i]);
-		printf("event: %d %d\n",i, event->type);
+		printf("event: %d %d %d\n",i, event->type, event->dumpBytes);
+		if (event->type == 0) {
+			continue;
+		}
+		for (int j = 0; j < event->dumpBytes; j++) {
+			printf("%c", event->sysexDump[j]);
+		}
+		printf("\n");
 	}
 }
 

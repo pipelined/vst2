@@ -13,12 +13,12 @@ const (
 	sysExEventSize = 44
 )
 
-// MIDIEvents are MIDI events to be processed by plugin or host.
-type MIDIEvents C.Events
+// EventsPtr is a container for events to be processed by plugin or host.
+type EventsPtr C.Events
 
-// Events allocates new MIDI events container and place there provided
-// events.
-func Events(events ...Event) *MIDIEvents {
+// Events allocates new events container and place there provided events.
+// It must be freed after use.
+func Events(events ...Event) *EventsPtr {
 	CEvents := C.newEvents(C.int32_t(len(events)))
 	for i := range events {
 		switch e := events[i].(type) {
@@ -32,11 +32,11 @@ func Events(events ...Event) *MIDIEvents {
 			C.setEvent(CEvents, unsafe.Pointer(e), C.int32_t(i))
 		}
 	}
-	return (*MIDIEvents)(CEvents)
+	return (*EventsPtr)(CEvents)
 }
 
-// Free memory allocated for events.
-func (e *MIDIEvents) Free() {
+// Free memory allocated for container.
+func (e *EventsPtr) Free() {
 	C.free(unsafe.Pointer(e.events))
 	C.free(unsafe.Pointer(e))
 }
@@ -111,6 +111,6 @@ func (s SysExDumpPtr) Free() {
 }
 
 // TestEvents is a helper function to test events.
-func TestEvents(e *MIDIEvents) {
+func TestEvents(e *EventsPtr) {
 	C.testEvents((*C.Events)(e))
 }

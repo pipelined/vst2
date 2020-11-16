@@ -112,5 +112,9 @@ Events* newEvents(int32_t numEvents);
 // no way to assign values to void** from Go.
 void setEvent(Events *events, void *event, int32_t pos);
 
+// gets the event from events container. This function is needed because there is
+// no way to assign values to void** from Go.
+void *getEvent(Events *events, int32_t pos);
+
 // TODO: remove
 void testEvents(Events *e);

@@ -72,3 +72,7 @@ Events* newEvents(int32_t numEvents) {
 void setEvent(Events *events, void *event, int32_t pos) {
 	events->events[pos] = event;
 }
+
+void* getEvent(Events *events, int32_t pos) {
+	return events->events[pos];
+}

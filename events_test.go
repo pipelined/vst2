@@ -14,8 +14,8 @@ func TestEvents(t *testing.T) {
 			SysExDump: dump,
 		},
 	)
+	defer events.Free()
 
 	assertNotNil(t, "events", events)
 	vst2.TestEvents(events)
-	events.Free()
 }

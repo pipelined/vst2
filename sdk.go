@@ -412,6 +412,37 @@ const (
 	PinUseSpeaker
 )
 
+// PluginCategory denotes the category of plugin.
+type PluginCategory uintptr
+
+const (
+	// PluginCategoryUnknown means category not implemented.
+	PluginCategoryUnknown PluginCategory = iota
+	// PluginCategoryEffect simple Effect.
+	PluginCategoryEffect
+	// PluginCategorySynth VST Instrument: synth, sampler, etc.
+	PluginCategorySynth
+	// PluginCategoryAnalysis scope, tuner.
+	PluginCategoryAnalysis
+	// PluginCategoryMastering dynamics control.
+	PluginCategoryMastering
+	// PluginCategorySpacializer panner.
+	PluginCategorySpacializer
+	// PluginCategoryRoomFx delay and reverb.
+	PluginCategoryRoomFx
+	// PluginCategorySurroundFx dedicated surround.
+	PluginCategorySurroundFx
+	// PluginCategoryRestoration denoiser.
+	PluginCategoryRestoration
+	// PluginCategoryOfflineProcess offline processor.
+	PluginCategoryOfflineProcess
+	// PluginCategoryShell plugin is a shell for other plugins.
+	PluginCategoryShell
+	// PluginCategoryGenerator tone generator.
+	PluginCategoryGenerator
+	pluginCategoryMaxCount
+)
+
 func trimNull(s string) string {
 	return strings.Trim(s, "\x00")
 }

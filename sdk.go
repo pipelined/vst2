@@ -389,8 +389,8 @@ const (
 type (
 	// MIDIEvent contains midi information.
 	MIDIEvent struct {
-		eventType       // Always MIDI.
-		ByteSize        int32
+		eventType             // Always MIDI.
+		byteSize        int32 // Always 32.
 		DeltaFrames     int32 // Number of sample frames into the current processing block that this event occurs on.
 		Flags           MIDIEventFlag
 		NoteLength      int32   // In sample frames, 0 if not available.

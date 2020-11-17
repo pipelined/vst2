@@ -352,7 +352,7 @@ const (
 
 // ProcessLevel is used as result for in HostGetCurrentProcessLevel call.
 // It tells the plugin in which thread host is right now.
-type ProcessLevel int32
+type ProcessLevel uintptr
 
 const (
 	// ProcessLevelUnknown is returned when not supported by host.
@@ -509,6 +509,23 @@ const (
 	// PanningLawEqualPower uses the following formula: L = pow (pan, 0.5)
 	// * M; R = pow ((1 - pan), 0.5) * M.
 	PanningLawEqualPower
+)
+
+// AutomationState communicates the host state of automation.
+type AutomationState uintptr
+
+const (
+	// AutomationUnsupported returned when host doesn't support automation.
+	AutomationUnsupported AutomationState = 0
+	// AutomationOff returned when automation is switched off.
+	AutomationOff
+	// AutomationRead returned when host is reading the automation.
+	AutomationRead
+	// AutomationWrite returned when host is writing the automation.
+	AutomationWrite
+	// AutomationReadWrite returned when host is reading and writing the
+	// automation.
+	AutomationReadWrite
 )
 
 func trimNull(s string) string {

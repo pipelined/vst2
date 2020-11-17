@@ -453,16 +453,16 @@ const (
 	ProcessDouble
 )
 
-// MIDIProgram structure for MIDI progra properties.
+// MIDIProgram describes the MIDI program.
 type MIDIProgram struct {
-	Index               int32
-	Name                ascii64
-	MIDIProgram         int8  // -1:off [-1;-127]
-	MIDIBankMsb         int8  // -1:off [-1;-127]
-	MIDIBankLsb         int8  // -1:off [-1;-127]
-	reserved            int8  // Not used.
-	ParentCategoryIndex int32 // -1 means there is no parent category.
-	Flags               MIDIProgramFlag
+	Index       int32
+	Name        ascii64
+	MIDIProgram int8  // -1:off [-1;-127]
+	MIDIBankMsb int8  // -1:off [-1;-127]
+	MIDIBankLsb int8  // -1:off [-1;-127]
+	reserved    int8  // Not used.
+	ParentIndex int32 // -1 means there is no parent category.
+	Flags       MIDIProgramFlag
 }
 
 // MIDIProgramFlag values.
@@ -471,6 +471,14 @@ type MIDIProgramFlag int32
 // MIDIProgramIsOmni program is in omni mode, channel 0 is used for
 // inquiries and program changes.
 const MIDIProgramIsOmni MIDIProgramFlag = 1
+
+// MIDIProgramCategory describes the MIDI program category.
+type MIDIProgramCategory struct {
+	Index       int32
+	Name        ascii64 ///< name
+	ParentIndex int32   // -1 means there is no parent category.
+	flags       int32   // Not used.
+}
 
 func trimNull(s string) string {
 	return strings.Trim(s, "\x00")

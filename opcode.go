@@ -19,7 +19,6 @@ const (
 	maxProductStrLen = 64 // used for #plugGetProductString, #audioMasterGetProductString
 	maxPluginNameLen = 32 // used for #plugGetPluginName
 
-	maxNameLen     = 64  // used for #MidiProgramName, #MidiProgramCategory, #MidiKeyName, #VstPinProperties
 	maxFileNameLen = 100 // used for #VstAudioFile->name
 )
 

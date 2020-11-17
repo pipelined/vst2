@@ -480,6 +480,15 @@ type MIDIProgramCategory struct {
 	flags       int32   // Not used.
 }
 
+// MIDIKey describes the MIDI key.
+type MIDIKey struct {
+	Index     int32
+	KeyNumber int32 // [0; 127]
+	Name      ascii64
+	reserved  int32 // Not used.
+	flags     int32 // Not used.
+}
+
 func trimNull(s string) string {
 	return strings.Trim(s, "\x00")
 }

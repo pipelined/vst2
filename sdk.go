@@ -489,6 +489,16 @@ type MIDIKey struct {
 	flags     int32 // Not used.
 }
 
+// PatchChunk is used to communicate preset or bank properties with plugin
+// before uploading it.
+type PatchChunk struct {
+	version        int32 // Always equals 1.
+	PluginUniqueID int32
+	PluginVersion  int32
+	NumElements    int32    // Number of presets for bank or number of parameters for preset.
+	reserved       [48]byte // Not used.
+}
+
 func trimNull(s string) string {
 	return strings.Trim(s, "\x00")
 }

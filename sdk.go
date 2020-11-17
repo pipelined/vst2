@@ -499,6 +499,18 @@ type PatchChunk struct {
 	reserved       [48]byte // Not used.
 }
 
+// PanningLaw determines the algorithm panning happens.
+type PanningLaw float32
+
+const (
+	// PanningLawLinear uses the following formula: L = pan * M; R = (1 -
+	// pan) * M.
+	PanningLawLinear PanningLaw = 0
+	// PanningLawEqualPower uses the following formula: L = pow (pan, 0.5)
+	// * M; R = pow ((1 - pan), 0.5) * M.
+	PanningLawEqualPower
+)
+
 func trimNull(s string) string {
 	return strings.Trim(s, "\x00")
 }

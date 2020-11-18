@@ -528,6 +528,148 @@ const (
 	AutomationReadWrite
 )
 
+// KeyCode used to pass information about key presses.
+type KeyCode struct {
+	Character int32 // ASCII character.
+	VirtualKey
+	ModifierKeyFlag // Bit flags.
+}
+
+// VirtualKey is platform-independent definition of Virtual Keys used in
+// KeyCode messages.
+type VirtualKey uint8
+
+// ModifierKeyFlag are flags used in KeyCode messages.
+type ModifierKeyFlag uint8
+
+const (
+	// VirtualKeyBack is Backspace key.
+	VirtualKeyBack VirtualKey = iota + 1
+	// VirtualKeyTab is Tab key.
+	VirtualKeyTab
+	// VirtualKeyClear is Clear key.
+	VirtualKeyClear
+	// VirtualKeyReturn is Return key.
+	VirtualKeyReturn
+	// VirtualKeyPause is Pause key.
+	VirtualKeyPause
+	// VirtualKeyEscape is Escape key.
+	VirtualKeyEscape
+	// VirtualKeySpace is Space key.
+	VirtualKeySpace
+	// VirtualKeyNext is Next key.
+	VirtualKeyNext
+	// VirtualKeyEnd is End key.
+	VirtualKeyEnd
+	// VirtualKeyHome is Home key.
+	VirtualKeyHome
+	// VirtualKeyLeft is Left key.
+	VirtualKeyLeft
+	// VirtualKeyUp is Up key.
+	VirtualKeyUp
+	// VirtualKeyRight is Right key.
+	VirtualKeyRight
+	// VirtualKeyDown is Down key.
+	VirtualKeyDown
+	// VirtualKeyPageUp is PageUp key.
+	VirtualKeyPageUp
+	// VirtualKeyPageDown is PageDown key.
+	VirtualKeyPageDown
+	// VirtualKeySelect is Select key.
+	VirtualKeySelect
+	// VirtualKeyPrint is Print key.
+	VirtualKeyPrint
+	// VirtualKeyEnter is Enter key.
+	VirtualKeyEnter
+	// VirtualKeySnapshot is Snapshot key.
+	VirtualKeySnapshot
+	// VirtualKeyInsert is Insert key.
+	VirtualKeyInsert
+	// VirtualKeyDelete is Delete key.
+	VirtualKeyDelete
+	// VirtualKeyHelp is Help key.
+	VirtualKeyHelp
+	// VirtualKeyNumpad0 is Numpad0 key.
+	VirtualKeyNumpad0
+	// VirtualKeyNumpad1 is Numpad1 key.
+	VirtualKeyNumpad1
+	// VirtualKeyNumpad2 is Numpad2 key.
+	VirtualKeyNumpad2
+	// VirtualKeyNumpad3 is Numpad3 key.
+	VirtualKeyNumpad3
+	// VirtualKeyNumpad4 is Numpad4 key.
+	VirtualKeyNumpad4
+	// VirtualKeyNumpad5 is Numpad5 key.
+	VirtualKeyNumpad5
+	// VirtualKeyNumpad6 is Numpad6 key.
+	VirtualKeyNumpad6
+	// VirtualKeyNumpad7 is Numpad7 key.
+	VirtualKeyNumpad7
+	// VirtualKeyNumpad8 is Numpad8 key.
+	VirtualKeyNumpad8
+	// VirtualKeyNumpad9 is Numpad9 key.
+	VirtualKeyNumpad9
+	// VirtualKeyMultiply is Multiply key.
+	VirtualKeyMultiply
+	// VirtualKeyAdd is Add key.
+	VirtualKeyAdd
+	// VirtualKeySeparator is Separator key.
+	VirtualKeySeparator
+	// VirtualKeySubtract is Subtract key.
+	VirtualKeySubtract
+	// VirtualKeyDecimal is Decimal key.
+	VirtualKeyDecimal
+	// VirtualKeyDivide is Divide key.
+	VirtualKeyDivide
+	// VirtualKeyF1 is F1 key.
+	VirtualKeyF1
+	// VirtualKeyF2 is F2 key.
+	VirtualKeyF2
+	// VirtualKeyF3 is F3 key.
+	VirtualKeyF3
+	// VirtualKeyF4 is F4 key.
+	VirtualKeyF4
+	// VirtualKeyF5 is F5 key.
+	VirtualKeyF5
+	// VirtualKeyF6 is F6 key.
+	VirtualKeyF6
+	// VirtualKeyF7 is F7 key.
+	VirtualKeyF7
+	// VirtualKeyF8 is F8 key.
+	VirtualKeyF8
+	// VirtualKeyF9 is F9 key.
+	VirtualKeyF9
+	// VirtualKeyF10 is F10 key.
+	VirtualKeyF10
+	// VirtualKeyF11 is F11 key.
+	VirtualKeyF11
+	// VirtualKeyF12 is F12 key.
+	VirtualKeyF12
+	// VirtualKeyNumlock is Numlock key.
+	VirtualKeyNumlock
+	// VirtualKeyScroll is Scroll key.
+	VirtualKeyScroll
+	// VirtualKeyShift is Shift key.
+	VirtualKeyShift
+	// VirtualKeyControl is Control key.
+	VirtualKeyControl
+	// VirtualKeyAlt is Alt key.
+	VirtualKeyAlt
+	// VirtualKeyEquals is Equals key.
+	VirtualKeyEquals
+)
+
+const (
+	// ModifierKeyShift is Shift key.
+	ModifierKeyShift ModifierKeyFlag = 1 << iota
+	// ModifierKeyAlternate is Alt key.
+	ModifierKeyAlternate
+	// ModifierKeyCommand is Command key on Mac.
+	ModifierKeyCommand
+	// ModifierKeyControl is Control key.
+	ModifierKeyControl
+)
+
 func trimNull(s string) string {
 	return strings.Trim(s, "\x00")
 }

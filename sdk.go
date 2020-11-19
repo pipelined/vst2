@@ -320,7 +320,8 @@ const (
 	_
 	_
 	_
-	// PluginFloatProcessing is set if plugin supports replacing process mode.
+	// PluginFloatProcessing is set if plugin supports replacing process
+	// mode.
 	PluginFloatProcessing
 	// PluginProgramChunks is set if preset data is handled in formatless
 	// chunks.
@@ -677,6 +678,69 @@ type EditorRectangle struct {
 	Bottom int16
 	Right  int16
 }
+
+type (
+	// HostCanDoString are constants that can be used to check host
+	// capabilities.
+	HostCanDoString string
+	// PluginCanDoString are constants that can be used to check plugin
+	// capabilities.
+	PluginCanDoString string
+)
+
+const (
+	// HostCanSendEvents host can send events.
+	HostCanSendEvents HostCanDoString = "sendVstEvents"
+	// HostCanSendMIDIEvent host can send MIDI events.
+	HostCanSendMIDIEvent HostCanDoString = "sendVstMidiEvent"
+	// HostCanSendTimeInfo host can send TimeInfo.
+	HostCanSendTimeInfo HostCanDoString = "sendVstTimeInfo"
+	// HostCanReceiveEvents host can receive events from plugin.
+	HostCanReceiveEvents HostCanDoString = "receiveVstEvents"
+	// HostCanReceiveMIDIEvent host can receive MIDI events from plugin.
+	HostCanReceiveMIDIEvent HostCanDoString = "receiveVstMidiEvent"
+	// HostCanReportConnectionChanges host can notify the plugin when
+	// something change in plugin´s routing/connections with
+	// Suspend/Resume/SetSpeakerArrangement.
+	HostCanReportConnectionChanges HostCanDoString = "reportConnectionChanges"
+	// HostCanAcceptIOChanges host can receive HostIOChanged.
+	HostCanAcceptIOChanges HostCanDoString = "acceptIOChanges"
+	// HostCanSizeWindow used by VSTGUI.
+	HostCanSizeWindow HostCanDoString = "sizeWindow"
+	// HostCanOffline host supports offline processing feature.
+	HostCanOffline HostCanDoString = "offline"
+	// HostCanOpenFileSelector host supports opcode HostOpenFileSelector.
+	HostCanOpenFileSelector HostCanDoString = "openFileSelector"
+	// HostCanCloseFileSelector host supports opcode HostCloseFileSelector.
+	HostCanCloseFileSelector HostCanDoString = "closeFileSelector"
+	// HostCanStartStopProcess host supports PlugStartProcess and
+	// PlugStopProcess functions.
+	HostCanStartStopProcess HostCanDoString = "startStopProcess"
+	// HostCanShellCategory host supports plugins with PluginCategoryShell.
+	HostCanShellCategory HostCanDoString = "shellCategory"
+	// HostCanSendRealtimeMIDIEvent host can send realtime MIDI events.
+	HostCanSendRealtimeMIDIEvent HostCanDoString = "sendVstMidiEventFlagIsRealtime"
+)
+
+const (
+	// PluginCanSendEvents plugin can send events.
+	PluginCanSendEvents PluginCanDoString = "sendVstEvents"
+	// PluginCanSendMIDIEvent plugin can send MIDI events.
+	PluginCanSendMIDIEvent PluginCanDoString = "sendVstMidiEvent"
+	// PluginCanReceiveEvents plugin can receive events.
+	PluginCanReceiveEvents PluginCanDoString = "receiveVstEvents"
+	// PluginCanReceiveMIDIEvent plugin can receive MIDI events.
+	PluginCanReceiveMIDIEvent PluginCanDoString = "receiveVstMidiEvent"
+	// PluginCanReceiveTimeInfo plugin can receive TimeInfo.
+	PluginCanReceiveTimeInfo PluginCanDoString = "receiveVstTimeInfo"
+	// PluginCanOffline plugin supports offline functions.
+	PluginCanOffline PluginCanDoString = "offline"
+	// PluginCanMIDIProgramNames plugin supports function
+	// GetMIDIProgramName.
+	PluginCanMIDIProgramNames PluginCanDoString = "midiProgramNames"
+	// PluginCanBypass plugin supports function SetBypass.
+	PluginCanBypass PluginCanDoString = "bypass"
+)
 
 func trimNull(s string) string {
 	return strings.Trim(s, "\x00")

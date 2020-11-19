@@ -670,6 +670,14 @@ const (
 	ModifierKeyControl
 )
 
+// EditorRectangle holds the information about plugin editor window.
+type EditorRectangle struct {
+	Top    int16
+	Left   int16
+	Bottom int16
+	Right  int16
+}
+
 func trimNull(s string) string {
 	return strings.Trim(s, "\x00")
 }

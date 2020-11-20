@@ -1,6 +1,7 @@
 #include <stdint.h>
 
 typedef struct Plugin Plugin;
+typedef struct Events Events;
 
 typedef	int64_t (*HostCallback) (Plugin* plugin, int32_t opcode, int32_t index, int64_t value, void* ptr, float opt);
 typedef int64_t (*DispatchProc) (Plugin* plugin, int32_t opcode, int32_t index, int64_t value, void* ptr, float opt);
@@ -72,6 +73,17 @@ struct Plugin
 	char future[56];
 };
 
+struct Events
+{
+	// Number of Events in array.
+	int32_t numEvents;
+	// Not used.
+	int64_t reserved;
+	// Event pointer array, variable size.
+	void** events;
+};
+
+
 // Plugin's entry point
 typedef Plugin* (*EntryPoint)(HostCallback host);
 
@@ -92,3 +104,17 @@ float getParameter(Plugin *plugin, int32_t paramIndex);
 
 // Bridge to call set parameter fucntion of loaded plugin
 void setParameter(Plugin *plugin, int32_t paramIndex, float value);
+
+// Bridge to allocate events structure.
+Events* newEvents(int32_t numEvents);
+
+// sets event into events array. This function is needed because there is
+// no way to assign values to void** from Go.
+void setEvent(Events *events, void *event, int32_t pos);
+
+// gets the event from events container. This function is needed because there is
+// no way to assign values to void** from Go.
+void *getEvent(Events *events, int32_t pos);
+
+// TODO: remove
+void testEvents(Events *e);

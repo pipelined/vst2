@@ -1,4 +1,4 @@
-//go:generate stringer -type=PlugectOpcode,HostOpcode -output=opcode_string.go
+//go:generate stringer -type=PluginOpcode,HostOpcode -output=opcode_string.go
 
 package vst2
 
@@ -15,14 +15,11 @@ import (
 )
 
 const (
-	maxVendorStrLen   = 64 // used for #plugGetVendorString, #audioMasterGetVendorString
-	maxProductStrLen  = 64 // used for #plugGetProductString, #audioMasterGetProductString
-	maxPlugectNameLen = 32 // used for #plugGetPlugectName
+	maxVendorStrLen  = 64 // used for #plugGetVendorString, #audioMasterGetVendorString
+	maxProductStrLen = 64 // used for #plugGetProductString, #audioMasterGetProductString
+	maxPluginNameLen = 32 // used for #plugGetPluginName
 
-	maxNameLen       = 64  // used for #MidiProgramName, #MidiProgramCategory, #MidiKeyName, #VstPinProperties
-	maxLabelLen      = 64  // used for #VstPinProperties->label
-	maxShortLabelLen = 8   // used for #VstPinProperties->shortLabel
-	maxFileNameLen   = 100 // used for #VstAudioFile->name
+	maxFileNameLen = 100 // used for #VstAudioFile->name
 )
 
 type (
@@ -49,7 +46,7 @@ func (s ascii64) String() string {
 }
 
 // PluginOpcode is sent by host in dispatch call to plugin.
-// It reflects APlugectOpcodes and APlugectXOpcodes opcodes values.
+// It reflects APluginOpcodes and APluginXOpcodes opcodes values.
 type PluginOpcode uint64
 
 const (
@@ -210,9 +207,9 @@ const (
 	// PlugSetBypass passed to make plugin bypassed.
 	// Value: 1 is bypass, 0 is no bypass.
 	PlugSetBypass
-	// PlugGetPlugectName passed to get a name of the plugin.
-	// Ptr: *[maxPlugectNameLen]byte buffer for plugin name.
-	PlugGetPlugectName
+	// PlugGetPluginName passed to get a name of the plugin.
+	// Ptr: *[maxPluginNameLen]byte buffer for plugin name.
+	PlugGetPluginName
 
 	// deprecated in VST v2.4
 	plugGetErrorText

@@ -311,16 +311,17 @@ const (
 	SpeakerLfe2
 )
 
-// PluginFlags values.
-type PluginFlags int32
+// PluginFlag values.
+type PluginFlag int32
 
 const (
 	// PluginHasEditor is set if the plugin provides a custom editor.
-	PluginHasEditor PluginFlags = 1 << iota
+	PluginHasEditor PluginFlag = 1 << iota
 	_
 	_
 	_
-	// PluginFloatProcessing is set if plugin supports replacing process mode.
+	// PluginFloatProcessing is set if plugin supports replacing process
+	// mode.
 	PluginFloatProcessing
 	// PluginProgramChunks is set if preset data is handled in formatless
 	// chunks.
@@ -352,7 +353,7 @@ const (
 
 // ProcessLevel is used as result for in HostGetCurrentProcessLevel call.
 // It tells the plugin in which thread host is right now.
-type ProcessLevel int32
+type ProcessLevel uintptr
 
 const (
 	// ProcessLevelUnknown is returned when not supported by host.
@@ -368,6 +369,377 @@ const (
 	// ProcessLevelOffline is returned when in offline processing and thus
 	// in user thread.
 	ProcessLevelOffline
+)
+
+// HostLanguage is the language of the host.
+type HostLanguage uintptr
+
+const (
+	// HostLanguageEnglish English.
+	HostLanguageEnglish HostLanguage = iota + 1
+	// HostLanguageGerman German.
+	HostLanguageGerman
+	// HostLanguageFrench French.
+	HostLanguageFrench
+	// HostLanguageItalian Italian.
+	HostLanguageItalian
+	// HostLanguageSpanish Spanish.
+	HostLanguageSpanish
+	// HostLanguageJapanese Japanese.
+	HostLanguageJapanese
+)
+
+type (
+	// PinProperties provides info about about plugin connectivity.
+	PinProperties struct {
+		Label ascii64
+		Flags PinPropertiesFlag
+		SpeakerArrangementType
+		ShortLabel ascii8   // Short name, recommended 6 chars + delimiter.
+		future     [48]byte // Not used.
+	}
+
+	// PinPropertiesFlag values.
+	PinPropertiesFlag int32
+)
+
+const (
+	// PinIsActive is ignored by Host.
+	PinIsActive PinPropertiesFlag = 1 << iota
+	// PinIsStereo means that pin is first of a stereo pair.
+	PinIsStereo
+	// PinUseSpeaker means that arrangement type is valid and pin can be
+	// used for arrangement setup.
+	PinUseSpeaker
+)
+
+// PluginCategory denotes the category of plugin.
+type PluginCategory uintptr
+
+const (
+	// PluginCategoryUnknown means category not implemented.
+	PluginCategoryUnknown PluginCategory = iota
+	// PluginCategoryEffect simple Effect.
+	PluginCategoryEffect
+	// PluginCategorySynth VST Instrument: synth, sampler, etc.
+	PluginCategorySynth
+	// PluginCategoryAnalysis scope, tuner.
+	PluginCategoryAnalysis
+	// PluginCategoryMastering dynamics control.
+	PluginCategoryMastering
+	// PluginCategorySpacializer panner.
+	PluginCategorySpacializer
+	// PluginCategoryRoomFx delay and reverb.
+	PluginCategoryRoomFx
+	// PluginCategorySurroundFx dedicated surround.
+	PluginCategorySurroundFx
+	// PluginCategoryRestoration denoiser.
+	PluginCategoryRestoration
+	// PluginCategoryOfflineProcess offline processor.
+	PluginCategoryOfflineProcess
+	// PluginCategoryShell plugin is a shell for other plugins.
+	PluginCategoryShell
+	// PluginCategoryGenerator tone generator.
+	PluginCategoryGenerator
+	pluginCategoryMaxCount
+)
+
+// ProcessPrecision allows to set processing precision of plugin.
+type ProcessPrecision int64
+
+const (
+	// ProcessFloat is 32 bits processing.
+	ProcessFloat ProcessPrecision = iota
+	// ProcessDouble is 64 bits processing.
+	ProcessDouble
+)
+
+// MIDIProgram describes the MIDI program.
+type MIDIProgram struct {
+	Index       int32
+	Name        ascii64
+	MIDIProgram int8  // -1:off [-1;-127]
+	MIDIBankMsb int8  // -1:off [-1;-127]
+	MIDIBankLsb int8  // -1:off [-1;-127]
+	reserved    int8  // Not used.
+	ParentIndex int32 // -1 means there is no parent category.
+	Flags       MIDIProgramFlag
+}
+
+// MIDIProgramFlag values.
+type MIDIProgramFlag int32
+
+// MIDIProgramIsOmni program is in omni mode, channel 0 is used for
+// inquiries and program changes.
+const MIDIProgramIsOmni MIDIProgramFlag = 1
+
+// MIDIProgramCategory describes the MIDI program category.
+type MIDIProgramCategory struct {
+	Index       int32
+	Name        ascii64 ///< name
+	ParentIndex int32   // -1 means there is no parent category.
+	flags       int32   // Not used.
+}
+
+// MIDIKey describes the MIDI key.
+type MIDIKey struct {
+	Index     int32
+	KeyNumber int32 // [0; 127]
+	Name      ascii64
+	reserved  int32 // Not used.
+	flags     int32 // Not used.
+}
+
+// PatchChunk is used to communicate preset or bank properties with plugin
+// before uploading it.
+type PatchChunk struct {
+	version        int32 // Always equals 1.
+	PluginUniqueID int32
+	PluginVersion  int32
+	NumElements    int32    // Number of presets for bank or number of parameters for preset.
+	reserved       [48]byte // Not used.
+}
+
+// PanningLaw determines the algorithm panning happens.
+type PanningLaw float32
+
+const (
+	// PanningLawLinear uses the following formula: L = pan * M; R = (1 -
+	// pan) * M.
+	PanningLawLinear PanningLaw = 0
+	// PanningLawEqualPower uses the following formula: L = pow (pan, 0.5)
+	// * M; R = pow ((1 - pan), 0.5) * M.
+	PanningLawEqualPower
+)
+
+// AutomationState communicates the host state of automation.
+type AutomationState uintptr
+
+const (
+	// AutomationUnsupported returned when host doesn't support automation.
+	AutomationUnsupported AutomationState = 0
+	// AutomationOff returned when automation is switched off.
+	AutomationOff
+	// AutomationRead returned when host is reading the automation.
+	AutomationRead
+	// AutomationWrite returned when host is writing the automation.
+	AutomationWrite
+	// AutomationReadWrite returned when host is reading and writing the
+	// automation.
+	AutomationReadWrite
+)
+
+// KeyCode used to pass information about key presses.
+type KeyCode struct {
+	Character int32 // ASCII character.
+	VirtualKey
+	ModifierKeyFlag // Bit flags.
+}
+
+// VirtualKey is platform-independent definition of Virtual Keys used in
+// KeyCode messages.
+type VirtualKey uint8
+
+// ModifierKeyFlag are flags used in KeyCode messages.
+type ModifierKeyFlag uint8
+
+const (
+	// VirtualKeyBack is Backspace key.
+	VirtualKeyBack VirtualKey = iota + 1
+	// VirtualKeyTab is Tab key.
+	VirtualKeyTab
+	// VirtualKeyClear is Clear key.
+	VirtualKeyClear
+	// VirtualKeyReturn is Return key.
+	VirtualKeyReturn
+	// VirtualKeyPause is Pause key.
+	VirtualKeyPause
+	// VirtualKeyEscape is Escape key.
+	VirtualKeyEscape
+	// VirtualKeySpace is Space key.
+	VirtualKeySpace
+	// VirtualKeyNext is Next key.
+	VirtualKeyNext
+	// VirtualKeyEnd is End key.
+	VirtualKeyEnd
+	// VirtualKeyHome is Home key.
+	VirtualKeyHome
+	// VirtualKeyLeft is Left key.
+	VirtualKeyLeft
+	// VirtualKeyUp is Up key.
+	VirtualKeyUp
+	// VirtualKeyRight is Right key.
+	VirtualKeyRight
+	// VirtualKeyDown is Down key.
+	VirtualKeyDown
+	// VirtualKeyPageUp is PageUp key.
+	VirtualKeyPageUp
+	// VirtualKeyPageDown is PageDown key.
+	VirtualKeyPageDown
+	// VirtualKeySelect is Select key.
+	VirtualKeySelect
+	// VirtualKeyPrint is Print key.
+	VirtualKeyPrint
+	// VirtualKeyEnter is Enter key.
+	VirtualKeyEnter
+	// VirtualKeySnapshot is Snapshot key.
+	VirtualKeySnapshot
+	// VirtualKeyInsert is Insert key.
+	VirtualKeyInsert
+	// VirtualKeyDelete is Delete key.
+	VirtualKeyDelete
+	// VirtualKeyHelp is Help key.
+	VirtualKeyHelp
+	// VirtualKeyNumpad0 is Numpad0 key.
+	VirtualKeyNumpad0
+	// VirtualKeyNumpad1 is Numpad1 key.
+	VirtualKeyNumpad1
+	// VirtualKeyNumpad2 is Numpad2 key.
+	VirtualKeyNumpad2
+	// VirtualKeyNumpad3 is Numpad3 key.
+	VirtualKeyNumpad3
+	// VirtualKeyNumpad4 is Numpad4 key.
+	VirtualKeyNumpad4
+	// VirtualKeyNumpad5 is Numpad5 key.
+	VirtualKeyNumpad5
+	// VirtualKeyNumpad6 is Numpad6 key.
+	VirtualKeyNumpad6
+	// VirtualKeyNumpad7 is Numpad7 key.
+	VirtualKeyNumpad7
+	// VirtualKeyNumpad8 is Numpad8 key.
+	VirtualKeyNumpad8
+	// VirtualKeyNumpad9 is Numpad9 key.
+	VirtualKeyNumpad9
+	// VirtualKeyMultiply is Multiply key.
+	VirtualKeyMultiply
+	// VirtualKeyAdd is Add key.
+	VirtualKeyAdd
+	// VirtualKeySeparator is Separator key.
+	VirtualKeySeparator
+	// VirtualKeySubtract is Subtract key.
+	VirtualKeySubtract
+	// VirtualKeyDecimal is Decimal key.
+	VirtualKeyDecimal
+	// VirtualKeyDivide is Divide key.
+	VirtualKeyDivide
+	// VirtualKeyF1 is F1 key.
+	VirtualKeyF1
+	// VirtualKeyF2 is F2 key.
+	VirtualKeyF2
+	// VirtualKeyF3 is F3 key.
+	VirtualKeyF3
+	// VirtualKeyF4 is F4 key.
+	VirtualKeyF4
+	// VirtualKeyF5 is F5 key.
+	VirtualKeyF5
+	// VirtualKeyF6 is F6 key.
+	VirtualKeyF6
+	// VirtualKeyF7 is F7 key.
+	VirtualKeyF7
+	// VirtualKeyF8 is F8 key.
+	VirtualKeyF8
+	// VirtualKeyF9 is F9 key.
+	VirtualKeyF9
+	// VirtualKeyF10 is F10 key.
+	VirtualKeyF10
+	// VirtualKeyF11 is F11 key.
+	VirtualKeyF11
+	// VirtualKeyF12 is F12 key.
+	VirtualKeyF12
+	// VirtualKeyNumlock is Numlock key.
+	VirtualKeyNumlock
+	// VirtualKeyScroll is Scroll key.
+	VirtualKeyScroll
+	// VirtualKeyShift is Shift key.
+	VirtualKeyShift
+	// VirtualKeyControl is Control key.
+	VirtualKeyControl
+	// VirtualKeyAlt is Alt key.
+	VirtualKeyAlt
+	// VirtualKeyEquals is Equals key.
+	VirtualKeyEquals
+)
+
+const (
+	// ModifierKeyShift is Shift key.
+	ModifierKeyShift ModifierKeyFlag = 1 << iota
+	// ModifierKeyAlternate is Alt key.
+	ModifierKeyAlternate
+	// ModifierKeyCommand is Command key on Mac.
+	ModifierKeyCommand
+	// ModifierKeyControl is Control key.
+	ModifierKeyControl
+)
+
+// EditorRectangle holds the information about plugin editor window.
+type EditorRectangle struct {
+	Top    int16
+	Left   int16
+	Bottom int16
+	Right  int16
+}
+
+type (
+	// HostCanDoString are constants that can be used to check host
+	// capabilities.
+	HostCanDoString string
+	// PluginCanDoString are constants that can be used to check plugin
+	// capabilities.
+	PluginCanDoString string
+)
+
+const (
+	// HostCanSendEvents host can send events.
+	HostCanSendEvents HostCanDoString = "sendVstEvents"
+	// HostCanSendMIDIEvent host can send MIDI events.
+	HostCanSendMIDIEvent HostCanDoString = "sendVstMidiEvent"
+	// HostCanSendTimeInfo host can send TimeInfo.
+	HostCanSendTimeInfo HostCanDoString = "sendVstTimeInfo"
+	// HostCanReceiveEvents host can receive events from plugin.
+	HostCanReceiveEvents HostCanDoString = "receiveVstEvents"
+	// HostCanReceiveMIDIEvent host can receive MIDI events from plugin.
+	HostCanReceiveMIDIEvent HostCanDoString = "receiveVstMidiEvent"
+	// HostCanReportConnectionChanges host can notify the plugin when
+	// something change in plugin´s routing/connections with
+	// Suspend/Resume/SetSpeakerArrangement.
+	HostCanReportConnectionChanges HostCanDoString = "reportConnectionChanges"
+	// HostCanAcceptIOChanges host can receive HostIOChanged.
+	HostCanAcceptIOChanges HostCanDoString = "acceptIOChanges"
+	// HostCanSizeWindow used by VSTGUI.
+	HostCanSizeWindow HostCanDoString = "sizeWindow"
+	// HostCanOffline host supports offline processing feature.
+	HostCanOffline HostCanDoString = "offline"
+	// HostCanOpenFileSelector host supports opcode HostOpenFileSelector.
+	HostCanOpenFileSelector HostCanDoString = "openFileSelector"
+	// HostCanCloseFileSelector host supports opcode HostCloseFileSelector.
+	HostCanCloseFileSelector HostCanDoString = "closeFileSelector"
+	// HostCanStartStopProcess host supports PlugStartProcess and
+	// PlugStopProcess functions.
+	HostCanStartStopProcess HostCanDoString = "startStopProcess"
+	// HostCanShellCategory host supports plugins with PluginCategoryShell.
+	HostCanShellCategory HostCanDoString = "shellCategory"
+	// HostCanSendRealtimeMIDIEvent host can send realtime MIDI events.
+	HostCanSendRealtimeMIDIEvent HostCanDoString = "sendVstMidiEventFlagIsRealtime"
+)
+
+const (
+	// PluginCanSendEvents plugin can send events.
+	PluginCanSendEvents PluginCanDoString = "sendVstEvents"
+	// PluginCanSendMIDIEvent plugin can send MIDI events.
+	PluginCanSendMIDIEvent PluginCanDoString = "sendVstMidiEvent"
+	// PluginCanReceiveEvents plugin can receive events.
+	PluginCanReceiveEvents PluginCanDoString = "receiveVstEvents"
+	// PluginCanReceiveMIDIEvent plugin can receive MIDI events.
+	PluginCanReceiveMIDIEvent PluginCanDoString = "receiveVstMidiEvent"
+	// PluginCanReceiveTimeInfo plugin can receive TimeInfo.
+	PluginCanReceiveTimeInfo PluginCanDoString = "receiveVstTimeInfo"
+	// PluginCanOffline plugin supports offline functions.
+	PluginCanOffline PluginCanDoString = "offline"
+	// PluginCanMIDIProgramNames plugin supports function
+	// GetMIDIProgramName.
+	PluginCanMIDIProgramNames PluginCanDoString = "midiProgramNames"
+	// PluginCanBypass plugin supports function SetBypass.
+	PluginCanBypass PluginCanDoString = "bypass"
 )
 
 func trimNull(s string) string {

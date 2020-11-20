@@ -71,8 +71,8 @@ func (p *Plugin) NumPrograms() int {
 }
 
 // Flags returns the plugin flags.
-func (p *Plugin) Flags() PluginFlags {
-	return PluginFlags(p.flags)
+func (p *Plugin) Flags() PluginFlag {
+	return PluginFlag(p.flags)
 }
 
 // ProcessDouble audio with VST plugin.
@@ -109,12 +109,12 @@ func (p *Plugin) SetParamValue(index int, value float32) {
 
 // CanProcessFloat32 checks if plugin can process float32.
 func (p *Plugin) CanProcessFloat32() bool {
-	return PluginFlags(p.flags)&PluginFloatProcessing == PluginFloatProcessing
+	return PluginFlag(p.flags)&PluginFloatProcessing == PluginFloatProcessing
 }
 
 // CanProcessFloat64 checks if plugin can process float64.
 func (p *Plugin) CanProcessFloat64() bool {
-	return PluginFlags(p.flags)&PluginDoubleProcessing == PluginDoubleProcessing
+	return PluginFlag(p.flags)&PluginDoubleProcessing == PluginDoubleProcessing
 }
 
 // Convert golang string to C string without allocations. Result string is

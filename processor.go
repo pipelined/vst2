@@ -102,7 +102,7 @@ func (p *Processor) Allocator(init ProcessorInitFunc) pipe.ProcessorAllocatorFun
 		}
 		processFn, flushFn := processorFns(p.Plugin, &p.host)
 		return pipe.Processor{
-			Output: pipe.SignalProperties{
+			SignalProperties: pipe.SignalProperties{
 				Channels:   props.Channels,
 				SampleRate: props.SampleRate,
 			},
@@ -126,12 +126,12 @@ func processorFns(p *Plugin, host *processorHost) (pipe.ProcessFunc, pipe.FlushF
 func doubleFns(p *Plugin, host *processorHost) (pipe.ProcessFunc, pipe.FlushFunc) {
 	doubleIn := NewDoubleBuffer(host.Channels, host.BufferSize)
 	doubleOut := NewDoubleBuffer(host.Channels, host.BufferSize)
-	return func(in, out signal.Floating) error {
+	return func(in, out signal.Floating) (int, error) {
 			doubleIn.CopyFrom(in)
 			p.ProcessDouble(doubleIn, doubleOut)
 			host.CurrentPosition += int64(in.Length())
 			doubleOut.CopyTo(out)
-			return nil
+			return in.Length(), nil
 		},
 		func(context.Context) error {
 			doubleIn.Free()
@@ -144,12 +144,12 @@ func doubleFns(p *Plugin, host *processorHost) (pipe.ProcessFunc, pipe.FlushFunc
 func floatFns(p *Plugin, host *processorHost) (pipe.ProcessFunc, pipe.FlushFunc) {
 	floatIn := NewFloatBuffer(host.Channels, host.BufferSize)
 	floatOut := NewFloatBuffer(host.Channels, host.BufferSize)
-	return func(in, out signal.Floating) error {
+	return func(in, out signal.Floating) (int, error) {
 			floatIn.CopyFrom(in)
 			p.ProcessFloat(floatIn, floatOut)
 			host.CurrentPosition += int64(in.Length())
 			floatOut.CopyTo(out)
-			return nil
+			return in.Length(), nil
 		},
 		func(context.Context) error {
 			floatIn.Free()

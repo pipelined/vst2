@@ -45,15 +45,17 @@ type (
 	// wrapping technique to add more types to callback.
 	HostCallbackFunc func(op HostOpcode, index int32, value int64, ptr unsafe.Pointer, opt float32) uintptr
 
-	// HostCallbackAllocator returns new host callback function that does
-	// proper casting of plugin calls.
-	HostCallbackAllocator struct {
-		GetSampleRate   HostGetSampleRateFunc
-		GetBufferSize   HostGetBufferSizeFunc
-		GetProcessLevel HostGetProcessLevel
-		GetTimeInfo     HostGetTimeInfo
+	// Host handles all callbacks from plugin.
+	Host struct {
+		ProgressProcessed HostProgressProcessed
+		GetSampleRate     HostGetSampleRateFunc
+		GetBufferSize     HostGetBufferSizeFunc
+		GetProcessLevel   HostGetProcessLevel
+		GetTimeInfo       HostGetTimeInfo
 	}
 
+	// HostProgressProcessed is executed after every process call.
+	HostProgressProcessed func(int)
 	// HostGetSampleRateFunc returns host sample rate.
 	HostGetSampleRateFunc func() signal.Frequency
 	// HostGetBufferSizeFunc returns host buffer size.
@@ -64,9 +66,9 @@ type (
 	HostGetTimeInfo func() *TimeInfo
 )
 
-// HostCallback returns HostCallbackFunc that handles all vst types casts
+// Callback returns HostCallbackFunc that handles all vst types casts
 // and allows to write handlers without usage of unsafe package.
-func HostCallback(h HostCallbackAllocator) HostCallbackFunc {
+func (h Host) Callback() HostCallbackFunc {
 	return func(op HostOpcode, index int32, value int64, ptr unsafe.Pointer, opt float32) uintptr {
 		switch op {
 		case HostGetCurrentProcessLevel:

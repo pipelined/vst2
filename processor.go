@@ -11,8 +11,11 @@ import (
 type (
 	// Processor is pipe component that wraps.
 	Processor struct {
-		host       processorHost
-		Plugin     *Plugin
+		bufferSize int
+		channels   int
+		sampleRate signal.Frequency
+		plugin     *Plugin
+		progressFn HostProgressProcessed
 		Parameters []Parameter
 		Presets    []Preset
 	}
@@ -30,59 +33,43 @@ type (
 		name string
 	}
 
-	// ProcessorHost contains values required to handle plugin-to-host
-	// callbacks. It must be modified in the processing goroutine, otherwise
-	// race condition might happen.
-	processorHost struct {
-		BufferSize      int
-		Channels        int
-		SampleRate      signal.Frequency
-		CurrentPosition int64
-	}
-
 	// ProcessorInitFunc applies configuration on plugin before starting it
 	// in the processor routine.
 	ProcessorInitFunc func(*Plugin)
 )
 
-func (h *processorHost) callback() HostCallbackFunc {
-	return HostCallback(HostCallbackAllocator{
-		GetSampleRate: func() signal.Frequency {
-			return h.SampleRate
-		},
-		GetBufferSize: func() int {
-			return h.BufferSize
-		},
-		GetProcessLevel: func() ProcessLevel {
-			return ProcessLevelRealtime
-		},
-	})
-}
-
-// Processor represents vst2 sound processor.
-func (v *VST) Processor() Processor {
-	host := processorHost{}
-	p := v.Plugin(host.callback())
-	numParams := p.NumParams()
+// Processor represents vst2 sound processor. Processor always overrides
+// GetBufferSize and GetSampleRate callbacks, because this vaules are
+// injected when processor is allocated by pipe.
+func (v *VST) Processor(h Host) *Processor {
+	processor := Processor{}
+	h.GetBufferSize = func() int {
+		return processor.bufferSize
+	}
+	h.GetSampleRate = func() signal.Frequency {
+		return processor.sampleRate
+	}
+	plugin := v.Plugin(h.Callback())
+	numParams := plugin.NumParams()
 	params := make([]Parameter, numParams)
 	for i := 0; i < numParams; i++ {
 		params = append(params, Parameter{
-			name:       p.ParamName(i),
-			unit:       p.ParamUnitName(i),
-			value:      p.ParamValue(i),
-			valueLabel: p.ParamValueName(i),
+			name:       plugin.ParamName(i),
+			unit:       plugin.ParamUnitName(i),
+			value:      plugin.ParamValue(i),
+			valueLabel: plugin.ParamValueName(i),
 		})
 	}
-	numPresets := p.NumPrograms()
+	numPresets := plugin.NumPrograms()
 	presets := make([]Preset, numPresets)
 	for i := 0; i < numPresets; i++ {
 		presets = append(presets, Preset{
-			name: p.ProgramName(i),
+			name: plugin.ProgramName(i),
 		})
 	}
-	return Processor{
-		host:       host,
-		Plugin:     p,
+	return &Processor{
+		plugin:     plugin,
+		progressFn: h.ProgressProcessed,
 		Parameters: params,
 		Presets:    presets,
 	}
@@ -91,23 +78,23 @@ func (v *VST) Processor() Processor {
 // Allocator returns pipe processor allocator that can be plugged into line.
 func (p *Processor) Allocator(init ProcessorInitFunc) pipe.ProcessorAllocatorFunc {
 	return func(mctx mutable.Context, bufferSize int, props pipe.SignalProperties) (pipe.Processor, error) {
-		p.host.BufferSize = bufferSize
-		p.host.Channels = props.Channels
-		p.host.SampleRate = props.SampleRate
-		p.Plugin.Start()
-		p.Plugin.SetSampleRate(props.SampleRate)
-		p.Plugin.SetBufferSize(bufferSize)
+		p.bufferSize = bufferSize
+		p.channels = props.Channels
+		p.sampleRate = props.SampleRate
+		p.plugin.Start()
+		p.plugin.SetSampleRate(props.SampleRate)
+		p.plugin.SetBufferSize(bufferSize)
 		if init != nil {
-			init(p.Plugin)
+			init(p.plugin)
 		}
-		processFn, flushFn := processorFns(p.Plugin, &p.host)
+		processFn, flushFn := processorFns(p.plugin, p.channels, p.bufferSize, p.progressFn)
 		return pipe.Processor{
 			SignalProperties: pipe.SignalProperties{
-				Channels:   props.Channels,
-				SampleRate: props.SampleRate,
+				Channels:   p.channels,
+				SampleRate: p.sampleRate,
 			},
 			StartFunc: func(context.Context) error {
-				p.Plugin.Resume()
+				p.plugin.Resume()
 				return nil
 			},
 			ProcessFunc: processFn,
@@ -116,23 +103,32 @@ func (p *Processor) Allocator(init ProcessorInitFunc) pipe.ProcessorAllocatorFun
 	}
 }
 
-func processorFns(p *Plugin, host *processorHost) (pipe.ProcessFunc, pipe.FlushFunc) {
+func processorFns(p *Plugin, channels, bufferSize int, progressFn HostProgressProcessed) (pipe.ProcessFunc, pipe.FlushFunc) {
 	if p.CanProcessFloat64() {
-		return doubleFns(p, host)
+		return doubleFns(p, channels, bufferSize, progressFn)
 	}
-	return floatFns(p, host)
+	return floatFns(p, channels, bufferSize, progressFn)
 }
 
-func doubleFns(p *Plugin, host *processorHost) (pipe.ProcessFunc, pipe.FlushFunc) {
-	doubleIn := NewDoubleBuffer(host.Channels, host.BufferSize)
-	doubleOut := NewDoubleBuffer(host.Channels, host.BufferSize)
-	return func(in, out signal.Floating) (int, error) {
+func doubleFns(p *Plugin, channels, bufferSize int, progressFn HostProgressProcessed) (pipe.ProcessFunc, pipe.FlushFunc) {
+	doubleIn := NewDoubleBuffer(channels, bufferSize)
+	doubleOut := NewDoubleBuffer(channels, bufferSize)
+	processFn := func(in, out signal.Floating) (int, error) {
+		doubleIn.CopyFrom(in)
+		p.ProcessDouble(doubleIn, doubleOut)
+		doubleOut.CopyTo(out)
+		return in.Length(), nil
+	}
+	if progressFn != nil {
+		processFn = func(in, out signal.Floating) (int, error) {
 			doubleIn.CopyFrom(in)
 			p.ProcessDouble(doubleIn, doubleOut)
-			host.CurrentPosition += int64(in.Length())
 			doubleOut.CopyTo(out)
+			progressFn(in.Length())
 			return in.Length(), nil
-		},
+		}
+	}
+	return processFn,
 		func(context.Context) error {
 			doubleIn.Free()
 			doubleOut.Free()
@@ -141,16 +137,25 @@ func doubleFns(p *Plugin, host *processorHost) (pipe.ProcessFunc, pipe.FlushFunc
 		}
 }
 
-func floatFns(p *Plugin, host *processorHost) (pipe.ProcessFunc, pipe.FlushFunc) {
-	floatIn := NewFloatBuffer(host.Channels, host.BufferSize)
-	floatOut := NewFloatBuffer(host.Channels, host.BufferSize)
-	return func(in, out signal.Floating) (int, error) {
+func floatFns(p *Plugin, channels, bufferSize int, progressFn HostProgressProcessed) (pipe.ProcessFunc, pipe.FlushFunc) {
+	floatIn := NewFloatBuffer(channels, bufferSize)
+	floatOut := NewFloatBuffer(channels, bufferSize)
+	processFn := func(in, out signal.Floating) (int, error) {
+		floatIn.CopyFrom(in)
+		p.ProcessFloat(floatIn, floatOut)
+		floatOut.CopyTo(out)
+		return in.Length(), nil
+	}
+	if progressFn != nil {
+		processFn = func(in, out signal.Floating) (int, error) {
 			floatIn.CopyFrom(in)
 			p.ProcessFloat(floatIn, floatOut)
-			host.CurrentPosition += int64(in.Length())
 			floatOut.CopyTo(out)
+			progressFn(in.Length())
 			return in.Length(), nil
-		},
+		}
+	}
+	return processFn,
 		func(context.Context) error {
 			floatIn.Free()
 			floatOut.Free()

@@ -5,8 +5,8 @@ typedef struct Events Events;
 
 typedef	int64_t (*HostCallback) (Plugin* plugin, int32_t opcode, int32_t index, int64_t value, void* ptr, float opt);
 typedef int64_t (*DispatchProc) (Plugin* plugin, int32_t opcode, int32_t index, int64_t value, void* ptr, float opt);
-typedef void (*FloatProcessProc) (Plugin* plugin, float** inputs, float** outputs, int32_t sampleFrames);
-typedef void (*DoubleProcessProc) (Plugin* plugin, double** inputs, double** outputs, int32_t sampleFrames);
+typedef void (*ProcessFloatFunc) (Plugin* plugin, float** inputs, float** outputs, int32_t sampleFrames);
+typedef void (*ProcessDoubleFunc) (Plugin* plugin, double** inputs, double** outputs, int32_t sampleFrames);
 typedef void (*SetParameterProc) (Plugin* plugin, int32_t index, float parameter);
 typedef float (*GetParameterProc) (Plugin* plugin, int32_t index);
 
@@ -18,7 +18,7 @@ struct Plugin
 	DispatchProc dispatcher;
 
 	// Deprecated.
-	FloatProcessProc process;
+	ProcessFloatFunc process;
 
 	// Set new value of automatable parameter.
 	SetParameterProc setParameter;
@@ -65,9 +65,9 @@ struct Plugin
 	int32_t version;
 
 	// Process audio samples in replacing mode with single precision.
-	FloatProcessProc processReplacing;
+	ProcessFloatFunc processFloat;
 	// Process audio samples in replacing mode with double precision.
-	DoubleProcessProc processDoubleReplacing;
+	ProcessDoubleFunc processDouble;
 
 	// Reserved for extension.
 	char future[56];

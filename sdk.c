@@ -18,12 +18,12 @@ int64_t dispatchHostBridge(Plugin *plugin, int32_t opcode, int32_t index, int64_
 
 // Bridge to call process replacing function of loaded plugin
 void processDoubleHostBridge(Plugin *plugin, double ** inputs, double ** outputs, int32_t sampleFrames){
-	plugin -> processDoubleReplacing(plugin, inputs, outputs, sampleFrames);
+	plugin -> processDouble(plugin, inputs, outputs, sampleFrames);
 }
 
 // Bridge to call process replacing function of loaded plugin
 void processFloatHostBridge(Plugin *plugin, float **inputs, float **outputs, int32_t sampleFrames){
-	plugin -> processReplacing(plugin, inputs, outputs, sampleFrames);
+	plugin -> processFloat(plugin, inputs, outputs, sampleFrames);
 }
 
 // Bridge to call get parameter fucntion of loaded plugin

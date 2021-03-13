@@ -79,10 +79,9 @@ func (p *Plugin) Flags() PluginFlag {
 func (p *Plugin) ProcessDouble(in, out DoubleBuffer) {
 	C.processDouble(
 		(*C.Plugin)(p),
-		C.int32_t(in.numChannels),
-		C.int32_t(in.size),
 		&in.data[0],
 		&out.data[0],
+		C.int32_t(in.size),
 	)
 }
 
@@ -90,10 +89,9 @@ func (p *Plugin) ProcessDouble(in, out DoubleBuffer) {
 func (p *Plugin) ProcessFloat(in, out FloatBuffer) {
 	C.processFloat(
 		(*C.Plugin)(p),
-		C.int32_t(in.numChannels),
-		C.int32_t(in.size),
 		&in.data[0],
 		&out.data[0],
+		C.int32_t(in.size),
 	)
 }
 

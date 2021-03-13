@@ -94,10 +94,10 @@ Plugin* loadPlugin(EntryPoint load);
 int64_t dispatch(Plugin *plugin, int32_t opcode, int32_t index, int64_t value, void *ptr, float opt);
 
 // Bridge to call process replacing function of loaded plugin
-void processDouble(Plugin *plugin, int32_t numChannels, int32_t blocksize, double **inputs, double **outputs);
+void processDouble(Plugin *plugin, double **inputs, double **outputs, int32_t sampleFrames);
 
 // Bridge to call process replacing function of loaded plugin
-void processFloat(Plugin *plugin, int32_t numChannels, int32_t blocksize, float **inputs, float **outputs);
+void processFloat(Plugin *plugin, float **inputs, float **outputs, int32_t sampleFrames);
 
 // Bridge to call get parameter fucntion of loaded plugin
 float getParameter(Plugin *plugin, int32_t paramIndex);

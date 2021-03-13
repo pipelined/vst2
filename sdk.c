@@ -48,20 +48,6 @@ typedef struct Event
 	int64_t resvd2;		///< zero (Reserved for future use)
 } Event;
 
-void testEvents(Events* e) {
-	for (int i = 0; i < e->numEvents; i++) {
-		Event* event = ((Event *)e->events[i]);
-		printf("event: %d %d %d\n",i, event->type, event->dumpBytes);
-		if (event->type == 0) {
-			continue;
-		}
-		for (int j = 0; j < event->dumpBytes; j++) {
-			printf("%c", event->sysexDump[j]);
-		}
-		printf("\n");
-	}
-}
-
 Events* newEvents(int32_t numEvents) {
 	Events *e = malloc(sizeof(*e));
 	e->numEvents = numEvents;

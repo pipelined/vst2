@@ -39,7 +39,7 @@ func (v *VST) Plugin(c HostCallbackFunc) *Plugin {
 	if v.main == nil || c == nil {
 		return nil
 	}
-	p := (*Plugin)(C.loadPlugin(v.main))
+	p := (*Plugin)(C.loadPluginBridge(v.main))
 	mutex.Lock()
 	callbacks[p] = c
 	mutex.Unlock()
@@ -49,7 +49,7 @@ func (v *VST) Plugin(c HostCallbackFunc) *Plugin {
 
 // Dispatch wraps-up C method to dispatch calls to plugin
 func (p *Plugin) Dispatch(opcode PluginOpcode, index int32, value int64, ptr unsafe.Pointer, opt float32) uintptr {
-	return uintptr(C.dispatch((*C.Plugin)(p), C.int32_t(opcode), C.int32_t(index), C.int64_t(value), unsafe.Pointer(ptr), C.float(opt)))
+	return uintptr(C.dispatchHostBridge((*C.Plugin)(p), C.int32_t(opcode), C.int32_t(index), C.int64_t(value), unsafe.Pointer(ptr), C.float(opt)))
 }
 
 // ScanPaths returns a slice of default vst2 locations.
@@ -77,7 +77,7 @@ func (p *Plugin) Flags() PluginFlag {
 
 // ProcessDouble audio with VST plugin.
 func (p *Plugin) ProcessDouble(in, out DoubleBuffer) {
-	C.processDouble(
+	C.processDoubleHostBridge(
 		(*C.Plugin)(p),
 		&in.data[0],
 		&out.data[0],
@@ -87,7 +87,7 @@ func (p *Plugin) ProcessDouble(in, out DoubleBuffer) {
 
 // ProcessFloat audio with VST plugin.
 func (p *Plugin) ProcessFloat(in, out FloatBuffer) {
-	C.processFloat(
+	C.processFloatHostBridge(
 		(*C.Plugin)(p),
 		&in.data[0],
 		&out.data[0],
@@ -97,12 +97,12 @@ func (p *Plugin) ProcessFloat(in, out FloatBuffer) {
 
 // ParamValue returns the value of parameter.
 func (p *Plugin) ParamValue(index int) float32 {
-	return float32(C.getParameter((*C.Plugin)(p), C.int32_t(index)))
+	return float32(C.getParameterHostBridge((*C.Plugin)(p), C.int32_t(index)))
 }
 
 // SetParamValue sets new value for parameter.
 func (p *Plugin) SetParamValue(index int, value float32) {
-	C.setParameter((*C.Plugin)(p), C.int32_t(index), C.float(value))
+	C.setParameterHostBridge((*C.Plugin)(p), C.int32_t(index), C.float(value))
 }
 
 // CanProcessFloat32 checks if plugin can process float32.

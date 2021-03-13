@@ -1,8 +1,4 @@
-pipelined.dev/pipe v0.9.0 h1:lZK1z2j7MT4p49/YG5ixdwm9SZR3ob6WRJRoyWOPS0o=
-pipelined.dev/pipe v0.9.0/go.mod h1:GExMBEAGrfgMAXM3RRwZepzL+VSrAfq2iUeBMbOkTzw=
 pipelined.dev/pipe v0.10.0 h1:qDYvTB5PjqV7xn5YTL7JYqA+I1bDNC0sxUGMVeoB8Pg=
 pipelined.dev/pipe v0.10.0/go.mod h1:aIt+NPlW0QLYByqYniG77lTxSvl7OtCNLws/m+Xz5ww=
-pipelined.dev/signal v0.9.0 h1:1tmBYsBQCP4TXYy+wCbv6LH3aiRrigqcx4i7dwSAd9U=
-pipelined.dev/signal v0.9.0/go.mod h1:wi0YlA20+rinS9o+7IMZHH3/YsO3jkahHNLSCCfaEA0=
 pipelined.dev/signal v0.10.0 h1:7O1bdYHG6MeXYthNKsXB++jx2UkUPiicwE/MMwdgYRc=
 pipelined.dev/signal v0.10.0/go.mod h1:wi0YlA20+rinS9o+7IMZHH3/YsO3jkahHNLSCCfaEA0=

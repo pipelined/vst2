@@ -150,8 +150,3 @@ func (s SysExDataPtr) Bytes() []byte {
 func (s SysExDataPtr) Free() {
 	C.free(unsafe.Pointer(unsafe.Pointer(s.data)))
 }
-
-// TestEvents is a helper function to test events.
-func TestEvents(e *EventsPtr) {
-	C.testEvents((*C.Events)(e))
-}

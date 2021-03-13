@@ -19,7 +19,6 @@ func TestEvents(t *testing.T) {
 	defer events.Free()
 
 	assertNotNil(t, "events", events)
-	vst2.TestEvents(events)
 
 	for i := 0; i < events.NumEvents(); i++ {
 		fmt.Printf("%v", events.Event(i))

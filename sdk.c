@@ -4,7 +4,7 @@
 #include "sdk.h"
 
 //Go callback prototype
-int hostCallback(Plugin *plugin, int32_t opcode, int32_t index, int64_t value, void *ptr, float opt);
+int64_t hostCallback(Plugin *plugin, int32_t opcode, int32_t index, int64_t value, void *ptr, float opt);
 
 //Bridge function to call entry point on Effect
 Plugin * loadPluginBridge(EntryPoint load){

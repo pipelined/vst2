@@ -21,7 +21,7 @@ var (
 
 //export hostCallback
 // global hostCallback, calls real callback.
-func hostCallback(p *Plugin, opcode int64, index int32, value int64, ptr unsafe.Pointer, opt float32) uintptr {
+func hostCallback(p *Plugin, opcode int32, index int32, value int64, ptr unsafe.Pointer, opt float32) int64 {
 	// HostVersion is requested when plugin is created
 	// It's never in map
 	if HostOpcode(opcode) == HostVersion {
@@ -43,7 +43,7 @@ func hostCallback(p *Plugin, opcode int64, index int32, value int64, ptr unsafe.
 type (
 	// HostCallbackFunc used as callback function called by plugin. Use closure
 	// wrapping technique to add more types to callback.
-	HostCallbackFunc func(op HostOpcode, index int32, value int64, ptr unsafe.Pointer, opt float32) uintptr
+	HostCallbackFunc func(op HostOpcode, index int32, value int64, ptr unsafe.Pointer, opt float32) int64
 
 	// Host handles all callbacks from plugin.
 	Host struct {
@@ -69,23 +69,23 @@ type (
 // Callback returns HostCallbackFunc that handles all vst types casts
 // and allows to write handlers without usage of unsafe package.
 func (h Host) Callback() HostCallbackFunc {
-	return func(op HostOpcode, index int32, value int64, ptr unsafe.Pointer, opt float32) uintptr {
+	return func(op HostOpcode, index int32, value int64, ptr unsafe.Pointer, opt float32) int64 {
 		switch op {
 		case HostGetCurrentProcessLevel:
 			if h.GetProcessLevel != nil {
-				return uintptr(h.GetProcessLevel())
+				return int64(h.GetProcessLevel())
 			}
 		case HostGetSampleRate:
 			if h.GetSampleRate != nil {
-				return uintptr(h.GetSampleRate())
+				return int64(h.GetSampleRate())
 			}
 		case HostGetBlockSize:
 			if h.GetBufferSize != nil {
-				return uintptr(h.GetBufferSize())
+				return int64(h.GetBufferSize())
 			}
 		case HostGetTime:
 			if h.GetTimeInfo != nil {
-				return uintptr(unsafe.Pointer(h.GetTimeInfo()))
+				return int64(uintptr(unsafe.Pointer(h.GetTimeInfo())))
 			}
 		}
 		return 0
@@ -95,7 +95,7 @@ func (h Host) Callback() HostCallbackFunc {
 // NoopHostCallback returns dummy host callback that just prints received
 // opcodes.
 func NoopHostCallback() HostCallbackFunc {
-	return func(op HostOpcode, index int32, value int64, ptr unsafe.Pointer, opt float32) uintptr {
+	return func(op HostOpcode, index int32, value int64, ptr unsafe.Pointer, opt float32) int64 {
 		fmt.Printf("host received opcode: %v\n", op)
 		return 0
 	}

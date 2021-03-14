@@ -47,7 +47,7 @@ func (s ascii64) String() string {
 
 // PluginOpcode is sent by host in dispatch call to plugin.
 // It reflects APluginOpcodes and APluginXOpcodes opcodes values.
-type PluginOpcode uint64
+type PluginOpcode uint32
 
 const (
 	// PlugOpen passed to open the plugin.
@@ -345,7 +345,7 @@ const (
 
 // HostOpcode is sent by plugin in dispatch call to host.
 // It reflects AudioMasterOpcodes and AudioMasterOpcodesX opcodes values.
-type HostOpcode uint64
+type HostOpcode uint32
 
 const (
 	// HostAutomate passed to when parameter value is automated.

@@ -1,5 +1,5 @@
 #include <stdlib.h>
-#include "plugin.h"
+#include "vst.h"
 
 //Go dispatch prototype
 int64_t dispatchPluginBridge(CPlugin *plugin, int32_t opcode, int32_t index, int64_t value, void *ptr, float opt);

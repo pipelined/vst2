@@ -2,7 +2,7 @@ package vst2
 
 /*
 #cgo CFLAGS: -I${SRCDIR}
-#include "plugin.h"
+#include "vst.h"
 */
 import "C"
 import (

@@ -516,7 +516,7 @@ func (p *Plugin) Start() {
 func (p *Plugin) Close() {
 	p.Dispatch(plugClose, 0, 0, nil, 0.0)
 	mutex.Lock()
-	delete(callbacks, p)
+	delete(callbacks, unsafe.Pointer(p))
 	mutex.Unlock()
 }
 

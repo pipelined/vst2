@@ -2,7 +2,7 @@ package vst2
 
 /*
 #cgo CFLAGS: -std=gnu99 -I${SRCDIR}
-#include "sdk.h"
+#include "vst.h"
 */
 import "C"
 import (

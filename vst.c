@@ -1,7 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdint.h>
-#include "sdk.h"
+#include "vst.h"
 
 //Go callback prototype
 int64_t hostCallback(CPlugin *plugin, int32_t opcode, int32_t index, int64_t value, void *ptr, float opt);

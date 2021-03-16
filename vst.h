@@ -1,3 +1,5 @@
+#ifndef VST_H
+#define VST_H
 #include <stdint.h>
 
 typedef struct CPlugin CPlugin;
@@ -115,3 +117,4 @@ void setEvent(Events *events, void *event, int32_t pos);
 // gets the event from events container. This function is needed because there is
 // no way to assign values to void** from Go.
 void *getEvent(Events *events, int32_t pos);
+#endif

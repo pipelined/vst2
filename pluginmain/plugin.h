@@ -1,4 +1,4 @@
-#include "sdk.h"
+#include "vst.h"
 
 CPlugin* VSTPluginMain(HostCallback c);
 

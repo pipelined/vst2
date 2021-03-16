@@ -26,7 +26,7 @@ type (
 	}
 
 	// Plugin is an instance of loaded VST plugin.
-	Plugin C.Plugin
+	Plugin C.CPlugin
 
 	// pluginMain is a reference to VST main function.
 	// wrapper on C entry point.
@@ -49,7 +49,7 @@ func (v *VST) Plugin(c HostCallbackFunc) *Plugin {
 
 // Dispatch wraps-up C method to dispatch calls to plugin
 func (p *Plugin) Dispatch(opcode PluginOpcode, index int32, value int64, ptr unsafe.Pointer, opt float32) uintptr {
-	return uintptr(C.dispatchHostBridge((*C.Plugin)(p), C.int32_t(opcode), C.int32_t(index), C.int64_t(value), unsafe.Pointer(ptr), C.float(opt)))
+	return uintptr(C.dispatchHostBridge((*C.CPlugin)(p), C.int32_t(opcode), C.int32_t(index), C.int64_t(value), ptr, C.float(opt)))
 }
 
 // ScanPaths returns a slice of default vst2 locations.
@@ -78,7 +78,7 @@ func (p *Plugin) Flags() PluginFlag {
 // ProcessDouble audio with VST plugin.
 func (p *Plugin) ProcessDouble(in, out DoubleBuffer) {
 	C.processDoubleHostBridge(
-		(*C.Plugin)(p),
+		(*C.CPlugin)(p),
 		&in.data[0],
 		&out.data[0],
 		C.int32_t(in.size),
@@ -88,7 +88,7 @@ func (p *Plugin) ProcessDouble(in, out DoubleBuffer) {
 // ProcessFloat audio with VST plugin.
 func (p *Plugin) ProcessFloat(in, out FloatBuffer) {
 	C.processFloatHostBridge(
-		(*C.Plugin)(p),
+		(*C.CPlugin)(p),
 		&in.data[0],
 		&out.data[0],
 		C.int32_t(in.size),
@@ -97,12 +97,12 @@ func (p *Plugin) ProcessFloat(in, out FloatBuffer) {
 
 // ParamValue returns the value of parameter.
 func (p *Plugin) ParamValue(index int) float32 {
-	return float32(C.getParameterHostBridge((*C.Plugin)(p), C.int32_t(index)))
+	return float32(C.getParameterHostBridge((*C.CPlugin)(p), C.int32_t(index)))
 }
 
 // SetParamValue sets new value for parameter.
 func (p *Plugin) SetParamValue(index int, value float32) {
-	C.setParameterHostBridge((*C.Plugin)(p), C.int32_t(index), C.float(value))
+	C.setParameterHostBridge((*C.CPlugin)(p), C.int32_t(index), C.float(value))
 }
 
 // CanProcessFloat32 checks if plugin can process float32.

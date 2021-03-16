@@ -1,16 +1,16 @@
 #include <stdint.h>
 
-typedef struct Plugin Plugin;
+typedef struct CPlugin CPlugin;
 typedef struct Events Events;
 
-typedef	int64_t (*HostCallback) (Plugin* plugin, int32_t opcode, int32_t index, int64_t value, void* ptr, float opt);
-typedef int64_t (*DispatchProc) (Plugin* plugin, int32_t opcode, int32_t index, int64_t value, void* ptr, float opt);
-typedef void (*ProcessFloatFunc) (Plugin* plugin, float** inputs, float** outputs, int32_t sampleFrames);
-typedef void (*ProcessDoubleFunc) (Plugin* plugin, double** inputs, double** outputs, int32_t sampleFrames);
-typedef void (*SetParameterProc) (Plugin* plugin, int32_t index, float parameter);
-typedef float (*GetParameterProc) (Plugin* plugin, int32_t index);
+typedef	int64_t (*HostCallback) (CPlugin* plugin, int32_t opcode, int32_t index, int64_t value, void* ptr, float opt);
+typedef int64_t (*DispatchProc) (CPlugin* plugin, int32_t opcode, int32_t index, int64_t value, void* ptr, float opt);
+typedef void (*ProcessFloatFunc) (CPlugin* plugin, float** inputs, float** outputs, int32_t sampleFrames);
+typedef void (*ProcessDoubleFunc) (CPlugin* plugin, double** inputs, double** outputs, int32_t sampleFrames);
+typedef void (*SetParameterProc) (CPlugin* plugin, int32_t index, float parameter);
+typedef float (*GetParameterProc) (CPlugin* plugin, int32_t index);
 
-struct Plugin
+struct CPlugin
 {
 	// EffectMagic value.
 	int32_t magic;
@@ -84,26 +84,26 @@ struct Events
 };
 
 
-// Plugin's entry point
-typedef Plugin* (*EntryPoint)(HostCallback host);
+// CPlugin's entry point
+typedef CPlugin* (*EntryPoint)(HostCallback host);
 
 // Bridge function to call entry point on Effect
-Plugin* loadPluginBridge(EntryPoint load);
+CPlugin* loadPluginBridge(EntryPoint load);
 
 // Bridge to call dispatch function of loaded plugin
-int64_t dispatchHostBridge(Plugin *plugin, int32_t opcode, int32_t index, int64_t value, void *ptr, float opt);
+int64_t dispatchHostBridge(CPlugin *plugin, int32_t opcode, int32_t index, int64_t value, void *ptr, float opt);
 
 // Bridge to call process replacing function of loaded plugin
-void processDoubleHostBridge(Plugin *plugin, double **inputs, double **outputs, int32_t sampleFrames);
+void processDoubleHostBridge(CPlugin *plugin, double **inputs, double **outputs, int32_t sampleFrames);
 
 // Bridge to call process replacing function of loaded plugin
-void processFloatHostBridge(Plugin *plugin, float **inputs, float **outputs, int32_t sampleFrames);
+void processFloatHostBridge(CPlugin *plugin, float **inputs, float **outputs, int32_t sampleFrames);
 
 // Bridge to call get parameter fucntion of loaded plugin
-float getParameterHostBridge(Plugin *plugin, int32_t paramIndex);
+float getParameterHostBridge(CPlugin *plugin, int32_t paramIndex);
 
 // Bridge to call set parameter fucntion of loaded plugin
-void setParameterHostBridge(Plugin *plugin, int32_t paramIndex, float value);
+void setParameterHostBridge(CPlugin *plugin, int32_t paramIndex, float value);
 
 // Bridge to allocate events structure.
 Events* newEvents(int32_t numEvents);

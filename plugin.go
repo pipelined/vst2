@@ -39,7 +39,7 @@ func (v *VST) Plugin(c HostCallbackFunc) *Plugin {
 	if v.main == nil || c == nil {
 		return nil
 	}
-	p := (*Plugin)(C.loadPluginBridge(v.main))
+	p := (*Plugin)(C.loadPluginHostBridge(v.main))
 	mutex.Lock()
 	callbacks[p] = c
 	mutex.Unlock()

@@ -2,7 +2,7 @@ package vst2
 
 /*
 #cgo CFLAGS: -std=gnu99 -I${SRCDIR}
-#include "sdk.h"
+#include "vst.h"
 */
 import "C"
 import (
@@ -65,6 +65,9 @@ type (
 	// HostGetTimeInfo returns current time info.
 	HostGetTimeInfo func() *TimeInfo
 )
+
+// DispatchFunc called by host.
+type DispatchFunc func(op PluginOpcode, index int32, value int64, ptr unsafe.Pointer, opt float32) int64
 
 // Callback returns HostCallbackFunc that handles all vst types casts
 // and allows to write handlers without usage of unsafe package.

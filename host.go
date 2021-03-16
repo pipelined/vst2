@@ -35,9 +35,6 @@ type (
 		Name   string
 	}
 
-	// Plugin is an instance of loaded VST plugin.
-	Plugin C.CPlugin
-
 	// pluginMain is a reference to VST main function.
 	// wrapper on C entry point.
 	pluginMain C.EntryPoint
@@ -113,12 +110,12 @@ func (v *VST) Plugin(c HostCallbackFunc) *Plugin {
 	if v.main == nil || c == nil {
 		return nil
 	}
-	p := (*Plugin)(C.loadPluginHostBridge(v.main))
+	p := (*C.CPlugin)(C.loadPluginHostBridge(v.main))
 	mutex.Lock()
 	callbacks[unsafe.Pointer(p)] = c
 	mutex.Unlock()
 
-	return p
+	return &Plugin{p: p}
 }
 
 //export hostCallback
@@ -144,7 +141,7 @@ func hostCallback(p *C.CPlugin, opcode int32, index int32, value int64, ptr unsa
 
 // Dispatch wraps-up C method to dispatch calls to plugin
 func (p *Plugin) Dispatch(opcode PluginOpcode, index int32, value int64, ptr unsafe.Pointer, opt float32) uintptr {
-	return uintptr(C.dispatchHostBridge((*C.CPlugin)(p), C.int32_t(opcode), C.int32_t(index), C.int64_t(value), ptr, C.float(opt)))
+	return uintptr(C.dispatchHostBridge((*C.CPlugin)(p.p), C.int32_t(opcode), C.int32_t(index), C.int64_t(value), ptr, C.float(opt)))
 }
 
 // ScanPaths returns a slice of default vst2 locations.
@@ -157,23 +154,23 @@ func ScanPaths() []string {
 
 // NumParams returns the number of parameters.
 func (p *Plugin) NumParams() int {
-	return int(p.numParams)
+	return int(p.p.numParams)
 }
 
 // NumPrograms returns the number of programs.
 func (p *Plugin) NumPrograms() int {
-	return int(p.numPrograms)
+	return int(p.p.numPrograms)
 }
 
 // Flags returns the plugin flags.
 func (p *Plugin) Flags() PluginFlag {
-	return PluginFlag(p.flags)
+	return PluginFlag(p.p.flags)
 }
 
 // ProcessDouble audio with VST plugin.
 func (p *Plugin) ProcessDouble(in, out DoubleBuffer) {
 	C.processDoubleHostBridge(
-		(*C.CPlugin)(p),
+		(*C.CPlugin)(p.p),
 		&in.data[0],
 		&out.data[0],
 		C.int32_t(in.size),
@@ -183,7 +180,7 @@ func (p *Plugin) ProcessDouble(in, out DoubleBuffer) {
 // ProcessFloat audio with VST plugin.
 func (p *Plugin) ProcessFloat(in, out FloatBuffer) {
 	C.processFloatHostBridge(
-		(*C.CPlugin)(p),
+		(*C.CPlugin)(p.p),
 		&in.data[0],
 		&out.data[0],
 		C.int32_t(in.size),
@@ -192,22 +189,22 @@ func (p *Plugin) ProcessFloat(in, out FloatBuffer) {
 
 // ParamValue returns the value of parameter.
 func (p *Plugin) ParamValue(index int) float32 {
-	return float32(C.getParameterHostBridge((*C.CPlugin)(p), C.int32_t(index)))
+	return float32(C.getParameterHostBridge((*C.CPlugin)(p.p), C.int32_t(index)))
 }
 
 // SetParamValue sets new value for parameter.
 func (p *Plugin) SetParamValue(index int, value float32) {
-	C.setParameterHostBridge((*C.CPlugin)(p), C.int32_t(index), C.float(value))
+	C.setParameterHostBridge((*C.CPlugin)(p.p), C.int32_t(index), C.float(value))
 }
 
 // CanProcessFloat32 checks if plugin can process float32.
 func (p *Plugin) CanProcessFloat32() bool {
-	return PluginFlag(p.flags)&PluginFloatProcessing == PluginFloatProcessing
+	return PluginFlag(p.p.flags)&PluginFloatProcessing == PluginFloatProcessing
 }
 
 // CanProcessFloat64 checks if plugin can process float64.
 func (p *Plugin) CanProcessFloat64() bool {
-	return PluginFlag(p.flags)&PluginDoubleProcessing == PluginDoubleProcessing
+	return PluginFlag(p.p.flags)&PluginDoubleProcessing == PluginDoubleProcessing
 }
 
 // Convert golang string to C string without allocations. Result string is

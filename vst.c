@@ -4,11 +4,11 @@
 #include "vst.h"
 
 //Go callback prototype
-int64_t hostCallback(CPlugin *plugin, int32_t opcode, int32_t index, int64_t value, void *ptr, float opt);
+int64_t hostCallbackBridge(CPlugin *plugin, int32_t opcode, int32_t index, int64_t value, void *ptr, float opt);
 
 //Bridge function to call entry point on Effect
 CPlugin * loadPluginHostBridge(EntryPoint load){
-	return load((HostCallback)hostCallback);
+	return load((HostCallback)hostCallbackBridge);
 }
 
 // Bridge to call dispatch function of loaded plugin

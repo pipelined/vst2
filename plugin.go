@@ -7,12 +7,24 @@ package vst2
 import "C"
 import (
 	"fmt"
+	"sync"
 	"unsafe"
+)
+
+var (
+	// global state for callbacks.
+	plugins = struct {
+		sync.RWMutex
+		mapping map[unsafe.Pointer]Plugin
+	}{
+		mapping: map[unsafe.Pointer]Plugin{},
+	}
 )
 
 // Plugin is an instance of loaded VST plugin.
 type Plugin struct {
-	p *C.CPlugin
+	p  *C.CPlugin
+	hc *C.HostCallback
 }
 
 func registerPlugin(p *C.CPlugin) {}

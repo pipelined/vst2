@@ -13,10 +13,14 @@ import (
 	"pipelined.dev/signal"
 )
 
-// global state for callbacks.
 var (
-	mutex     sync.RWMutex
-	callbacks = make(map[unsafe.Pointer]HostCallbackFunc)
+	// global state for callbacks.
+	callbacks = struct {
+		sync.RWMutex
+		mapping map[unsafe.Pointer]HostCallbackFunc
+	}{
+		mapping: map[unsafe.Pointer]HostCallbackFunc{},
+	}
 )
 
 const (
@@ -111,24 +115,24 @@ func (v *VST) Plugin(c HostCallbackFunc) *Plugin {
 		return nil
 	}
 	p := (*C.CPlugin)(C.loadPluginHostBridge(v.main))
-	mutex.Lock()
-	callbacks[unsafe.Pointer(p)] = c
-	mutex.Unlock()
+	callbacks.Lock()
+	callbacks.mapping[unsafe.Pointer(p)] = c
+	callbacks.Unlock()
 
 	return &Plugin{p: p}
 }
 
-//export hostCallback
-// global hostCallback, calls real callback.
-func hostCallback(p *C.CPlugin, opcode int32, index int32, value int64, ptr unsafe.Pointer, opt float32) int64 {
+//export hostCallbackBridge
+// global hostCallbackBridge, calls real callback.
+func hostCallbackBridge(p *C.CPlugin, opcode int32, index int32, value int64, ptr unsafe.Pointer, opt float32) int64 {
 	// HostVersion is requested when plugin is created
 	// It's never in map
 	if HostOpcode(opcode) == HostVersion {
 		return version
 	}
-	mutex.RLock()
-	c, ok := callbacks[unsafe.Pointer(p)]
-	mutex.RUnlock()
+	callbacks.RLock()
+	c, ok := callbacks.mapping[unsafe.Pointer(p)]
+	callbacks.RUnlock()
 	if !ok {
 		panic("plugin was closed")
 	}

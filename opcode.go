@@ -515,9 +515,9 @@ func (p *Plugin) Start() {
 // Close stops the plugin and cleans up C refs for plugin.
 func (p *Plugin) Close() {
 	p.Dispatch(plugClose, 0, 0, nil, 0.0)
-	mutex.Lock()
-	delete(callbacks, unsafe.Pointer(p))
-	mutex.Unlock()
+	callbacks.Lock()
+	delete(callbacks.mapping, unsafe.Pointer(p))
+	callbacks.Unlock()
 }
 
 // Resume the plugin processing. It must be called before processing is

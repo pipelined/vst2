@@ -78,6 +78,8 @@ struct CPlugin
 // CPlugin's entry point
 typedef CPlugin* (*EntryPoint)(HostCallback host);
 
+CPlugin* VSTPluginMain(HostCallback c);
+
 // Bridges to be called by host.
 CPlugin* loadPluginHostBridge(EntryPoint load);
 int64_t dispatchHostBridge(CPlugin *plugin, int32_t opcode, int32_t index, int64_t value, void *ptr, float opt);

@@ -1,5 +1,10 @@
 #include <stdlib.h>
-#include "vst.h"
+#include "include/vst.h"
+
+#include "include/vst.h"
+#include <stdlib.h>
+
+void newGoPlugin(CPlugin *plugin, HostCallback c);
 
 //Go dispatch prototype
 int64_t dispatchPluginBridge(CPlugin *plugin, int32_t opcode, int32_t index, int64_t value, void *ptr, float opt);
@@ -24,5 +29,6 @@ CPlugin* VSTPluginMain(HostCallback c) {
     p->setParameter = setParameterPluginBridge;
     p->processDouble = processDoublePluginBridge;
     p->processFloat = processFloatPluginBridge;
+    newGoPlugin(p, c);
     return p;
 }

@@ -78,16 +78,6 @@ struct CPlugin
 // CPlugin's entry point
 typedef CPlugin* (*EntryPoint)(HostCallback host);
 
-CPlugin* VSTPluginMain(HostCallback c);
-
-// Bridges to be called by host.
-CPlugin* loadPluginHostBridge(EntryPoint load);
-int64_t dispatchHostBridge(CPlugin *plugin, int32_t opcode, int32_t index, int64_t value, void *ptr, float opt);
-void processDoubleHostBridge(CPlugin *plugin, double **inputs, double **outputs, int32_t sampleFrames);
-void processFloatHostBridge(CPlugin *plugin, float **inputs, float **outputs, int32_t sampleFrames);
-float getParameterHostBridge(CPlugin *plugin, int32_t paramIndex);
-void setParameterHostBridge(CPlugin *plugin, int32_t paramIndex, float value);
-
 struct Events
 {
 	// Number of Events in array.

@@ -1,0 +1,3 @@
+FAIL	pipelined.dev/audio/vst2 [build failed]
+?   	pipelined.dev/audio/vst2/demoplugin	[no test files]
+FAIL

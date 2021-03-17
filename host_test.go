@@ -1,7 +1,8 @@
+// +build !plugin
+
 package vst2_test
 
 import (
-	"reflect"
 	"strings"
 	"testing"
 
@@ -67,28 +68,4 @@ func TestPluginParameters(t *testing.T) {
 		p.SetBankData([]byte(progData))
 		assertEqual(t, "resonance before", p.ParamValue(4), float32(1))
 	}))
-}
-
-func assertEqual(t *testing.T, name string, result, expected interface{}) {
-	t.Helper()
-	if !reflect.DeepEqual(expected, result) {
-		t.Fatalf("%v\nresult: \t%T\t%+v \nexpected: \t%T\t%+v", name, result, result, expected, expected)
-	}
-}
-
-func assertNotNil(t *testing.T, name string, result interface{}) {
-	t.Helper()
-	if reflect.DeepEqual(nil, result) {
-		t.Fatalf("%v\nresult: \t%T\t%+v \nexpected: \t%T\t%+v", name, result, result, nil, nil)
-	}
-}
-
-func assertPanic(t *testing.T, fn func()) {
-	t.Helper()
-	defer func() {
-		if r := recover(); r == nil {
-			t.Fatalf("expected panic")
-		}
-	}()
-	fn()
 }

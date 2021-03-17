@@ -1,9 +1,8 @@
 package vst2
 
 /*
-#cgo CFLAGS: -I${SRCDIR}
 #include <stdlib.h>
-#include "vst.h"
+#include "include/event/event.c"
 */
 import "C"
 import "unsafe"

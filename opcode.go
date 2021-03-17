@@ -2,16 +2,9 @@
 
 package vst2
 
-/*
-#include <stdlib.h>
-*/
-import "C"
 import (
 	"strings"
 	"unicode"
-	"unsafe"
-
-	"pipelined.dev/signal"
 )
 
 const (
@@ -506,142 +499,6 @@ const (
 	// deprecated in VST v2.4
 	hostGetInputSpeakerArrangement
 )
-
-// Start executes the PlugOpen opcode.
-func (p *Plugin) Start() {
-	p.Dispatch(plugOpen, 0, 0, nil, 0.0)
-}
-
-// Close stops the plugin and cleans up C refs for plugin.
-func (p *Plugin) Close() {
-	p.Dispatch(plugClose, 0, 0, nil, 0.0)
-	callbacks.Lock()
-	delete(callbacks.mapping, unsafe.Pointer(p))
-	callbacks.Unlock()
-}
-
-// Resume the plugin processing. It must be called before processing is
-// done.
-func (p *Plugin) Resume() {
-	p.Dispatch(plugStateChanged, 0, 1, nil, 0)
-}
-
-// Suspend the plugin processing. It must be called after processing is
-// done and no new signal is expected at this moment.
-func (p *Plugin) Suspend() {
-	p.Dispatch(plugStateChanged, 0, 0, nil, 0)
-}
-
-// SetBufferSize sets a buffer size per channel.
-func (p *Plugin) SetBufferSize(bufferSize int) {
-	p.Dispatch(plugSetBufferSize, 0, int64(bufferSize), nil, 0)
-}
-
-// SetSampleRate sets a sample rate for plugin.
-func (p *Plugin) SetSampleRate(sampleRate signal.Frequency) {
-	p.Dispatch(plugSetSampleRate, 0, 0, nil, float32(sampleRate))
-}
-
-// SetSpeakerArrangement creates and passes SpeakerArrangement structures to plugin
-func (p *Plugin) SetSpeakerArrangement(in, out *SpeakerArrangement) {
-	p.Dispatch(plugSetSpeakerArrangement, 0, int64(uintptr(unsafe.Pointer(in))), unsafe.Pointer(out), 0)
-}
-
-// ParamName returns the parameter label: "Release", "Gain", etc.
-func (p *Plugin) ParamName(index int) string {
-	var s ascii8
-	p.Dispatch(plugGetParamName, int32(index), 0, unsafe.Pointer(&s), 0)
-	return s.String()
-}
-
-// ParamValueName returns the parameter value label: "0.5", "HALL", etc.
-func (p *Plugin) ParamValueName(index int) string {
-	var s ascii8
-	p.Dispatch(plugGetParamDisplay, int32(index), 0, unsafe.Pointer(&s), 0)
-	return s.String()
-}
-
-// ParamUnitName returns the parameter unit label: "db", "ms", etc.
-func (p *Plugin) ParamUnitName(index int) string {
-	var s ascii8
-	p.Dispatch(plugGetParamLabel, int32(index), 0, unsafe.Pointer(&s), 0)
-	return s.String()
-}
-
-// CurrentProgramName returns current program name.
-func (p *Plugin) CurrentProgramName() string {
-	var s ascii24
-	p.Dispatch(plugGetProgramName, 0, 0, unsafe.Pointer(&s), 0)
-	return s.String()
-}
-
-// ProgramName returns program name for provided program index.
-func (p *Plugin) ProgramName(index int) string {
-	var s ascii24
-	p.Dispatch(plugGetProgramNameIndexed, int32(index), 0, unsafe.Pointer(&s), 0)
-	return s.String()
-}
-
-// SetCurrentProgramName sets new name to the current program. It will use
-// up to 24 ASCII characters. Non-ASCII characters are ignored.
-func (p *Plugin) SetCurrentProgramName(s string) {
-	var ps ascii24
-	copy(ps[:], []byte(removeNonASCII(s)))
-	p.Dispatch(plugSetProgramName, 0, 0, unsafe.Pointer(&ps), 0)
-}
-
-// Program returns current program number.
-func (p *Plugin) Program() int {
-	return int(p.Dispatch(plugGetProgram, 0, 0, nil, 0))
-}
-
-// SetProgram changes current program index.
-func (p *Plugin) SetProgram(index int) {
-	p.Dispatch(plugSetProgram, 0, int64(index), nil, 0)
-}
-
-// ParamProperties returns parameter properties for provided parameter
-// index. If opcode is not supported, boolean result is false.
-func (p *Plugin) ParamProperties(index int) (*ParameterProperties, bool) {
-	var props ParameterProperties
-	r := p.Dispatch(plugGetParameterProperties, int32(index), 0, unsafe.Pointer(&props), 0)
-	if r > 0 {
-		return &props, true
-	}
-	return nil, false
-}
-
-// GetProgramData returns current preset data. Plugin allocates required
-// memory, then this function allocates new byte slice of required length
-// where data is copied.
-func (p *Plugin) GetProgramData() []byte {
-	var ptr unsafe.Pointer
-	length := C.int(p.Dispatch(plugGetChunk, 1, 0, unsafe.Pointer(&ptr), 0))
-	return C.GoBytes(ptr, length)
-}
-
-// SetProgramData sets preset data to the plugin. Data is the full preset
-// including chunk header.
-func (p *Plugin) SetProgramData(data []byte) {
-	p.Dispatch(plugSetChunk, 1, int64(len(data)), unsafe.Pointer(&data[0]), 0)
-}
-
-// GetBankData returns current bank data. Plugin allocates required
-// memory, then this function allocates new byte slice of required length
-// where data is copied.
-func (p *Plugin) GetBankData() []byte {
-	var ptr unsafe.Pointer
-	length := C.int(p.Dispatch(plugGetChunk, 0, 0, unsafe.Pointer(&ptr), 0))
-	return C.GoBytes(ptr, length)
-}
-
-// SetBankData sets preset data to the plugin. Data is the full preset
-// including chunk header.
-func (p *Plugin) SetBankData(data []byte) {
-	ptr := C.CBytes(data)
-	p.Dispatch(plugSetChunk, 0, int64(len(data)), unsafe.Pointer(ptr), 0)
-	C.free(ptr)
-}
 
 func removeNonASCII(s string) string {
 	return strings.Map(func(r rune) rune {

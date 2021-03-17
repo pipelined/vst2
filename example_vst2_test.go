@@ -1,3 +1,5 @@
+// +build !plugin
+
 package vst2_test
 
 import (

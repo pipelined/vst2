@@ -22,19 +22,6 @@ type (
 		Presets    []Preset
 	}
 
-	// Parameter refers to plugin parameter that can be mutated in the pipe.
-	Parameter struct {
-		name       string
-		unit       string
-		value      float32
-		valueLabel string
-	}
-
-	// Preset refers to plugin presets.
-	Preset struct {
-		name string
-	}
-
 	// ProcessorInitFunc applies configuration on plugin before starting it
 	// in the processor routine.
 	ProcessorInitFunc func(*Plugin)
@@ -56,10 +43,10 @@ func (v *VST) Processor(h Host) *Processor {
 	params := make([]Parameter, numParams)
 	for i := 0; i < numParams; i++ {
 		params = append(params, Parameter{
-			name:       plugin.ParamName(i),
-			unit:       plugin.ParamUnitName(i),
+			Name:       plugin.ParamName(i),
+			Unit:       plugin.ParamUnitName(i),
+			ValueLabel: plugin.ParamValueName(i),
 			value:      plugin.ParamValue(i),
-			valueLabel: plugin.ParamValueName(i),
 		})
 	}
 	numPresets := plugin.NumPrograms()

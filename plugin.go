@@ -29,6 +29,7 @@ type (
 		inputDouble  DoubleBuffer
 		outputDouble DoubleBuffer
 		ProcessDoubleFunc
+		Parameters []Parameter
 	}
 
 	HostCallback struct {
@@ -42,9 +43,8 @@ type (
 	PluginAllocatorFunc func(HostCallback) Plugin
 )
 
-func getPlugin(cp *C.CPlugin) (p *Plugin, ok bool) {
+func getPlugin(cp *C.CPlugin) *Plugin {
 	plugins.RLock()
 	defer plugins.RUnlock()
-	p, ok = plugins.mapping[unsafe.Pointer(cp)]
-	return
+	return plugins.mapping[unsafe.Pointer(cp)]
 }

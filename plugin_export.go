@@ -33,20 +33,14 @@ func newGoPlugin(cp *C.CPlugin, c C.HostCallback) {
 //export dispatchPluginBridge
 // global dispatch, calls real plugin dispatch.
 func dispatchPluginBridge(cp *C.CPlugin, opcode int32, index int32, value int64, ptr unsafe.Pointer, opt float32) int64 {
-	p, ok := getPlugin(cp)
-	if !ok {
-		return 0
-	}
+	p := getPlugin(cp)
 	return p.DispatchFunc(PluginOpcode(opcode), index, value, ptr, opt)
 }
 
 //export processDoublePluginBridge
 // global processDouble, calls real plugin processDouble.
 func processDoublePluginBridge(cp *C.CPlugin, in, out **C.double, sampleFrames int32) {
-	p, ok := getPlugin(cp)
-	if !ok {
-		return
-	}
+	p := getPlugin(cp)
 	for i := range p.inputDouble.data {
 		p.inputDouble.data[i] = getDoubleChannel(in, i)
 	}
@@ -68,13 +62,13 @@ func processFloatPluginBridge(cp *C.CPlugin, in, out **float32, sampleFrames int
 //export getParameterPluginBridge
 // global getParameter, calls real plugin getParameter.
 func getParameterPluginBridge(cp *C.CPlugin, index int32) float32 {
-	return 0
+	return getPlugin(cp).Parameters[index].value
 }
 
 //export setParameterPluginBridge
 // global setParameter, calls real plugin setParameter.
 func setParameterPluginBridge(cp *C.CPlugin, index int32, value float32) {
-	return
+	getPlugin(cp).Parameters[index].value = value
 }
 
 func getDoubleChannel(buf **C.double, i int) *C.double {

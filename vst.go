@@ -3,7 +3,7 @@ package vst2
 import "strings"
 
 // EffectMagic is constant in every plugin.
-const EffectMagic = "VstP"
+const EffectMagic int32 = 'V'<<24 | 's'<<16 | 't'<<8 | 'P'<<0
 
 type (
 	// ParameterProperties contains the information about parameter.
@@ -260,8 +260,8 @@ const (
 	SpeakerArr81Music
 	// SpeakerArr102 is L R C Lfe Ls Rs Tfl Tfc Tfr Trl Trr Lfe2.
 	SpeakerArr102
-	// not defined.
-	numSpeakerArr
+	// numSpeakerArr not defined.
+	_
 )
 
 const (
@@ -339,16 +339,16 @@ const (
 	// processing.
 	PluginDoubleProcessing
 
-	// deprecated in VST v2.4
-	pluginHasClip
-	// deprecated in VST v2.4
-	pluginHasVu
-	// deprecated in VST v2.4
-	pluginCanMono
-	// deprecated in VST v2.4
-	pluginExtIsAsync
-	// deprecated in VST v2.4
-	pluginExtHasBuffer
+	// pluginHasClip deprecated in VST v2.4
+	_
+	// pluginHasVu deprecated in VST v2.4
+	_
+	// pluginCanMono deprecated in VST v2.4
+	_
+	// pluginExtIsAsync deprecated in VST v2.4
+	_
+	// pluginExtHasBuffer deprecated in VST v2.4
+	_
 )
 
 // ProcessLevel is used as result for in HostGetCurrentProcessLevel call.
@@ -396,7 +396,7 @@ type (
 		Flags PinPropertiesFlag
 		SpeakerArrangementType
 		ShortLabel ascii8   // Short name, recommended 6 chars + delimiter.
-		future     [48]byte // Not used.
+		_          [48]byte // reserved not used.
 	}
 
 	// PinPropertiesFlag values.
@@ -461,7 +461,7 @@ type MIDIProgram struct {
 	MIDIProgram int8  // -1:off [-1;-127]
 	MIDIBankMsb int8  // -1:off [-1;-127]
 	MIDIBankLsb int8  // -1:off [-1;-127]
-	reserved    int8  // Not used.
+	_           int8  // reserved not used.
 	ParentIndex int32 // -1 means there is no parent category.
 	Flags       MIDIProgramFlag
 }
@@ -478,7 +478,7 @@ type MIDIProgramCategory struct {
 	Index       int32
 	Name        ascii64 ///< name
 	ParentIndex int32   // -1 means there is no parent category.
-	flags       int32   // Not used.
+	_           int32   // flags not used.
 }
 
 // MIDIKey describes the MIDI key.
@@ -486,8 +486,8 @@ type MIDIKey struct {
 	Index     int32
 	KeyNumber int32 // [0; 127]
 	Name      ascii64
-	reserved  int32 // Not used.
-	flags     int32 // Not used.
+	_         int32 // reserved not used.
+	_         int32 // flags not used.
 }
 
 // PatchChunk is used to communicate preset or bank properties with plugin
@@ -497,7 +497,7 @@ type PatchChunk struct {
 	PluginUniqueID int32
 	PluginVersion  int32
 	NumElements    int32    // Number of presets for bank or number of parameters for preset.
-	reserved       [48]byte // Not used.
+	_              [48]byte // reserved not used.
 }
 
 // PanningLaw determines the algorithm panning happens.

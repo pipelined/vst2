@@ -15,18 +15,36 @@ var (
 	// global state for callbacks.
 	plugins = struct {
 		sync.RWMutex
-		mapping map[unsafe.Pointer]Plugin
+		mapping map[unsafe.Pointer]*Plugin
 	}{
-		mapping: map[unsafe.Pointer]Plugin{},
+		mapping: map[unsafe.Pointer]*Plugin{},
 	}
 )
 
 type (
-	Plugin struct{}
+	Plugin struct {
+		InputChannels  int
+		OutputChannels int
+		DispatchFunc
+		inputDouble  DoubleBuffer
+		outputDouble DoubleBuffer
+		ProcessDoubleFunc
+	}
 
 	HostCallback struct {
 		callbackFunc C.HostCallback
 	}
 
+	DispatchFunc func(op PluginOpcode, index int32, value int64, ptr unsafe.Pointer, opt float32) int64
+
+	ProcessDoubleFunc func(in, out DoubleBuffer)
+
 	PluginAllocatorFunc func(HostCallback) Plugin
 )
+
+func getPlugin(cp *C.CPlugin) (p *Plugin, ok bool) {
+	plugins.RLock()
+	defer plugins.RUnlock()
+	p, ok = plugins.mapping[unsafe.Pointer(cp)]
+	return
+}

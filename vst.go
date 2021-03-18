@@ -742,6 +742,21 @@ const (
 	PluginCanBypass PluginCanDoString = "bypass"
 )
 
+type (
+	// Parameter refers to plugin parameter that can be mutated in the pipe.
+	Parameter struct {
+		Name       string
+		Unit       string
+		value      float32
+		ValueLabel string
+	}
+
+	// Preset refers to plugin presets.
+	Preset struct {
+		name string
+	}
+)
+
 func trimNull(s string) string {
 	return strings.Trim(s, "\x00")
 }

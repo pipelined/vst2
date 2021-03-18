@@ -77,9 +77,6 @@ type (
 	HostGetTimeInfo func() *TimeInfo
 )
 
-// DispatchFunc called by host.
-type DispatchFunc func(op PluginOpcode, index int32, value int64, ptr unsafe.Pointer, opt float32) int64
-
 // Callback returns HostCallbackFunc that handles all vst types casts
 // and allows to write handlers without usage of unsafe package.
 func (h Host) Callback() HostCallbackFunc {

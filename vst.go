@@ -747,7 +747,7 @@ type (
 	Parameter struct {
 		Name       string
 		Unit       string
-		value      float32
+		Value      float32
 		ValueLabel string
 	}
 

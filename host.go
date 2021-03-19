@@ -158,9 +158,9 @@ func (p *Plugin) Flags() PluginFlag {
 func (p *Plugin) ProcessDouble(in, out DoubleBuffer) {
 	C.processDoubleHostBridge(
 		(*C.CPlugin)(p.p),
-		&in.data[0],
-		&out.data[0],
-		C.int32_t(in.size),
+		(**C.double)(&in.data[0]),
+		(**C.double)(&out.data[0]),
+		C.int32_t(in.Frames),
 	)
 }
 

@@ -13,9 +13,9 @@ type (
 	// C requires all buffer channels to be coallocated. This differs from
 	// Go slices.
 	DoubleBuffer struct {
-		numChannels int
-		size        int
-		data        []*C.double
+		Channels int
+		Frames   int
+		data     []DoubleBufferChannel
 	}
 
 	// FloatBuffer is a samples buffer for VST Process function.
@@ -25,26 +25,28 @@ type (
 		size        int
 		data        []*C.float
 	}
+
+	DoubleBufferChannel *C.double
 )
 
 // NewDoubleBuffer allocates new memory for C-compatible buffer.
 func NewDoubleBuffer(numChannels, bufferSize int) DoubleBuffer {
-	b := make([]*C.double, numChannels)
+	b := make([]DoubleBufferChannel, numChannels)
 	for i := 0; i < numChannels; i++ {
 		b[i] = (*C.double)(C.malloc(C.size_t(C.sizeof_double * bufferSize)))
 	}
 	return DoubleBuffer{
-		data:        b,
-		size:        bufferSize,
-		numChannels: numChannels,
+		data:     b,
+		Frames:   bufferSize,
+		Channels: numChannels,
 	}
 }
 
 // CopyTo copies values to signal.Floating buffer. If dimensions differ - the lesser used.
 func (b DoubleBuffer) CopyTo(s signal.Floating) {
-	mustSameChannels(s.Channels(), b.numChannels)
+	mustSameChannels(s.Channels(), b.Channels)
 	// determine the size of data by picking up a lesser dimensions.
-	bufferSize := min(s.Length(), b.size)
+	bufferSize := min(s.Length(), b.Frames)
 
 	// copy data.
 	for c := 0; c < s.Channels(); c++ {
@@ -57,9 +59,9 @@ func (b DoubleBuffer) CopyTo(s signal.Floating) {
 
 // CopyFrom copies values from signal.Float64. If dimensions differ - the lesser used.
 func (b DoubleBuffer) CopyFrom(s signal.Floating) {
-	mustSameChannels(s.Channels(), b.numChannels)
+	mustSameChannels(s.Channels(), b.Channels)
 	// determine the size of data by picking up a lesser dimensions.
-	bufferSize := min(s.Length(), b.size)
+	bufferSize := min(s.Length(), b.Frames)
 
 	// copy data.
 	for c := 0; c < s.Channels(); c++ {
@@ -68,6 +70,18 @@ func (b DoubleBuffer) CopyFrom(s signal.Floating) {
 			(*row)[i] = C.double(s.Sample(s.BufferIndex(c, i)))
 		}
 	}
+}
+
+func (b DoubleBuffer) Channel(i int) DoubleBufferChannel {
+	return b.data[i]
+}
+
+func DoubleValue(dc DoubleBufferChannel, i int) float64 {
+	return float64((*[1 << 30]C.double)(unsafe.Pointer(dc))[i])
+}
+
+func SetDoubleValue(dc DoubleBufferChannel, i int, value float64) {
+	(*(*[1 << 30]C.double)(unsafe.Pointer(dc)))[i] = C.double(value)
 }
 
 // Free the allocated memory.

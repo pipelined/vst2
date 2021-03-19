@@ -1,33 +1,43 @@
-package demoplugin
+package main
 
 import (
-	"pipelined.dev/signal"
-)
+	"unsafe"
 
-func init() {}
+	"pipelined.dev/audio/vst2"
+)
 
 type Gain struct {
 	Gain float64
 }
 
-// type Param struct {
-// 	value float64
-// }
-
-// type Params struct {
-// 	Params []*Param
-// }
-
-// func (p Params) SetParamValue(i int, value float64) {
-// 	p.Params[i].value = value
-// }
-
-// func (p Params) GetParamValue(i int) float64 {
-// 	return p.Params[i].value
-// }
-
-func (p *Gain) Process(in, out signal.Floating) {
-	for i := 0; i < in.Len(); i++ {
-		out.SetSample(i, in.Sample(i)*p.Gain)
+func init() {
+	vst2.PluginAllocator = func(vst2.HostCallback) vst2.Plugin {
+		gain := vst2.Parameter{
+			Name:  "Gain",
+			Unit:  "db",
+			Value: 1,
+		}
+		return vst2.Plugin{
+			InputChannels:  2,
+			OutputChannels: 2,
+			Parameters: []*vst2.Parameter{
+				&gain,
+			},
+			ProcessDoubleFunc: func(in, out vst2.DoubleBuffer) {
+				in1 := in.Channel(0)
+				in2 := in.Channel(1)
+				out1 := out.Channel(0)
+				out2 := out.Channel(1)
+				for i := 0; i < in.Frames; i++ {
+					vst2.SetDoubleValue(out1, i, vst2.DoubleValue(in1, i)*float64(gain.Value))
+					vst2.SetDoubleValue(out2, i, vst2.DoubleValue(in2, i)*float64(gain.Value))
+				}
+			},
+			DispatchFunc: func(op vst2.PluginOpcode, index int32, value int64, ptr unsafe.Pointer, opt float32) int64 {
+				return 0
+			},
+		}
 	}
 }
+
+func main() {}

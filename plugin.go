@@ -2,7 +2,7 @@
 
 package vst2
 
-//#include "include/vst.h"
+//#include "include/plugin/plugin.c"
 import "C"
 import (
 	"sync"
@@ -29,7 +29,7 @@ type (
 		inputDouble  DoubleBuffer
 		outputDouble DoubleBuffer
 		ProcessDoubleFunc
-		Parameters []Parameter
+		Parameters []*Parameter
 	}
 
 	HostCallback struct {

@@ -1,9 +1,6 @@
 #include <stdlib.h>
 #include "include/vst.h"
 
-#include "include/vst.h"
-#include <stdlib.h>
-
 void newGoPlugin(CPlugin *plugin, HostCallback c);
 
 //Go dispatch prototype

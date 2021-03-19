@@ -5,27 +5,29 @@ package vst2
 //#include "include/vst.h"
 import "C"
 import (
+	"os"
 	"unsafe"
 )
 
-//export newGoPlugin
 // instantiate go plugin
+//export newGoPlugin
 func newGoPlugin(cp *C.CPlugin, c C.HostCallback) {
 	p := PluginAllocator(HostCallback{c})
 	cp.magic = C.int(EffectMagic)
 	cp.numInputs = C.int(p.InputChannels)
 	cp.numOutputs = C.int(p.OutputChannels)
+	cp.numParams = C.int(len(p.Parameters))
 	cp.flags = cp.flags | C.int(PluginDoubleProcessing)
-	// cp.flags = cp.flags | C.int(PluginFloatProcessing)
-	plugins.Lock()
+	cp.flags = cp.flags | C.int(PluginFloatProcessing)
 	p.inputDouble = DoubleBuffer{
-		numChannels: p.InputChannels,
-		data:        make([]*C.double, p.InputChannels),
+		Channels: p.InputChannels,
+		data:     make([]DoubleBufferChannel, p.InputChannels),
 	}
 	p.outputDouble = DoubleBuffer{
-		numChannels: p.OutputChannels,
-		data:        make([]*C.double, p.OutputChannels),
+		Channels: p.OutputChannels,
+		data:     make([]DoubleBufferChannel, p.OutputChannels),
 	}
+	plugins.Lock()
 	plugins.mapping[unsafe.Pointer(cp)] = &p
 	plugins.Unlock()
 }
@@ -34,6 +36,7 @@ func newGoPlugin(cp *C.CPlugin, c C.HostCallback) {
 // global dispatch, calls real plugin dispatch.
 func dispatchPluginBridge(cp *C.CPlugin, opcode int32, index int32, value int64, ptr unsafe.Pointer, opt float32) int64 {
 	p := getPlugin(cp)
+	os.Stderr.WriteString("HELLO STDERR")
 	return p.DispatchFunc(PluginOpcode(opcode), index, value, ptr, opt)
 }
 
@@ -47,8 +50,8 @@ func processDoublePluginBridge(cp *C.CPlugin, in, out **C.double, sampleFrames i
 	for i := range p.outputDouble.data {
 		p.outputDouble.data[i] = getDoubleChannel(out, i)
 	}
-	p.inputDouble.size = int(sampleFrames)
-	p.outputDouble.size = int(sampleFrames)
+	p.inputDouble.Frames = int(sampleFrames)
+	p.outputDouble.Frames = int(sampleFrames)
 	p.ProcessDoubleFunc(p.inputDouble, p.outputDouble)
 	return
 }
@@ -62,13 +65,13 @@ func processFloatPluginBridge(cp *C.CPlugin, in, out **float32, sampleFrames int
 //export getParameterPluginBridge
 // global getParameter, calls real plugin getParameter.
 func getParameterPluginBridge(cp *C.CPlugin, index int32) float32 {
-	return getPlugin(cp).Parameters[index].value
+	return getPlugin(cp).Parameters[index].Value
 }
 
 //export setParameterPluginBridge
 // global setParameter, calls real plugin setParameter.
 func setParameterPluginBridge(cp *C.CPlugin, index int32, value float32) {
-	getPlugin(cp).Parameters[index].value = value
+	getPlugin(cp).Parameters[index].Value = value
 }
 
 func getDoubleChannel(buf **C.double, i int) *C.double {

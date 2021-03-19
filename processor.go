@@ -46,7 +46,7 @@ func (v *VST) Processor(h Host) *Processor {
 			Name:       plugin.ParamName(i),
 			Unit:       plugin.ParamUnitName(i),
 			ValueLabel: plugin.ParamValueName(i),
-			value:      plugin.ParamValue(i),
+			Value:      plugin.ParamValue(i),
 		})
 	}
 	numPresets := plugin.NumPrograms()

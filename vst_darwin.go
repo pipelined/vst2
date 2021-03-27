@@ -1,6 +1,8 @@
+// +build !plugin
+
 package vst2
 
-//#cgo darwin LDFLAGS: -framework CoreFoundation
+//#cgo LDFLAGS: -framework CoreFoundation
 //#include <CoreFoundation/CoreFoundation.h>
 import "C"
 import (

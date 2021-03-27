@@ -1,16 +1,18 @@
+#ifndef VST_H
+#define VST_H
 #include <stdint.h>
 
-typedef struct Plugin Plugin;
+typedef struct CPlugin CPlugin;
 typedef struct Events Events;
 
-typedef	int64_t (*HostCallback) (Plugin* plugin, int32_t opcode, int32_t index, int64_t value, void* ptr, float opt);
-typedef int64_t (*DispatchProc) (Plugin* plugin, int32_t opcode, int32_t index, int64_t value, void* ptr, float opt);
-typedef void (*FloatProcessProc) (Plugin* plugin, float** inputs, float** outputs, int32_t sampleFrames);
-typedef void (*DoubleProcessProc) (Plugin* plugin, double** inputs, double** outputs, int32_t sampleFrames);
-typedef void (*SetParameterProc) (Plugin* plugin, int32_t index, float parameter);
-typedef float (*GetParameterProc) (Plugin* plugin, int32_t index);
+typedef	int64_t (*HostCallback) (CPlugin* plugin, int32_t opcode, int32_t index, int64_t value, void* ptr, float opt);
+typedef int64_t (*DispatchProc) (CPlugin* plugin, int32_t opcode, int32_t index, int64_t value, void* ptr, float opt);
+typedef void (*ProcessFloatFunc) (CPlugin* plugin, float** inputs, float** outputs, int32_t sampleFrames);
+typedef void (*ProcessDoubleFunc) (CPlugin* plugin, double** inputs, double** outputs, int32_t sampleFrames);
+typedef void (*SetParameterProc) (CPlugin* plugin, int32_t index, float parameter);
+typedef float (*GetParameterProc) (CPlugin* plugin, int32_t index);
 
-struct Plugin
+struct CPlugin
 {
 	// EffectMagic value.
 	int32_t magic;
@@ -18,7 +20,7 @@ struct Plugin
 	DispatchProc dispatcher;
 
 	// Deprecated.
-	FloatProcessProc process;
+	ProcessFloatFunc process;
 
 	// Set new value of automatable parameter.
 	SetParameterProc setParameter;
@@ -65,13 +67,16 @@ struct Plugin
 	int32_t version;
 
 	// Process audio samples in replacing mode with single precision.
-	FloatProcessProc processReplacing;
+	ProcessFloatFunc processFloat;
 	// Process audio samples in replacing mode with double precision.
-	DoubleProcessProc processDoubleReplacing;
+	ProcessDoubleFunc processDouble;
 
 	// Reserved for extension.
 	char future[56];
 };
+
+// CPlugin's entry point
+typedef CPlugin* (*EntryPoint)(HostCallback host);
 
 struct Events
 {
@@ -83,28 +88,6 @@ struct Events
 	void** events;
 };
 
-
-// Plugin's entry point
-typedef Plugin* (*EntryPoint)(HostCallback host);
-
-// Bridge function to call entry point on Effect
-Plugin* loadPlugin(EntryPoint load);
-
-// Bridge to call dispatch function of loaded plugin
-int64_t dispatch(Plugin *plugin, int32_t opcode, int32_t index, int64_t value, void *ptr, float opt);
-
-// Bridge to call process replacing function of loaded plugin
-void processDouble(Plugin *plugin, int32_t numChannels, int32_t blocksize, double **inputs, double **outputs);
-
-// Bridge to call process replacing function of loaded plugin
-void processFloat(Plugin *plugin, int32_t numChannels, int32_t blocksize, float **inputs, float **outputs);
-
-// Bridge to call get parameter fucntion of loaded plugin
-float getParameter(Plugin *plugin, int32_t paramIndex);
-
-// Bridge to call set parameter fucntion of loaded plugin
-void setParameter(Plugin *plugin, int32_t paramIndex, float value);
-
 // Bridge to allocate events structure.
 Events* newEvents(int32_t numEvents);
 
@@ -115,6 +98,4 @@ void setEvent(Events *events, void *event, int32_t pos);
 // gets the event from events container. This function is needed because there is
 // no way to assign values to void** from Go.
 void *getEvent(Events *events, int32_t pos);
-
-// TODO: remove
-void testEvents(Events *e);
+#endif

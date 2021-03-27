@@ -5,7 +5,6 @@ package vst2
 //#include "include/vst.h"
 import "C"
 import (
-	"os"
 	"unsafe"
 )
 
@@ -19,22 +18,10 @@ func newGoPlugin(cp *C.CPlugin, c C.HostCallback) {
 	cp.numParams = C.int(len(p.Parameters))
 	cp.flags = cp.flags | C.int(PluginDoubleProcessing)
 	cp.flags = cp.flags | C.int(PluginFloatProcessing)
-	p.inputDouble = DoubleBuffer{
-		Channels: p.InputChannels,
-		data:     make([]*C.double, p.InputChannels),
-	}
-	p.outputDouble = DoubleBuffer{
-		Channels: p.OutputChannels,
-		data:     make([]*C.double, p.OutputChannels),
-	}
-	p.inputFloat = FloatBuffer{
-		Channels: p.InputChannels,
-		data:     make([]*C.float, p.InputChannels),
-	}
-	p.outputFloat = FloatBuffer{
-		Channels: p.OutputChannels,
-		data:     make([]*C.float, p.OutputChannels),
-	}
+	p.inputDouble = DoubleBuffer{data: make([]*C.double, p.InputChannels)}
+	p.outputDouble = DoubleBuffer{data: make([]*C.double, p.OutputChannels)}
+	p.inputFloat = FloatBuffer{data: make([]*C.float, p.InputChannels)}
+	p.outputFloat = FloatBuffer{data: make([]*C.float, p.OutputChannels)}
 	plugins.Lock()
 	plugins.mapping[unsafe.Pointer(cp)] = &p
 	plugins.Unlock()
@@ -44,7 +31,6 @@ func newGoPlugin(cp *C.CPlugin, c C.HostCallback) {
 // global dispatch, calls real plugin dispatch.
 func dispatchPluginBridge(cp *C.CPlugin, opcode int32, index int32, value int64, ptr unsafe.Pointer, opt float32) int64 {
 	p := getPlugin(cp)
-	os.Stderr.WriteString("HELLO STDERR")
 	return p.DispatchFunc(PluginOpcode(opcode), index, value, ptr, opt)
 }
 

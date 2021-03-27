@@ -21,7 +21,7 @@ func TestBuffer(t *testing.T) {
 			}.Float64()
 			signal.WriteStripedFloat64(floats, f)
 
-			b.CopyFrom(f)
+			b.Write(f)
 
 			for i := range floats {
 				for j := range floats[i] {

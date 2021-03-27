@@ -103,16 +103,16 @@ func doubleFns(p *Plugin, channels, bufferSize int, progressFn HostProgressProce
 	doubleIn := NewDoubleBuffer(channels, bufferSize)
 	doubleOut := NewDoubleBuffer(channels, bufferSize)
 	processFn := func(in, out signal.Floating) (int, error) {
-		doubleIn.CopyFrom(in)
+		doubleIn.Write(in)
 		p.ProcessDouble(doubleIn, doubleOut)
-		doubleOut.CopyTo(out)
+		doubleOut.Read(out)
 		return in.Length(), nil
 	}
 	if progressFn != nil {
 		processFn = func(in, out signal.Floating) (int, error) {
-			doubleIn.CopyFrom(in)
+			doubleIn.Write(in)
 			p.ProcessDouble(doubleIn, doubleOut)
-			doubleOut.CopyTo(out)
+			doubleOut.Read(out)
 			progressFn(in.Length())
 			return in.Length(), nil
 		}
@@ -130,16 +130,16 @@ func floatFns(p *Plugin, channels, bufferSize int, progressFn HostProgressProces
 	floatIn := NewFloatBuffer(channels, bufferSize)
 	floatOut := NewFloatBuffer(channels, bufferSize)
 	processFn := func(in, out signal.Floating) (int, error) {
-		floatIn.CopyFrom(in)
+		floatIn.Write(in)
 		p.ProcessFloat(floatIn, floatOut)
-		floatOut.CopyTo(out)
+		floatOut.Read(out)
 		return in.Length(), nil
 	}
 	if progressFn != nil {
 		processFn = func(in, out signal.Floating) (int, error) {
-			floatIn.CopyFrom(in)
+			floatIn.Write(in)
 			p.ProcessFloat(floatIn, floatOut)
-			floatOut.CopyTo(out)
+			floatOut.Read(out)
 			progressFn(in.Length())
 			return in.Length(), nil
 		}

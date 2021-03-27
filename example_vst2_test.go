@@ -144,12 +144,12 @@ func Example_plugin() {
 	defer out.Free()
 
 	// Fill input with data values.
-	in.CopyFrom(buffer)
+	in.Write(buffer)
 
 	// Process data.
 	plugin.ProcessDouble(in, out)
 	// Copy processed data.
-	out.CopyTo(buffer)
+	out.Read(buffer)
 
 	// Output:
 	// Received opcode: HostGetCurrentProcessLevel

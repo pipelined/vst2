@@ -1,9 +1,8 @@
 package vst2
 
 /*
-#cgo CFLAGS: -std=gnu99 -I${SRCDIR}/sdk
 #include <stdlib.h>
-#include "sdk.h"
+#include "include/event/event.c"
 */
 import "C"
 import "unsafe"
@@ -149,9 +148,4 @@ func (s SysExDataPtr) Bytes() []byte {
 // Free releases allocated memory.
 func (s SysExDataPtr) Free() {
 	C.free(unsafe.Pointer(unsafe.Pointer(s.data)))
-}
-
-// TestEvents is a helper function to test events.
-func TestEvents(e *EventsPtr) {
-	C.testEvents((*C.Events)(e))
 }

@@ -1,3 +1,5 @@
+// +build !plugin
+
 package vst2_test
 
 import (
@@ -15,7 +17,7 @@ import (
 // provided prefix. This technique allows to provide callback with any
 // context needed.
 func PrinterHostCallback(prefix string) vst2.HostCallbackFunc {
-	return func(code vst2.HostOpcode, index int32, value int64, ptr unsafe.Pointer, opt float32) uintptr {
+	return func(code vst2.HostOpcode, index int32, value int64, ptr unsafe.Pointer, opt float32) int64 {
 		fmt.Printf("%s: %v\n", prefix, code)
 		return 0
 	}
@@ -142,12 +144,12 @@ func Example_plugin() {
 	defer out.Free()
 
 	// Fill input with data values.
-	in.CopyFrom(buffer)
+	in.Write(buffer)
 
 	// Process data.
 	plugin.ProcessDouble(in, out)
 	// Copy processed data.
-	out.CopyTo(buffer)
+	out.Read(buffer)
 
 	// Output:
 	// Received opcode: HostGetCurrentProcessLevel

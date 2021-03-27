@@ -31,8 +31,18 @@ func init() {
 				out1 := out.Channel(0)
 				out2 := out.Channel(1)
 				for i := 0; i < in.Frames; i++ {
-					vst2.SetDoubleValue(out1, i, vst2.DoubleValue(in1, i)*float64(gain.Value))
-					vst2.SetDoubleValue(out2, i, vst2.DoubleValue(in2, i)*float64(gain.Value))
+					out1[i] = in1[i] * float64(gain.Value)
+					out2[i] = in2[i] * float64(gain.Value)
+				}
+			},
+			ProcessFloatFunc: func(in, out vst2.FloatBuffer) {
+				in1 := in.Channel(0)
+				in2 := in.Channel(1)
+				out1 := out.Channel(0)
+				out2 := out.Channel(1)
+				for i := 0; i < in.Frames; i++ {
+					out1[i] = in1[i] * float32(gain.Value)
+					out2[i] = in2[i] * float32(gain.Value)
 				}
 			},
 			DispatchFunc: func(op vst2.PluginOpcode, index int32, value int64, ptr unsafe.Pointer, opt float32) int64 {

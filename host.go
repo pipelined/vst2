@@ -158,8 +158,8 @@ func (p *Plugin) Flags() PluginFlag {
 func (p *Plugin) ProcessDouble(in, out DoubleBuffer) {
 	C.processDoubleHostBridge(
 		(*C.CPlugin)(p.p),
-		(**C.double)(&in.data[0]),
-		(**C.double)(&out.data[0]),
+		in.cArray(),
+		out.cArray(),
 		C.int32_t(in.Frames),
 	)
 }
@@ -168,9 +168,9 @@ func (p *Plugin) ProcessDouble(in, out DoubleBuffer) {
 func (p *Plugin) ProcessFloat(in, out FloatBuffer) {
 	C.processFloatHostBridge(
 		(*C.CPlugin)(p.p),
-		&in.data[0],
-		&out.data[0],
-		C.int32_t(in.size),
+		in.cArray(),
+		out.cArray(),
+		C.int32_t(in.Frames),
 	)
 }
 

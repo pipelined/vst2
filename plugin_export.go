@@ -21,11 +21,19 @@ func newGoPlugin(cp *C.CPlugin, c C.HostCallback) {
 	cp.flags = cp.flags | C.int(PluginFloatProcessing)
 	p.inputDouble = DoubleBuffer{
 		Channels: p.InputChannels,
-		data:     make([]DoubleBufferChannel, p.InputChannels),
+		data:     make([]*C.double, p.InputChannels),
 	}
 	p.outputDouble = DoubleBuffer{
 		Channels: p.OutputChannels,
-		data:     make([]DoubleBufferChannel, p.OutputChannels),
+		data:     make([]*C.double, p.OutputChannels),
+	}
+	p.inputFloat = FloatBuffer{
+		Channels: p.InputChannels,
+		data:     make([]*C.float, p.InputChannels),
+	}
+	p.outputFloat = FloatBuffer{
+		Channels: p.OutputChannels,
+		data:     make([]*C.float, p.OutputChannels),
 	}
 	plugins.Lock()
 	plugins.mapping[unsafe.Pointer(cp)] = &p
@@ -58,7 +66,17 @@ func processDoublePluginBridge(cp *C.CPlugin, in, out **C.double, sampleFrames i
 
 //export processFloatPluginBridge
 // global processFloat, calls real plugin processFloat.
-func processFloatPluginBridge(cp *C.CPlugin, in, out **float32, sampleFrames int32) {
+func processFloatPluginBridge(cp *C.CPlugin, in, out **C.float, sampleFrames int32) {
+	p := getPlugin(cp)
+	for i := range p.inputFloat.data {
+		p.inputFloat.data[i] = getFloatChannel(in, i)
+	}
+	for i := range p.outputFloat.data {
+		p.outputFloat.data[i] = getFloatChannel(out, i)
+	}
+	p.inputFloat.Frames = int(sampleFrames)
+	p.outputFloat.Frames = int(sampleFrames)
+	p.ProcessFloatFunc(p.inputFloat, p.outputFloat)
 	return
 }
 
@@ -72,9 +90,4 @@ func getParameterPluginBridge(cp *C.CPlugin, index int32) float32 {
 // global setParameter, calls real plugin setParameter.
 func setParameterPluginBridge(cp *C.CPlugin, index int32, value float32) {
 	getPlugin(cp).Parameters[index].Value = value
-}
-
-func getDoubleChannel(buf **C.double, i int) *C.double {
-	ptrPtr := (**C.double)(unsafe.Pointer(uintptr(unsafe.Pointer(buf)) + uintptr(i)*unsafe.Sizeof(*buf)))
-	return *ptrPtr
 }

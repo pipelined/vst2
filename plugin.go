@@ -28,7 +28,10 @@ type (
 		DispatchFunc
 		inputDouble  DoubleBuffer
 		outputDouble DoubleBuffer
+		inputFloat   FloatBuffer
+		outputFloat  FloatBuffer
 		ProcessDoubleFunc
+		ProcessFloatFunc
 		Parameters []*Parameter
 	}
 
@@ -39,6 +42,8 @@ type (
 	DispatchFunc func(op PluginOpcode, index int32, value int64, ptr unsafe.Pointer, opt float32) int64
 
 	ProcessDoubleFunc func(in, out DoubleBuffer)
+
+	ProcessFloatFunc func(in, out FloatBuffer)
 
 	PluginAllocatorFunc func(HostCallback) Plugin
 )

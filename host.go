@@ -52,29 +52,9 @@ type (
 )
 
 type (
-	// HostCallbackFunc used as callback function called by plugin. Use closure
-	// wrapping technique to add more types to callback.
+	// HostCallbackFunc used as callback function called by plugin. Use
+	// closure wrapping technique to add more types to callback.
 	HostCallbackFunc func(op HostOpcode, index int32, value int64, ptr unsafe.Pointer, opt float32) int64
-
-	// Host handles all callbacks from plugin.
-	Host struct {
-		ProgressProcessed HostProgressProcessed
-		GetSampleRate     HostGetSampleRateFunc
-		GetBufferSize     HostGetBufferSizeFunc
-		GetProcessLevel   HostGetProcessLevel
-		GetTimeInfo       HostGetTimeInfo
-	}
-
-	// HostProgressProcessed is executed after every process call.
-	HostProgressProcessed func(int)
-	// HostGetSampleRateFunc returns host sample rate.
-	HostGetSampleRateFunc func() signal.Frequency
-	// HostGetBufferSizeFunc returns host buffer size.
-	HostGetBufferSizeFunc func() int
-	// HostGetProcessLevel returns the context of execution.
-	HostGetProcessLevel func() ProcessLevel
-	// HostGetTimeInfo returns current time info.
-	HostGetTimeInfo func() *TimeInfo
 )
 
 // Callback returns HostCallbackFunc that handles all vst types casts

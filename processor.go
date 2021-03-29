@@ -17,7 +17,7 @@ type (
 		channels   int
 		sampleRate signal.Frequency
 		plugin     *Plugin
-		progressFn HostProgressProcessed
+		progressFn ProgressProcessedFunc
 		Parameters []Parameter
 		Presets    []Preset
 	}
@@ -25,12 +25,16 @@ type (
 	// ProcessorInitFunc applies configuration on plugin before starting it
 	// in the processor routine.
 	ProcessorInitFunc func(*Plugin)
+
+	// HostProgressProcessed is executed by processor after every process
+	// call.
+	ProgressProcessedFunc func(int)
 )
 
 // Processor represents vst2 sound processor. Processor always overrides
 // GetBufferSize and GetSampleRate callbacks, because this vaules are
 // injected when processor is allocated by pipe.
-func (v *VST) Processor(h Host) *Processor {
+func (v *VST) Processor(h Host, progressFn ProgressProcessedFunc) *Processor {
 	processor := Processor{}
 	h.GetBufferSize = func() int {
 		return processor.bufferSize
@@ -58,7 +62,7 @@ func (v *VST) Processor(h Host) *Processor {
 	}
 	return &Processor{
 		plugin:     plugin,
-		progressFn: h.ProgressProcessed,
+		progressFn: progressFn,
 		Parameters: params,
 		Presets:    presets,
 	}
@@ -92,14 +96,14 @@ func (p *Processor) Allocator(init ProcessorInitFunc) pipe.ProcessorAllocatorFun
 	}
 }
 
-func processorFns(p *Plugin, channels, bufferSize int, progressFn HostProgressProcessed) (pipe.ProcessFunc, pipe.FlushFunc) {
+func processorFns(p *Plugin, channels, bufferSize int, progressFn ProgressProcessedFunc) (pipe.ProcessFunc, pipe.FlushFunc) {
 	if p.CanProcessFloat64() {
 		return doubleFns(p, channels, bufferSize, progressFn)
 	}
 	return floatFns(p, channels, bufferSize, progressFn)
 }
 
-func doubleFns(p *Plugin, channels, bufferSize int, progressFn HostProgressProcessed) (pipe.ProcessFunc, pipe.FlushFunc) {
+func doubleFns(p *Plugin, channels, bufferSize int, progressFn ProgressProcessedFunc) (pipe.ProcessFunc, pipe.FlushFunc) {
 	doubleIn := NewDoubleBuffer(channels, bufferSize)
 	doubleOut := NewDoubleBuffer(channels, bufferSize)
 	processFn := func(in, out signal.Floating) (int, error) {
@@ -126,7 +130,7 @@ func doubleFns(p *Plugin, channels, bufferSize int, progressFn HostProgressProce
 		}
 }
 
-func floatFns(p *Plugin, channels, bufferSize int, progressFn HostProgressProcessed) (pipe.ProcessFunc, pipe.FlushFunc) {
+func floatFns(p *Plugin, channels, bufferSize int, progressFn ProgressProcessedFunc) (pipe.ProcessFunc, pipe.FlushFunc) {
 	floatIn := NewFloatBuffer(channels, bufferSize)
 	floatOut := NewFloatBuffer(channels, bufferSize)
 	processFn := func(in, out signal.Floating) (int, error) {

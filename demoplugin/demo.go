@@ -13,7 +13,7 @@ type Gain struct {
 }
 
 func init() {
-	vst2.PluginAllocator = func(vst2.HostCallback) vst2.Plugin {
+	vst2.PluginAllocator = func(h vst2.Host) vst2.Plugin {
 		gain := vst2.Parameter{
 			Name:  "Gain",
 			Unit:  "db",

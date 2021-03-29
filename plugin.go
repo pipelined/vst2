@@ -7,6 +7,8 @@ import "C"
 import (
 	"sync"
 	"unsafe"
+
+	"pipelined.dev/signal"
 )
 
 var (
@@ -35,8 +37,8 @@ type (
 		Parameters []*Parameter
 	}
 
-	HostCallback struct {
-		callbackFunc C.HostCallback
+	callbackHandler struct {
+		callback C.HostCallback
 	}
 
 	DispatchFunc func(op PluginOpcode, index int32, value int64, ptr unsafe.Pointer, opt float32) int64
@@ -45,8 +47,16 @@ type (
 
 	ProcessFloatFunc func(in, out FloatBuffer)
 
-	PluginAllocatorFunc func(HostCallback) Plugin
+	PluginAllocatorFunc func(Host) Plugin
 )
+
+func (h callbackHandler) host() Host {
+	return Host{
+		GetSampleRate: func() signal.Frequency {
+			return 0
+		},
+	}
+}
 
 func getPlugin(cp *C.CPlugin) *Plugin {
 	plugins.RLock()

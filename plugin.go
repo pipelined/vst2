@@ -56,7 +56,7 @@ func (h callbackHandler) host(cp *C.CPlugin) Host {
 			return signal.Frequency(C.callbackHost(h.callback, cp, C.int(HostGetSampleRate), 0, 0, nil, 0))
 		},
 		GetBufferSize: func() int {
-			return int(C.callbackHost(h.callback, cp, C.int(HostGetBlockSize), 0, 0, nil, 0))
+			return int(C.callbackHost(h.callback, cp, C.int(HostGetBufferSize), 0, 0, nil, 0))
 		},
 	}
 }

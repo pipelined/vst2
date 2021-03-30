@@ -70,7 +70,7 @@ func (h Host) Callback() HostCallbackFunc {
 			if h.GetSampleRate != nil {
 				return int64(h.GetSampleRate())
 			}
-		case HostGetBlockSize:
+		case HostGetBufferSize:
 			if h.GetBufferSize != nil {
 				return int64(h.GetBufferSize())
 			}

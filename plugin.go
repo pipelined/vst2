@@ -50,10 +50,10 @@ type (
 	PluginAllocatorFunc func(Host) Plugin
 )
 
-func (h callbackHandler) host() Host {
+func (h callbackHandler) host(cp *C.CPlugin) Host {
 	return Host{
 		GetSampleRate: func() signal.Frequency {
-			return 0
+			return signal.Frequency(C.callbackHost(h.callback, cp, C.int(HostGetSampleRate), 0, 0, nil, 0))
 		},
 	}
 }

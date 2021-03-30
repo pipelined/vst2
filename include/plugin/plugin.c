@@ -19,7 +19,6 @@ float getParameterPluginBridge(CPlugin *plugin, int32_t paramIndex);
 void setParameterPluginBridge(CPlugin *plugin, int32_t paramIndex, float value);
 
 CPlugin* VSTPluginMain(HostCallback c) {
-    // TODO: init values from go plugin
     CPlugin *p = malloc(sizeof(CPlugin));
     p->dispatcher = dispatchPluginBridge;
     p->getParameter = getParameterPluginBridge;
@@ -29,3 +28,7 @@ CPlugin* VSTPluginMain(HostCallback c) {
     newGoPlugin(p, c);
     return p;
 }
+
+int64_t callbackHost(HostCallback c, CPlugin* plugin, int32_t opcode, int32_t index, int64_t value, void* ptr, float opt) {
+    return c(plugin, opcode, index, value, ptr, opt);
+};

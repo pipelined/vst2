@@ -11,7 +11,7 @@ import (
 // instantiate go plugin
 //export newGoPlugin
 func newGoPlugin(cp *C.CPlugin, c C.HostCallback) {
-	p := PluginAllocator(callbackHandler{c}.host())
+	p := PluginAllocator(callbackHandler{c}.host(cp))
 	cp.magic = C.int(EffectMagic)
 	cp.numInputs = C.int(p.InputChannels)
 	cp.numOutputs = C.int(p.OutputChannels)

@@ -11,17 +11,21 @@ import (
 // instantiate go plugin
 //export newGoPlugin
 func newGoPlugin(cp *C.CPlugin, c C.HostCallback) {
-	p := PluginAllocator(HostCallback{c})
+	p := PluginAllocator(callbackHandler{c}.host(cp))
 	cp.magic = C.int(EffectMagic)
 	cp.numInputs = C.int(p.InputChannels)
 	cp.numOutputs = C.int(p.OutputChannels)
 	cp.numParams = C.int(len(p.Parameters))
-	cp.flags = cp.flags | C.int(PluginDoubleProcessing)
-	cp.flags = cp.flags | C.int(PluginFloatProcessing)
-	p.inputDouble = DoubleBuffer{data: make([]*C.double, p.InputChannels)}
-	p.outputDouble = DoubleBuffer{data: make([]*C.double, p.OutputChannels)}
-	p.inputFloat = FloatBuffer{data: make([]*C.float, p.InputChannels)}
-	p.outputFloat = FloatBuffer{data: make([]*C.float, p.OutputChannels)}
+	if p.ProcessDoubleFunc != nil {
+		cp.flags = cp.flags | C.int(PluginDoubleProcessing)
+		p.inputDouble = DoubleBuffer{data: make([]*C.double, p.InputChannels)}
+		p.outputDouble = DoubleBuffer{data: make([]*C.double, p.OutputChannels)}
+	}
+	if p.ProcessFloatFunc != nil {
+		cp.flags = cp.flags | C.int(PluginFloatProcessing)
+		p.inputFloat = FloatBuffer{data: make([]*C.float, p.InputChannels)}
+		p.outputFloat = FloatBuffer{data: make([]*C.float, p.OutputChannels)}
+	}
 	plugins.Lock()
 	plugins.mapping[unsafe.Pointer(cp)] = &p
 	plugins.Unlock()

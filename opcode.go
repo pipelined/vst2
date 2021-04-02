@@ -392,9 +392,9 @@ const (
 	// HostGetSampleRate passed when plugin needs sample rate.
 	// Return: current sample rate.
 	HostGetSampleRate
-	// HostGetBlockSize passed when plugin needs buffer size.
+	// HostGetBufferSize passed when plugin needs buffer size.
 	// Return: current buffer size.
-	HostGetBlockSize
+	HostGetBufferSize
 	// HostGetInputLatency passed when plugin needs input latency.
 	// Return: input latency in samples.
 	HostGetInputLatency

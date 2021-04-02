@@ -58,6 +58,12 @@ func (h callbackHandler) host(cp *C.CPlugin) Host {
 		GetBufferSize: func() int {
 			return int(C.callbackHost(h.callback, cp, C.int(HostGetBufferSize), 0, 0, nil, 0))
 		},
+		GetProcessLevel: func() ProcessLevel {
+			return ProcessLevel(C.callbackHost(h.callback, cp, C.int(HostGetCurrentProcessLevel), 0, 0, nil, 0))
+		},
+		GetTimeInfo: func() *TimeInfo {
+			return (*TimeInfo)(unsafe.Pointer(uintptr(C.callbackHost(h.callback, cp, C.int(HostGetTime), 0, 0, nil, 0))))
+		},
 	}
 }
 

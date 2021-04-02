@@ -7,8 +7,8 @@ type (
 	Host struct {
 		GetSampleRate   HostGetSampleRateFunc
 		GetBufferSize   HostGetBufferSizeFunc
-		GetProcessLevel HostGetProcessLevel
-		GetTimeInfo     HostGetTimeInfo
+		GetProcessLevel HostGetProcessLevelFunc
+		GetTimeInfo     HostGetTimeInfoFunc
 	}
 
 	// HostGetSampleRateFunc returns host sample rate.
@@ -16,7 +16,7 @@ type (
 	// HostGetBufferSizeFunc returns host buffer size.
 	HostGetBufferSizeFunc func() int
 	// HostGetProcessLevel returns the context of execution.
-	HostGetProcessLevel func() ProcessLevel
+	HostGetProcessLevelFunc func() ProcessLevel
 	// HostGetTimeInfo returns current time info.
-	HostGetTimeInfo func() *TimeInfo
+	HostGetTimeInfoFunc func() *TimeInfo
 )

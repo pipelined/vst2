@@ -27,7 +27,7 @@ func newGoPlugin(cp *C.CPlugin, c C.HostCallback) {
 		p.outputFloat = FloatBuffer{data: make([]*C.float, p.OutputChannels)}
 	}
 	plugins.Lock()
-	plugins.mapping[unsafe.Pointer(cp)] = &p
+	plugins.mapping[uintptr(unsafe.Pointer(cp))] = &p
 	plugins.Unlock()
 }
 

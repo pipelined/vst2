@@ -27,28 +27,40 @@ type (
 	Plugin struct {
 		InputChannels  int
 		OutputChannels int
-		DispatchFunc
-		inputDouble  DoubleBuffer
-		outputDouble DoubleBuffer
-		inputFloat   FloatBuffer
-		outputFloat  FloatBuffer
+		inputDouble    DoubleBuffer
+		outputDouble   DoubleBuffer
+		inputFloat     FloatBuffer
+		outputFloat    FloatBuffer
 		ProcessDoubleFunc
 		ProcessFloatFunc
 		Parameters []*Parameter
+		dispatchFunc
+	}
+
+	Dispatcher struct {
+		paramNameFunc      func(int) string
+		paramValueNameFunc func(int) string
+		paramUnitNameFunc  func(int) string
 	}
 
 	callbackHandler struct {
 		callback C.HostCallback
 	}
 
-	DispatchFunc func(op PluginOpcode, index int32, value int64, ptr unsafe.Pointer, opt float32) int64
+	dispatchFunc func(op PluginOpcode, index int32, value int64, ptr unsafe.Pointer, opt float32) int64
 
 	ProcessDoubleFunc func(in, out DoubleBuffer)
 
 	ProcessFloatFunc func(in, out FloatBuffer)
 
-	PluginAllocatorFunc func(Host) Plugin
+	PluginAllocatorFunc func(Host) (Plugin, Dispatcher)
 )
+
+func (d Dispatcher) dispatchFunc(params []*Parameter) dispatchFunc {
+	return func(op PluginOpcode, index int32, value int64, ptr unsafe.Pointer, opt float32) int64 {
+		return 0
+	}
+}
 
 func (h callbackHandler) host(cp *C.CPlugin) Host {
 	return Host{

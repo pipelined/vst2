@@ -17,9 +17,9 @@ var (
 	// global state for callbacks.
 	plugins = struct {
 		sync.RWMutex
-		mapping map[unsafe.Pointer]*Plugin
+		mapping map[uintptr]*Plugin
 	}{
-		mapping: map[unsafe.Pointer]*Plugin{},
+		mapping: map[uintptr]*Plugin{},
 	}
 )
 
@@ -70,5 +70,5 @@ func (h callbackHandler) host(cp *C.CPlugin) Host {
 func getPlugin(cp *C.CPlugin) *Plugin {
 	plugins.RLock()
 	defer plugins.RUnlock()
-	return plugins.mapping[unsafe.Pointer(cp)]
+	return plugins.mapping[uintptr(unsafe.Pointer(cp))]
 }

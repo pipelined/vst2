@@ -2,11 +2,6 @@
 
 package vst2
 
-import (
-	"strings"
-	"unicode"
-)
-
 const (
 	maxVendorStrLen  = 64 // used for #plugGetVendorString, #audioMasterGetVendorString
 	maxProductStrLen = 64 // used for #plugGetProductString, #audioMasterGetProductString
@@ -500,11 +495,16 @@ const (
 	hostGetInputSpeakerArrangement
 )
 
-func removeNonASCII(s string) string {
-	return strings.Map(func(r rune) rune {
-		if r > unicode.MaxASCII {
-			return -1
+func copyASCII(dst []byte, src string) {
+	var read int
+	for i := 0; i < len(src); i++ {
+		if read == len(dst)-1 {
+			break
 		}
-		return r
-	}, s)
+		if r := src[i]; r <= 127 {
+			dst[read] = r
+			read++
+		}
+	}
+	dst[read] = '\x00'
 }

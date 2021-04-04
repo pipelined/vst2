@@ -3,8 +3,6 @@
 package main
 
 import (
-	"unsafe"
-
 	"pipelined.dev/audio/vst2"
 )
 
@@ -13,7 +11,7 @@ type Gain struct {
 }
 
 func init() {
-	vst2.PluginAllocator = func(h vst2.Host) vst2.Plugin {
+	vst2.PluginAllocator = func(h vst2.Host) (vst2.Plugin, vst2.Dispatcher) {
 		gain := vst2.Parameter{
 			Name:  "Gain",
 			Unit:  "db",
@@ -45,10 +43,7 @@ func init() {
 					out2[i] = in2[i] * float32(gain.Value)
 				}
 			},
-			DispatchFunc: func(op vst2.PluginOpcode, index int32, value int64, ptr unsafe.Pointer, opt float32) int64 {
-				return 0
-			},
-		}
+		}, vst2.Dispatcher{}
 	}
 }
 

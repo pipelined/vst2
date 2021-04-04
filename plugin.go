@@ -17,38 +17,72 @@ var (
 	// global state for callbacks.
 	plugins = struct {
 		sync.RWMutex
-		mapping map[unsafe.Pointer]*Plugin
+		mapping map[uintptr]*Plugin
 	}{
-		mapping: map[unsafe.Pointer]*Plugin{},
+		mapping: map[uintptr]*Plugin{},
 	}
 )
 
 type (
+	// PluginAllocatorFunc allocates new plugin instance and its
+	// dispatcher.
+	PluginAllocatorFunc func(Host) (Plugin, Dispatcher)
+
+	// Plugin is a VST2 effect that processes float/double signal buffers.
 	Plugin struct {
 		InputChannels  int
 		OutputChannels int
-		DispatchFunc
-		inputDouble  DoubleBuffer
-		outputDouble DoubleBuffer
-		inputFloat   FloatBuffer
-		outputFloat  FloatBuffer
+		inputDouble    DoubleBuffer
+		outputDouble   DoubleBuffer
+		inputFloat     FloatBuffer
+		outputFloat    FloatBuffer
 		ProcessDoubleFunc
 		ProcessFloatFunc
 		Parameters []*Parameter
+		dispatchFunc
 	}
+
+	// Dispatcher handles plugin dispatch calls from the host.
+	Dispatcher struct {
+		SetBufferSizeFunc(size int)
+	}
+
+	// ProcessDoubleFunc defines logic for double signal processing.
+	ProcessDoubleFunc func(in, out DoubleBuffer)
+
+	// ProcessFloatFunc defines logic for float signal processing.
+	ProcessFloatFunc func(in, out FloatBuffer)
 
 	callbackHandler struct {
 		callback C.HostCallback
 	}
 
-	DispatchFunc func(op PluginOpcode, index int32, value int64, ptr unsafe.Pointer, opt float32) int64
-
-	ProcessDoubleFunc func(in, out DoubleBuffer)
-
-	ProcessFloatFunc func(in, out FloatBuffer)
-
-	PluginAllocatorFunc func(Host) Plugin
+	dispatchFunc func(op PluginOpcode, index int32, value int64, ptr unsafe.Pointer, opt float32) int64
 )
+
+func (d Dispatcher) dispatchFunc(params []*Parameter) dispatchFunc {
+	return func(op PluginOpcode, index int32, value int64, ptr unsafe.Pointer, opt float32) int64 {
+		switch op {
+		case plugGetParamName:
+			s := (*ascii8)(ptr)
+			copyASCII(s[:], params[index].Name)
+		case plugGetParamDisplay:
+			s := (*ascii8)(ptr)
+			copyASCII(s[:], params[index].ValueLabel)
+		case plugGetParamLabel:
+			s := (*ascii8)(ptr)
+			copyASCII(s[:], params[index].Unit)
+		case plugSetBufferSize:
+			if d.SetBufferSizeFunc == nil {
+				return 0
+			}
+			d.SetBufferSizeFunc(int(value))
+		default:
+			return 0
+		}
+		return 1
+	}
+}
 
 func (h callbackHandler) host(cp *C.CPlugin) Host {
 	return Host{
@@ -70,5 +104,6 @@ func (h callbackHandler) host(cp *C.CPlugin) Host {
 func getPlugin(cp *C.CPlugin) *Plugin {
 	plugins.RLock()
 	defer plugins.RUnlock()
-	return plugins.mapping[unsafe.Pointer(cp)]
+	return plugins.mapping[uintptr(unsafe.Pointer(cp))]
 }
+

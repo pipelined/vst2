@@ -24,8 +24,11 @@ var (
 )
 
 type (
+	// PluginAllocatorFunc allocates new plugin instance and its
+	// dispatcher.
 	PluginAllocatorFunc func(Host) (Plugin, Dispatcher)
 
+	// Plugin is a VST2 effect that processes float/double signal buffers.
 	Plugin struct {
 		InputChannels  int
 		OutputChannels int
@@ -39,19 +42,22 @@ type (
 		dispatchFunc
 	}
 
+	// Dispatcher handles plugin dispatch calls from the host.
 	Dispatcher struct {
 		SetBufferSizeFunc(size int)
 	}
+
+	// ProcessDoubleFunc defines logic for double signal processing.
+	ProcessDoubleFunc func(in, out DoubleBuffer)
+
+	// ProcessFloatFunc defines logic for float signal processing.
+	ProcessFloatFunc func(in, out FloatBuffer)
 
 	callbackHandler struct {
 		callback C.HostCallback
 	}
 
 	dispatchFunc func(op PluginOpcode, index int32, value int64, ptr unsafe.Pointer, opt float32) int64
-
-	ProcessDoubleFunc func(in, out DoubleBuffer)
-
-	ProcessFloatFunc func(in, out FloatBuffer)
 )
 
 func (d Dispatcher) dispatchFunc(params []*Parameter) dispatchFunc {

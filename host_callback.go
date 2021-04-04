@@ -253,7 +253,7 @@ func (p *Plugin) ProgramName(index int) string {
 // up to 24 ASCII characters. Non-ASCII characters are ignored.
 func (p *Plugin) SetCurrentProgramName(s string) {
 	var ps ascii24
-	copy(ps[:], []byte(removeNonASCII(s)))
+	copyASCII(ps[:], s)
 	p.Dispatch(plugSetProgramName, 0, 0, unsafe.Pointer(&ps), 0)
 }
 

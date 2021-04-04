@@ -11,7 +11,8 @@ import (
 // instantiate go plugin
 //export newGoPlugin
 func newGoPlugin(cp *C.CPlugin, c C.HostCallback) {
-	p := PluginAllocator(callbackHandler{c}.host(cp))
+	p, d := PluginAllocator(callbackHandler{c}.host(cp))
+	p.dispatchFunc = d.dispatchFunc(p.Parameters)
 	cp.magic = C.int(EffectMagic)
 	cp.numInputs = C.int(p.InputChannels)
 	cp.numOutputs = C.int(p.OutputChannels)
@@ -27,7 +28,7 @@ func newGoPlugin(cp *C.CPlugin, c C.HostCallback) {
 		p.outputFloat = FloatBuffer{data: make([]*C.float, p.OutputChannels)}
 	}
 	plugins.Lock()
-	plugins.mapping[unsafe.Pointer(cp)] = &p
+	plugins.mapping[uintptr(unsafe.Pointer(cp))] = &p
 	plugins.Unlock()
 }
 
@@ -35,7 +36,7 @@ func newGoPlugin(cp *C.CPlugin, c C.HostCallback) {
 // global dispatch, calls real plugin dispatch.
 func dispatchPluginBridge(cp *C.CPlugin, opcode int32, index int32, value int64, ptr unsafe.Pointer, opt float32) int64 {
 	p := getPlugin(cp)
-	return p.DispatchFunc(PluginOpcode(opcode), index, value, ptr, opt)
+	return p.dispatchFunc(PluginOpcode(opcode), index, value, ptr, opt)
 }
 
 //export processDoublePluginBridge

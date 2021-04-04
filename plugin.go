@@ -59,13 +59,13 @@ func (d Dispatcher) dispatchFunc(params []*Parameter) dispatchFunc {
 		switch op {
 		case plugGetParamName:
 			s := (*ascii8)(ptr)
-			asciiString(s[:], params[index].Name)
+			copyASCII(s[:], params[index].Name)
 		case plugGetParamDisplay:
 			s := (*ascii8)(ptr)
-			asciiString(s[:], params[index].ValueLabel)
+			copyASCII(s[:], params[index].ValueLabel)
 		case plugGetParamLabel:
 			s := (*ascii8)(ptr)
-			asciiString(s[:], params[index].Unit)
+			copyASCII(s[:], params[index].Unit)
 		case plugSetBufferSize:
 			if d.SetBufferSizeFunc == nil {
 				return 0
@@ -101,16 +101,3 @@ func getPlugin(cp *C.CPlugin) *Plugin {
 	return plugins.mapping[uintptr(unsafe.Pointer(cp))]
 }
 
-func asciiString(dst []byte, src string) {
-	var read int
-	for i := 0; i < len(src); i++ {
-		if read == len(dst)-1 {
-			break
-		}
-		if r := src[i]; r <= 127 {
-			dst[read] = r
-			read++
-		}
-	}
-	dst[read] = '\x00'
-}

@@ -24,6 +24,8 @@ var (
 )
 
 type (
+	PluginAllocatorFunc func(Host) (Plugin, Dispatcher)
+
 	Plugin struct {
 		InputChannels  int
 		OutputChannels int
@@ -38,9 +40,7 @@ type (
 	}
 
 	Dispatcher struct {
-		paramNameFunc      func(int) string
-		paramValueNameFunc func(int) string
-		paramUnitNameFunc  func(int) string
+		SetBufferSizeFunc(size int)
 	}
 
 	callbackHandler struct {
@@ -52,13 +52,29 @@ type (
 	ProcessDoubleFunc func(in, out DoubleBuffer)
 
 	ProcessFloatFunc func(in, out FloatBuffer)
-
-	PluginAllocatorFunc func(Host) (Plugin, Dispatcher)
 )
 
 func (d Dispatcher) dispatchFunc(params []*Parameter) dispatchFunc {
 	return func(op PluginOpcode, index int32, value int64, ptr unsafe.Pointer, opt float32) int64 {
-		return 0
+		switch op {
+		case plugGetParamName:
+			s := (*ascii8)(ptr)
+			asciiString(s[:], params[index].Name)
+		case plugGetParamDisplay:
+			s := (*ascii8)(ptr)
+			asciiString(s[:], params[index].ValueLabel)
+		case plugGetParamLabel:
+			s := (*ascii8)(ptr)
+			asciiString(s[:], params[index].Unit)
+		case plugSetBufferSize:
+			if d.SetBufferSizeFunc == nil {
+				return 0
+			}
+			d.SetBufferSizeFunc(int(value))
+		default:
+			return 0
+		}
+		return 1
 	}
 }
 
@@ -83,4 +99,18 @@ func getPlugin(cp *C.CPlugin) *Plugin {
 	plugins.RLock()
 	defer plugins.RUnlock()
 	return plugins.mapping[uintptr(unsafe.Pointer(cp))]
+}
+
+func asciiString(dst []byte, src string) {
+	var read int
+	for i := 0; i < len(src); i++ {
+		if read == len(dst)-1 {
+			break
+		}
+		if r := src[i]; r <= 127 {
+			dst[read] = r
+			read++
+		}
+	}
+	dst[read] = '\x00'
 }

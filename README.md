@@ -5,7 +5,7 @@
 [![Test](https://github.com/pipelined/vst2/workflows/Test/badge.svg)](https://github.com/pipelined/vst2/actions?query=workflow%3ATest)
 [![codecov](https://codecov.io/gh/pipelined/vst2/branch/master/graph/badge.svg)](https://codecov.io/gh/pipelined/vst2)
 
-`vst2` implements VST2 SDK API. It allows you to interact with plugins and process audio.
+`vst2` implements VST2 SDK API. It provides capabilities to build both VST2 hosts and plugins.
 
 ## Installation
 

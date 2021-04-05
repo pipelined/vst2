@@ -44,7 +44,7 @@ type (
 
 	// Dispatcher handles plugin dispatch calls from the host.
 	Dispatcher struct {
-		SetBufferSizeFunc(size int)
+		SetBufferSizeFunc func(size int)
 	}
 
 	// ProcessDoubleFunc defines logic for double signal processing.
@@ -106,4 +106,3 @@ func getPlugin(cp *C.CPlugin) *Plugin {
 	defer plugins.RUnlock()
 	return plugins.mapping[uintptr(unsafe.Pointer(cp))]
 }
-

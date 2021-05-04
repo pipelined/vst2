@@ -1,6 +1,12 @@
 #include <stdlib.h>
 #include "include/vst.h"
 
+#ifdef _WIN32
+#define VSTAPI __declspec(dllexport)
+#else
+#define VSTAPI __attribute__((visibility("default")))
+#endif
+
 void newGoPlugin(CPlugin *plugin, HostCallback c);
 
 //Go dispatch prototype
@@ -18,7 +24,7 @@ float getParameterPluginBridge(CPlugin *plugin, int32_t paramIndex);
 //Go setParameter prototype
 void setParameterPluginBridge(CPlugin *plugin, int32_t paramIndex, float value);
 
-CPlugin* VSTPluginMain(HostCallback c) {
+VSTAPI CPlugin* VSTPluginMain(HostCallback c) {
     CPlugin *p = malloc(sizeof(CPlugin));
     p->dispatcher = dispatchPluginBridge;
     p->getParameter = getParameterPluginBridge;

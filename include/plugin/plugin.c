@@ -25,7 +25,7 @@ float getParameterPluginBridge(CPlugin *plugin, int32_t paramIndex);
 void setParameterPluginBridge(CPlugin *plugin, int32_t paramIndex, float value);
 
 VSTAPI CPlugin* VSTPluginMain(HostCallback c) {
-    CPlugin *p = malloc(sizeof(CPlugin));
+    CPlugin *p = calloc(1,sizeof(CPlugin));
     p->dispatcher = dispatchPluginBridge;
     p->getParameter = getParameterPluginBridge;
     p->setParameter = setParameterPluginBridge;

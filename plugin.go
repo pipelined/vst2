@@ -30,6 +30,8 @@ type (
 
 	// Plugin is a VST2 effect that processes float/double signal buffers.
 	Plugin struct {
+		UniqueID       [4]byte
+		Version        int32
 		InputChannels  int
 		OutputChannels int
 		inputDouble    DoubleBuffer

@@ -16,9 +16,9 @@ typedef struct Event
 } Event;
 
 Events* newEvents(int32_t numEvents) {
-	Events *e = malloc(sizeof(Events));
+	Events *e = calloc(1,sizeof(Events));
 	e->numEvents = numEvents;
-	e->events = malloc(sizeof(e->events) * numEvents);
+	e->events = calloc(numEvents, sizeof(e->events));
 	return e;
 }
 

@@ -26,7 +26,7 @@ type (
 func NewDoubleBuffer(numChannels, frames int) DoubleBuffer {
 	b := make([]*C.double, numChannels)
 	for i := 0; i < numChannels; i++ {
-		b[i] = (*C.double)(C.malloc(C.size_t(C.sizeof_double * frames)))
+		b[i] = (*C.double)(C.calloc(1, C.size_t(C.sizeof_double*frames)))
 	}
 	return DoubleBuffer{
 		data:   b,
@@ -90,7 +90,7 @@ func (b DoubleBuffer) Free() {
 func NewFloatBuffer(numChannels, frames int) FloatBuffer {
 	b := make([]*C.float, numChannels)
 	for i := 0; i < numChannels; i++ {
-		b[i] = (*C.float)(C.malloc(C.size_t(C.sizeof_float * frames)))
+		b[i] = (*C.float)(C.calloc(1, C.size_t(C.sizeof_float*frames)))
 	}
 	return FloatBuffer{
 		data:   b,

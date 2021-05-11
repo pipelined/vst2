@@ -33,6 +33,13 @@ func init() {
 					}
 				}
 			},
+			ProcessFloatFunc: func(in, out vst2.FloatBuffer) {
+				for c := 0; c < channels; c++ {
+					for i := 0; i < in.Frames; i++ {
+						out.Channel(c)[i] = in.Channel(c)[i] * float32(gain.Value)
+					}
+				}
+			},
 		}, vst2.Dispatcher{}
 	}
 }

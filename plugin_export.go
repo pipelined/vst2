@@ -5,41 +5,13 @@ package vst2
 //#include "include/vst.h"
 import "C"
 import (
-	"reflect"
-	"runtime"
-	"syscall"
 	"unsafe"
 )
-
-//fix vst host crash in windows, when plugin gets unloaded by pinning dll
-func preventDllFromUnload() {
-	const (
-		GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS = 4
-		GET_MODULE_HANDLE_EX_FLAG_PIN          = 1
-	)
-	var (
-		kernel32, _          = syscall.LoadLibrary("kernel32.dll")
-		getModuleHandleEx, _ = syscall.GetProcAddress(kernel32, "GetModuleHandleExW")
-		handle               uintptr
-	)
-	defer func(handle syscall.Handle) {
-		err := syscall.FreeLibrary(handle)
-		if err != nil {
-			panic("cant unload kernel32 lib")
-		}
-	}(kernel32)
-	if _, _, callErr := syscall.Syscall(uintptr(getModuleHandleEx), 3, GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS|GET_MODULE_HANDLE_EX_FLAG_PIN, reflect.ValueOf(preventDllFromUnload).Pointer(), uintptr(unsafe.Pointer(&handle))); callErr != 0 {
-		panic("cant pin dll")
-	}
-	return
-}
 
 // instantiate go plugin
 //export newGoPlugin
 func newGoPlugin(cp *C.CPlugin, c C.HostCallback) {
-	if runtime.GOOS == "windows" {
-		preventDllFromUnload()
-	}
+	loadHook()
 	p, d := PluginAllocator(callbackHandler{c}.host(cp))
 	p.dispatchFunc = d.dispatchFunc(p.Parameters)
 	cp.magic = C.int(EffectMagic)

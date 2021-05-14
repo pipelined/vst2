@@ -414,7 +414,7 @@ const (
 )
 
 // PluginCategory denotes the category of plugin.
-type PluginCategory uintptr
+type PluginCategory int64
 
 const (
 	// PluginCategoryUnknown means category not implemented.

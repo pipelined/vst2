@@ -13,7 +13,7 @@ import (
 func newGoPlugin(cp *C.CPlugin, c C.HostCallback) {
 	loadHook()
 	p, d := PluginAllocator(callbackHandler{c}.host(cp))
-	p.dispatchFunc = d.dispatchFunc(p.Parameters)
+	p.dispatchFunc = d.dispatchFunc(p)
 	cp.magic = C.int(EffectMagic)
 	cp.numInputs = C.int(p.InputChannels)
 	cp.numOutputs = C.int(p.OutputChannels)

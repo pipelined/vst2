@@ -17,7 +17,7 @@ type (
 	// 24 bytes ascii string.
 	ascii24 [24]byte
 
-	// 24 bytes ascii string.
+	// 32 bytes ascii string.
 	ascii32 [32]byte
 
 	// 64 bytes ascii string.

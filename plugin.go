@@ -32,6 +32,9 @@ type (
 	Plugin struct {
 		UniqueID       [4]byte
 		Version        int32
+		PluginName     string
+		Category       PluginCategory
+		Vendor         string
 		InputChannels  int
 		OutputChannels int
 		inputDouble    DoubleBuffer
@@ -62,23 +65,34 @@ type (
 	dispatchFunc func(op PluginOpcode, index int32, value int64, ptr unsafe.Pointer, opt float32) int64
 )
 
-func (d Dispatcher) dispatchFunc(params []*Parameter) dispatchFunc {
+func (d Dispatcher) dispatchFunc(p Plugin) dispatchFunc {
 	return func(op PluginOpcode, index int32, value int64, ptr unsafe.Pointer, opt float32) int64 {
 		switch op {
 		case plugGetParamName:
-			s := (*ascii8)(ptr)
-			copyASCII(s[:], params[index].Name)
+			s := (*ascii32)(ptr)
+			copyASCII(s[:], p.Parameters[index].Name)
 		case plugGetParamDisplay:
 			s := (*ascii8)(ptr)
-			copyASCII(s[:], params[index].ValueLabel)
+			copyASCII(s[:], p.Parameters[index].ValueLabel)
 		case plugGetParamLabel:
 			s := (*ascii8)(ptr)
-			copyASCII(s[:], params[index].Unit)
+			copyASCII(s[:], p.Parameters[index].Unit)
 		case plugSetBufferSize:
 			if d.SetBufferSizeFunc == nil {
 				return 0
 			}
 			d.SetBufferSizeFunc(int(value))
+		case PlugGetPluginName:
+			s := (*ascii64)(ptr)
+			copyASCII(s[:], p.PluginName)
+		case PlugGetProductString:
+			s := (*ascii64)(ptr)
+			copyASCII(s[:], p.PluginName)
+		case PlugGetVendorString:
+			s := (*ascii64)(ptr)
+			copyASCII(s[:], p.Vendor)
+		case PlugGetPlugCategory:
+			return int64(p.Category)
 		default:
 			return 0
 		}

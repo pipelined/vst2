@@ -13,7 +13,6 @@ import (
 func newGoPlugin(cp *C.CPlugin, c C.HostCallback) {
 	loadHook()
 	p, d := PluginAllocator(callbackHandler{c}.host(cp))
-	p.dispatchFunc = d.dispatchFunc(p)
 	cp.magic = C.int(EffectMagic)
 	cp.numInputs = C.int(p.InputChannels)
 	cp.numOutputs = C.int(p.OutputChannels)
@@ -30,6 +29,7 @@ func newGoPlugin(cp *C.CPlugin, c C.HostCallback) {
 		p.inputFloat = FloatBuffer{data: make([]*C.float, p.InputChannels)}
 		p.outputFloat = FloatBuffer{data: make([]*C.float, p.OutputChannels)}
 	}
+	p.dispatchFunc = d.dispatchFunc(p)
 	plugins.Lock()
 	plugins.mapping[uintptr(unsafe.Pointer(cp))] = &p
 	plugins.Unlock()

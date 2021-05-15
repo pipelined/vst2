@@ -32,7 +32,7 @@ type (
 	Plugin struct {
 		UniqueID       [4]byte
 		Version        int32
-		PluginName     string
+		Name           string
 		Category       PluginCategory
 		Vendor         string
 		InputChannels  int
@@ -69,7 +69,7 @@ func (d Dispatcher) dispatchFunc(p Plugin) dispatchFunc {
 	return func(op PluginOpcode, index int32, value int64, ptr unsafe.Pointer, opt float32) int64 {
 		switch op {
 		case plugGetParamName:
-			s := (*ascii32)(ptr)
+			s := (*ascii8)(ptr)
 			copyASCII(s[:], p.Parameters[index].Name)
 		case plugGetParamDisplay:
 			s := (*ascii8)(ptr)
@@ -83,11 +83,11 @@ func (d Dispatcher) dispatchFunc(p Plugin) dispatchFunc {
 			}
 			d.SetBufferSizeFunc(int(value))
 		case PlugGetPluginName:
-			s := (*ascii64)(ptr)
-			copyASCII(s[:], p.PluginName)
+			s := (*ascii32)(ptr)
+			copyASCII(s[:], p.Name)
 		case PlugGetProductString:
 			s := (*ascii64)(ptr)
-			copyASCII(s[:], p.PluginName)
+			copyASCII(s[:], p.Name)
 		case PlugGetVendorString:
 			s := (*ascii64)(ptr)
 			copyASCII(s[:], p.Vendor)

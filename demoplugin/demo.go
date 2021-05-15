@@ -23,6 +23,9 @@ func init() {
 			Version:        version,
 			InputChannels:  channels,
 			OutputChannels: channels,
+			Name:           "Gain",
+			Vendor:         "pipelined/vst2",
+			Category:       vst2.PluginCategoryEffect,
 			Parameters: []*vst2.Parameter{
 				&gain,
 			},

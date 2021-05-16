@@ -77,6 +77,11 @@ func (d Dispatcher) dispatchFunc(p Plugin) dispatchFunc {
 		case plugGetParamLabel:
 			s := (*ascii8)(ptr)
 			copyASCII(s[:], p.Parameters[index].Unit)
+		case PlugCanBeAutomated:
+			if p.Parameters[index].NotAutomated {
+				return 0
+			}
+			return 1
 		case plugSetBufferSize:
 			if d.SetBufferSizeFunc == nil {
 				return 0

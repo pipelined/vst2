@@ -18,11 +18,11 @@ func init() {
 			Name:  "Gain",
 			Unit:  "db",
 			Value: 0.5,
-			GetParamDisplay: func(Value float32) string {
-				return fmt.Sprintf("%+.2f", Value)
+			GetValueLabelFunc: func(value float32) string {
+				return fmt.Sprintf("%+.2f", value)
 			},
-			GetValue: func(Value float32) float32 {
-				return -20 + (40 * Value)
+			GetValueFunc: func(value float32) float32 {
+				return -20 + (40 * value)
 			},
 		}
 		channels := 2
@@ -38,7 +38,7 @@ func init() {
 				&gain,
 			},
 			ProcessDoubleFunc: func(in, out vst2.DoubleBuffer) {
-				var g = math.Pow(10.0, float64(gain.GetVal())/20.0)
+				var g = math.Pow(10, float64(gain.GetValue())/20)
 				for c := 0; c < channels; c++ {
 					for i := 0; i < in.Frames; i++ {
 						out.Channel(c)[i] = in.Channel(c)[i] * g
@@ -46,7 +46,7 @@ func init() {
 				}
 			},
 			ProcessFloatFunc: func(in, out vst2.FloatBuffer) {
-				var g = math.Pow(10.0, float64(gain.GetVal())/20.0)
+				var g = math.Pow(10, float64(gain.GetValue())/20)
 				for c := 0; c < channels; c++ {
 					for i := 0; i < in.Frames; i++ {
 						out.Channel(c)[i] = in.Channel(c)[i] * float32(g)

@@ -3,6 +3,8 @@
 package main
 
 import (
+	"fmt"
+	"math"
 	"pipelined.dev/audio/vst2"
 )
 
@@ -47,7 +49,7 @@ func init() {
 				var g = math.Pow(10.0, float64(gain.GetVal())/20.0)
 				for c := 0; c < channels; c++ {
 					for i := 0; i < in.Frames; i++ {
-						out.Channel(c)[i] = in.Channel(c)[i] * g
+						out.Channel(c)[i] = in.Channel(c)[i] * float32(g)
 					}
 				}
 			},

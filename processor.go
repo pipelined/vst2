@@ -18,8 +18,6 @@ type (
 		sampleRate signal.Frequency
 		plugin     *Plugin
 		progressFn ProgressProcessedFunc
-		Parameters []Parameter
-		Presets    []Preset
 	}
 
 	// ProcessorInitFunc applies configuration on plugin before starting it
@@ -43,28 +41,9 @@ func (v *VST) Processor(h Host, progressFn ProgressProcessedFunc) *Processor {
 		return processor.sampleRate
 	}
 	plugin := v.Plugin(h.Callback())
-	numParams := plugin.NumParams()
-	params := make([]Parameter, numParams)
-	for i := 0; i < numParams; i++ {
-		params = append(params, Parameter{
-			Name:       plugin.ParamName(i),
-			Unit:       plugin.ParamUnitName(i),
-			ValueLabel: plugin.ParamValueName(i),
-			Value:      plugin.ParamValue(i),
-		})
-	}
-	numPresets := plugin.NumPrograms()
-	presets := make([]Preset, numPresets)
-	for i := 0; i < numPresets; i++ {
-		presets = append(presets, Preset{
-			name: plugin.ProgramName(i),
-		})
-	}
 	return &Processor{
 		plugin:     plugin,
 		progressFn: progressFn,
-		Parameters: params,
-		Presets:    presets,
 	}
 }
 

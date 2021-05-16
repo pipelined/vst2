@@ -3,6 +3,8 @@
 package main
 
 import (
+	"fmt"
+	"math"
 	"pipelined.dev/audio/vst2"
 )
 
@@ -15,7 +17,13 @@ func init() {
 		gain := vst2.Parameter{
 			Name:  "Gain",
 			Unit:  "db",
-			Value: 1,
+			Value: 0.5,
+			GetValueLabelFunc: func(value float32) string {
+				return fmt.Sprintf("%+.2f", value)
+			},
+			GetValueFunc: func(value float32) float32 {
+				return -20 + (40 * value)
+			},
 		}
 		channels := 2
 		return vst2.Plugin{
@@ -30,16 +38,18 @@ func init() {
 				&gain,
 			},
 			ProcessDoubleFunc: func(in, out vst2.DoubleBuffer) {
+				var g = math.Pow(10, float64(gain.GetValue())/20)
 				for c := 0; c < channels; c++ {
 					for i := 0; i < in.Frames; i++ {
-						out.Channel(c)[i] = in.Channel(c)[i] * float64(gain.Value)
+						out.Channel(c)[i] = in.Channel(c)[i] * g
 					}
 				}
 			},
 			ProcessFloatFunc: func(in, out vst2.FloatBuffer) {
+				var g = math.Pow(10, float64(gain.GetValue())/20)
 				for c := 0; c < channels; c++ {
 					for i := 0; i < in.Frames; i++ {
-						out.Channel(c)[i] = in.Channel(c)[i] * float32(gain.Value)
+						out.Channel(c)[i] = in.Channel(c)[i] * float32(g)
 					}
 				}
 			},

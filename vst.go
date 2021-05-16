@@ -745,10 +745,11 @@ const (
 type (
 	// Parameter refers to plugin parameter that can be mutated in the pipe.
 	Parameter struct {
-		Name       string
-		Unit       string
-		Value      float32
-		ValueLabel string
+		Name         string
+		Unit         string
+		Value        float32
+		ValueLabel   string
+		NotAutomated bool
 	}
 
 	// Preset refers to plugin presets.

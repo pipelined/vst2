@@ -1,6 +1,9 @@
 package vst2
 
-import "strings"
+import (
+	"fmt"
+	"strings"
+)
 
 // EffectMagic is constant in every plugin.
 const EffectMagic int32 = 'V'<<24 | 's'<<16 | 't'<<8 | 'P'<<0
@@ -745,11 +748,13 @@ const (
 type (
 	// Parameter refers to plugin parameter that can be mutated in the pipe.
 	Parameter struct {
-		Name         string
-		Unit         string
-		Value        float32
-		ValueLabel   string
-		NotAutomated bool
+		Name            string
+		Unit            string
+		Value           float32
+		ValueLabel      string
+		NotAutomated    bool
+		GetParamDisplay func(Value float32) string
+		GetValue        func(Value float32) float32
 	}
 
 	// Preset refers to plugin presets.
@@ -757,6 +762,27 @@ type (
 		name string
 	}
 )
+
+// GetVal should be called in ProcessDoubleFunc or ProcessFloatFunc and will be called in GetDisplayVal.
+// It returns the plain Value or the return value of GetValue, when it was set for the Parameter
+func (e Parameter) GetVal() float32 {
+	if e.GetValue == nil {
+		return e.Value
+	} else {
+		return e.GetValue(e.Value)
+	}
+}
+
+// GetDisplayVal will be called in HostOpcode plugGetParamDisplay. Return a string formatted float value or the return
+// value of GetParamDisplay, when it was set for the Parameter
+func (e Parameter) GetDisplayVal() string {
+	if e.GetParamDisplay == nil {
+		e.ValueLabel = fmt.Sprintf("%f", e.GetVal())
+	} else {
+		e.ValueLabel = e.GetParamDisplay(e.GetVal())
+	}
+	return e.ValueLabel
+}
 
 func trimNull(s string) string {
 	return strings.Trim(s, "\x00")

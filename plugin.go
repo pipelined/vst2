@@ -73,7 +73,7 @@ func (d Dispatcher) dispatchFunc(p Plugin) dispatchFunc {
 			copyASCII(s[:], p.Parameters[index].Name)
 		case plugGetParamDisplay:
 			s := (*ascii8)(ptr)
-			copyASCII(s[:], p.Parameters[index].GetDisplayVal())
+			copyASCII(s[:], p.Parameters[index].GetValueLabel())
 		case plugGetParamLabel:
 			s := (*ascii8)(ptr)
 			copyASCII(s[:], p.Parameters[index].Unit)

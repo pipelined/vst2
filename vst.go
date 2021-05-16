@@ -751,6 +751,7 @@ type (
 		Name              string
 		Unit              string
 		Value             float32
+		ValueLabel        string
 		NotAutomated      bool
 		GetValueLabelFunc func(value float32) string
 		GetValueFunc      func(value float32) float32
@@ -775,9 +776,11 @@ func (e Parameter) GetValue() float32 {
 // value of GetValueLabelFunc, when it was set for the Parameter
 func (e Parameter) GetValueLabel() string {
 	if e.GetValueLabelFunc == nil {
-		return fmt.Sprintf("%f", e.GetValue())
+		e.ValueLabel = fmt.Sprintf("%f", e.GetValue())
+	} else {
+		e.ValueLabel = e.GetValueLabelFunc(e.GetValue())
 	}
-	return e.GetValueLabelFunc(e.GetValue())
+	return e.ValueLabel
 }
 
 func trimNull(s string) string {

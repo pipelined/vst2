@@ -37,6 +37,7 @@ type (
 		Vendor         string
 		InputChannels  int
 		OutputChannels int
+		Flags          PluginFlag
 		inputDouble    DoubleBuffer
 		outputDouble   DoubleBuffer
 		inputFloat     FloatBuffer

@@ -72,7 +72,6 @@ func (e *EventsPtr) Event(i int) Event {
 
 // Free memory allocated for container.
 func (e *EventsPtr) Free() {
-	C.free(unsafe.Pointer(e.events))
 	C.free(unsafe.Pointer(e))
 }
 

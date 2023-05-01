@@ -689,6 +689,8 @@ type (
 	// PluginCanDoString are constants that can be used to check plugin
 	// capabilities.
 	PluginCanDoString string
+	// CanDoResponse lists the possible return values for CanDo queries
+	CanDoResponse int64
 )
 
 const (
@@ -743,6 +745,15 @@ const (
 	PluginCanMIDIProgramNames PluginCanDoString = "midiProgramNames"
 	// PluginCanBypass plugin supports function SetBypass.
 	PluginCanBypass PluginCanDoString = "bypass"
+)
+
+const (
+	// YesCanDo is returned by CanDo queries when plugin/host is certain that it supports a feature.
+	YesCanDo CanDoResponse = 1
+	// NoCanDo is returned by CanDo queries when plugin/host is certain that it does not support a feature.
+	NoCanDo CanDoResponse = -1
+	// MaybeCanDo is returned by CanDo queries when plugin/host doesn't know if it supports a particular feature.
+	MaybeCanDo CanDoResponse = 0
 )
 
 type (

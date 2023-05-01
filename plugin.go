@@ -47,6 +47,7 @@ type (
 		Parameters []*Parameter
 		dispatchFunc
 		PluginCanDoFunc
+		ProcessEventsFunc
 	}
 
 	// Dispatcher handles plugin dispatch calls from the host.
@@ -59,6 +60,8 @@ type (
 
 	// ProcessFloatFunc defines logic for float signal processing.
 	ProcessFloatFunc func(in, out FloatBuffer)
+
+	ProcessEventsFunc func(*EventsPtr)
 
 	PluginCanDoFunc func(PluginCanDoString) CanDoResponse
 
@@ -108,6 +111,11 @@ func (d Dispatcher) dispatchFunc(p Plugin) dispatchFunc {
 				return int64(p.PluginCanDoFunc(s))
 			}
 			return 0
+		case PlugProcessEvents:
+			var e *EventsPtr = (*EventsPtr)(ptr)
+			if p.ProcessEventsFunc != nil {
+				p.ProcessEventsFunc(e)
+			}
 		default:
 			return 0
 		}

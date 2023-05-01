@@ -19,6 +19,7 @@ func newGoPlugin(cp *C.CPlugin, c C.HostCallback) {
 	cp.numParams = C.int(len(p.Parameters))
 	cp.version = C.int(p.Version)
 	cp.uniqueID = C.int(uint(p.UniqueID[0])<<24 | uint(p.UniqueID[1])<<16 | uint(p.UniqueID[2])<<8 | uint(p.UniqueID[3])<<0)
+	cp.flags = cp.flags | C.int(p.Flags)
 	if p.ProcessDoubleFunc != nil {
 		cp.flags = cp.flags | C.int(PluginDoubleProcessing)
 		p.inputDouble = DoubleBuffer{data: make([]*C.double, p.InputChannels)}

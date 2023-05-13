@@ -46,13 +46,14 @@ type (
 		ProcessFloatFunc
 		Parameters []*Parameter
 		dispatchFunc
-		PluginCanDoFunc
-		ProcessEventsFunc
 	}
 
 	// Dispatcher handles plugin dispatch calls from the host.
 	Dispatcher struct {
 		SetBufferSizeFunc func(size int)
+		CanDoFunc         func(PluginCanDoString) CanDoResponse // called by host to query the plugin about its capabilities
+		CloseFunc         func()                                // called by host right before deleting the plugin, use to free up resources
+		ProcessEventsFunc func(*EventsPtr)                      // called by host to pass events (e.g. MIDI events) along with their time stamps (frames) within the next processing block
 	}
 
 	// ProcessDoubleFunc defines logic for double signal processing.
@@ -60,10 +61,6 @@ type (
 
 	// ProcessFloatFunc defines logic for float signal processing.
 	ProcessFloatFunc func(in, out FloatBuffer)
-
-	ProcessEventsFunc func(*EventsPtr)
-
-	PluginCanDoFunc func(PluginCanDoString) CanDoResponse
 
 	callbackHandler struct {
 		callback C.HostCallback
@@ -75,6 +72,11 @@ type (
 func (d Dispatcher) dispatchFunc(p Plugin) dispatchFunc {
 	return func(op PluginOpcode, index int32, value int64, ptr unsafe.Pointer, opt float32) int64 {
 		switch op {
+		case plugClose:
+			if d.CloseFunc != nil {
+				d.CloseFunc()
+			}
+			return 0
 		case plugGetParamName:
 			s := (*ascii8)(ptr)
 			copyASCII(s[:], p.Parameters[index].Name)
@@ -106,16 +108,17 @@ func (d Dispatcher) dispatchFunc(p Plugin) dispatchFunc {
 		case PlugGetPlugCategory:
 			return int64(p.Category)
 		case PlugCanDo:
-			if p.PluginCanDoFunc != nil {
-				s := PluginCanDoString(C.GoString((*C.char)(ptr)))
-				return int64(p.PluginCanDoFunc(s))
+			if d.CanDoFunc == nil {
+				return 0
 			}
-			return 0
+			s := PluginCanDoString(C.GoString((*C.char)(ptr)))
+			return int64(d.CanDoFunc(s))
 		case PlugProcessEvents:
-			var e *EventsPtr = (*EventsPtr)(ptr)
-			if p.ProcessEventsFunc != nil {
-				p.ProcessEventsFunc(e)
+			if d.ProcessEventsFunc == nil {
+				return 0
 			}
+			var e *EventsPtr = (*EventsPtr)(ptr)
+			d.ProcessEventsFunc(e)
 		default:
 			return 0
 		}

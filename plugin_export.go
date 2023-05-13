@@ -40,7 +40,14 @@ func newGoPlugin(cp *C.CPlugin, c C.HostCallback) {
 // global dispatch, calls real plugin dispatch.
 func dispatchPluginBridge(cp *C.CPlugin, opcode int32, index int32, value int64, ptr unsafe.Pointer, opt float32) int64 {
 	p := getPlugin(cp)
-	return p.dispatchFunc(PluginOpcode(opcode), index, value, ptr, opt)
+	pluginOpcode := PluginOpcode(opcode)
+	ret := p.dispatchFunc(pluginOpcode, index, value, ptr, opt)
+	if pluginOpcode == plugClose {
+		plugins.RLock()
+		defer plugins.RUnlock()
+		delete(plugins.mapping, uintptr(unsafe.Pointer(cp)))
+	}
+	return ret
 }
 
 //export processDoublePluginBridge

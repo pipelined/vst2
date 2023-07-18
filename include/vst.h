@@ -81,9 +81,9 @@ typedef CPlugin* (*EntryPoint)(HostCallback host);
 struct Events
 {
 	// Number of Events in array.
-	int64_t numEvents;
+	int32_t numEvents;
 	// Not used.
-	int64_t reserved;
+	void* reserved;
 	// Event pointer array, variable size.
 	void* events[];
 };

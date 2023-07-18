@@ -61,6 +61,9 @@ func (e *EventsPtr) Event(i int) Event {
 		eventType
 	}
 	ev := (*event)(C.getEvent((*C.Events)(e), C.int32_t(i)))
+	if ev == nil {
+		return nil
+	}
 	switch ev.eventType {
 	case MIDI:
 		return (*MIDIEvent)(unsafe.Pointer(ev))

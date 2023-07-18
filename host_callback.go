@@ -76,7 +76,7 @@ func (h Host) Callback() HostCallbackFunc {
 			}
 		case HostGetTime:
 			if h.GetTimeInfo != nil {
-				return int64(uintptr(unsafe.Pointer(h.GetTimeInfo())))
+				return int64(uintptr(unsafe.Pointer(h.GetTimeInfo(TimeInfoFlag(value)))))
 			}
 		}
 		return 0

@@ -137,8 +137,8 @@ func (h callbackHandler) host(cp *C.CPlugin) Host {
 		GetProcessLevel: func() ProcessLevel {
 			return ProcessLevel(C.callbackHost(h.callback, cp, C.int(HostGetCurrentProcessLevel), 0, 0, nil, 0))
 		},
-		GetTimeInfo: func() *TimeInfo {
-			return (*TimeInfo)(unsafe.Pointer(uintptr(C.callbackHost(h.callback, cp, C.int(HostGetTime), 0, 0, nil, 0))))
+		GetTimeInfo: func(flags TimeInfoFlag) *TimeInfo {
+			return (*TimeInfo)(unsafe.Pointer(uintptr(C.callbackHost(h.callback, cp, C.int(HostGetTime), 0, C.longlong(flags), nil, 0))))
 		},
 	}
 }

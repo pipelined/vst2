@@ -18,5 +18,5 @@ type (
 	// HostGetProcessLevel returns the context of execution.
 	HostGetProcessLevelFunc func() ProcessLevel
 	// HostGetTimeInfo returns current time info.
-	HostGetTimeInfoFunc func() *TimeInfo
+	HostGetTimeInfoFunc func(flags TimeInfoFlag) *TimeInfo
 )

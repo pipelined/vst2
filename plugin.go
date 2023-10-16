@@ -54,6 +54,8 @@ type (
 		CanDoFunc         func(PluginCanDoString) CanDoResponse // called by host to query the plugin about its capabilities
 		CloseFunc         func()                                // called by host right before deleting the plugin, use to free up resources
 		ProcessEventsFunc func(*EventsPtr)                      // called by host to pass events (e.g. MIDI events) along with their time stamps (frames) within the next processing block
+		GetChunkFunc      func(isPreset bool) []byte            // called by host to get the current state of the plugin. You should define GetChunkFunc & SetChunkFunc in pairs; defining both sets the PluginProgramChunks flag advertizing the capability to the host.
+		SetChunkFunc      func(data []byte, isPreset bool)      // called by host to set the current state of the plugin
 	}
 
 	// ProcessDoubleFunc defines logic for double signal processing.
@@ -119,6 +121,23 @@ func (d Dispatcher) dispatchFunc(p Plugin) dispatchFunc {
 			}
 			var e *EventsPtr = (*EventsPtr)(ptr)
 			d.ProcessEventsFunc(e)
+		case plugGetChunk:
+			if d.GetChunkFunc == nil {
+				return 0
+			}
+			chunk := d.GetChunkFunc(index > 0)
+			if len(chunk) == 0 {
+				return 0
+			}
+			*(*unsafe.Pointer)(ptr) = unsafe.Pointer(C.CBytes(chunk))
+			return int64(len(chunk))
+		case plugSetChunk:
+			if d.SetChunkFunc == nil {
+				return 0
+			}
+			bytes := C.GoBytes(ptr, C.int(value))
+			d.SetChunkFunc(bytes, index > 0)
+			return 0
 		default:
 			return 0
 		}

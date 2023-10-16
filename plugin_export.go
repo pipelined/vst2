@@ -30,6 +30,13 @@ func newGoPlugin(cp *C.CPlugin, c C.HostCallback) {
 		p.inputFloat = FloatBuffer{data: make([]*C.float, p.InputChannels)}
 		p.outputFloat = FloatBuffer{data: make([]*C.float, p.OutputChannels)}
 	}
+
+	// GetChunk and SetChunk should be defined in pairs. If both are
+	// defined, we advertise the capability to save and load plugin settings,
+	// by settings flag PluginProgramChunks.
+	if d.GetChunkFunc != nil && d.SetChunkFunc != nil {
+		cp.flags = cp.flags | C.int(PluginProgramChunks)
+	}
 	p.dispatchFunc = d.dispatchFunc(p)
 	plugins.Lock()
 	plugins.mapping[uintptr(unsafe.Pointer(cp))] = &p

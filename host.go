@@ -9,6 +9,7 @@ type (
 		GetBufferSize   HostGetBufferSizeFunc
 		GetProcessLevel HostGetProcessLevelFunc
 		GetTimeInfo     HostGetTimeInfoFunc
+		UpdateDisplay   HostUpdateDisplayFunc
 	}
 
 	// HostGetSampleRateFunc returns host sample rate.
@@ -19,4 +20,6 @@ type (
 	HostGetProcessLevelFunc func() ProcessLevel
 	// HostGetTimeInfo returns current time info.
 	HostGetTimeInfoFunc func(flags TimeInfoFlag) *TimeInfo
+	// HostUpdateDisplay tells there are changes & requests GUI redraw. Returns true on success
+	HostUpdateDisplayFunc func() bool
 )

@@ -22,6 +22,6 @@ jobs:
     - name: Test plugin
       run: go build --buildmode c-archive --tags plugin -o demoplugin.a ./demoplugin
     - name: Upload coverage
-      uses: codecov/codecov-action@v1
+      uses: codecov/codecov-action@v4.6.0
       with:
         file: ./coverage.txt

@@ -1,0 +1,88 @@
+# golangci-lint configuration for vst2
+# Comprehensive Go linting with sensible defaults
+
+version = "2"
+
+[run]
+timeout = "5m"
+
+[linters]
+# Disable all linters by default, then enable specific ones
+default = "none"
+
+# Enable specific linters
+enable = [
+    "errcheck",      # Check for unchecked errors
+    "govet",         # Go vet
+    "ineffassign",   # Detect ineffectual assignments
+    "staticcheck",   # Staticcheck
+    "unused",        # Detect unused code
+    "gosec",         # Security checker
+    "misspell",      # Spell checker
+    "revive",        # Replacement for golint
+    "unconvert",     # Unnecessary conversions
+    "unparam",       # Unused function parameters
+    "gocyclo",       # Cyclomatic complexity
+    "goconst",       # Detect repeated strings
+    "gocritic",      # Opinionated linter
+]
+
+[linters.settings.tagliatelle.case.rules]
+json = "camel"
+
+[linters.settings.varnamelen]
+ignore-names = [
+    "ok",   # Common idiom for map lookups and type assertions
+    "id",   # Common identifier
+    "i",    # Loop counter
+    "j",    # Loop counter
+    "n",    # Common for size/count
+    "r",    # Common for reader
+    "w",    # Common for writer
+    "b",    # Common for bytes/buffer
+]
+
+ignore-decls = [
+    "r *bufio.Reader",
+    "w io.Writer",
+]
+
+[linters.exclusions]
+# Use default exclusion presets
+presets = [
+    "comments",
+    "common-false-positives",
+    "legacy",
+    "std-error-handling",
+]
+
+# Exclude specific rules
+[[linters.exclusions.rules]]
+linters = ["gosec"]
+text = "G601"  # Ignore implicit memory aliasing warnings
+
+[[linters.exclusions.rules]]
+linters = ["revive"]
+path = "cmd/"  # Allow certain patterns in CLI code
+
+[[linters.exclusions.rules]]
+linters = ["errcheck"]
+path = "_test\\.go"  # Allow unchecked errors in tests
+
+# Exclude third-party code
+[[linters.exclusions.rules]]
+path = "third_party"
+linters = [".*"]
+
+[formatters]
+enable = [
+    "gofmt",      # Format code
+    "goimports",  # Organize imports
+]
+
+[issues]
+# Maximum issues count per one linter (0 = unlimited)
+max-issues-per-linter = 0
+
+# Maximum count of issues with the same text (0 = unlimited)
+max-same-issues = 0

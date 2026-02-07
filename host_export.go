@@ -1,4 +1,5 @@
-//+build !plugin
+//go:build !plugin
+// +build !plugin
 
 package vst2
 
@@ -6,8 +7,9 @@ package vst2
 import "C"
 import "unsafe"
 
-//export hostCallbackBridge
 // global hostCallbackBridge, calls real callback.
+//
+//export hostCallbackBridge
 func hostCallbackBridge(p *C.CPlugin, opcode int32, index int32, value int64, ptr unsafe.Pointer, opt float32) int64 {
 	// HostVersion is requested when plugin is created
 	// It's never in map

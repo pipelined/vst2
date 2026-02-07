@@ -1,3 +1,4 @@
+//go:build !plugin
 // +build !plugin
 
 package vst2_test

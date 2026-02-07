@@ -1,3 +1,4 @@
+//go:build !plugin
 // +build !plugin
 
 package vst2
@@ -5,6 +6,7 @@ package vst2
 //#cgo LDFLAGS: -framework CoreFoundation
 //#include <CoreFoundation/CoreFoundation.h>
 import "C"
+
 import (
 	"fmt"
 	"unsafe"
@@ -17,13 +19,11 @@ const (
 	displayNameKey = "CFBundleName"
 )
 
-var (
-	// ScanPaths of Vst2 files
-	scanPaths = []string{
-		"~/Library/Audio/Plug-Ins/VST",
-		"/Library/Audio/Plug-Ins/VST",
-	}
-)
+// ScanPaths of Vst2 files
+var scanPaths = []string{
+	"~/Library/Audio/Plug-Ins/VST",
+	"/Library/Audio/Plug-Ins/VST",
+}
 
 // Open loads the plugin entry point into memory. It's CFBundle in OS X.
 func Open(path string) (*VST, error) {
@@ -73,7 +73,7 @@ func getName(bundle C.CFBundleRef) string {
 
 // Convert CoreFoundation String to golang string.
 func cfStringRefToString(cfStr C.CFStringRef) (goString string) {
-	l := C.CFStringGetLength(cfStr) //utf-16 length
+	l := C.CFStringGetLength(cfStr) // utf-16 length
 	buf := make([]byte, l*2)
 	C.CFStringGetCString(cfStr, (*C.char)(unsafe.Pointer(&buf[0])), l*2, C.CFStringGetSystemEncoding())
 	return string(buf)

@@ -100,6 +100,7 @@ func (i PluginOpcode) String() string {
 	}
 	return _PluginOpcode_name[_PluginOpcode_index[i]:_PluginOpcode_index[i+1]]
 }
+
 func _() {
 	// An "invalid array index" compiler error signifies that the constant values have changed.
 	// Re-run the stringer command to generate them again.

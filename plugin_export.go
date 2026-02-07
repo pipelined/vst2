@@ -1,14 +1,17 @@
+//go:build plugin
 // +build plugin
 
 package vst2
 
 //#include "include/vst.h"
 import "C"
+
 import (
 	"unsafe"
 )
 
 // instantiate go plugin
+//
 //export newGoPlugin
 func newGoPlugin(cp *C.CPlugin, c C.HostCallback) {
 	loadHook()
@@ -43,8 +46,9 @@ func newGoPlugin(cp *C.CPlugin, c C.HostCallback) {
 	plugins.Unlock()
 }
 
-//export dispatchPluginBridge
 // global dispatch, calls real plugin dispatch.
+//
+//export dispatchPluginBridge
 func dispatchPluginBridge(cp *C.CPlugin, opcode int32, index int32, value int64, ptr unsafe.Pointer, opt float32) int64 {
 	p := getPlugin(cp)
 	pluginOpcode := PluginOpcode(opcode)
@@ -57,8 +61,9 @@ func dispatchPluginBridge(cp *C.CPlugin, opcode int32, index int32, value int64,
 	return ret
 }
 
-//export processDoublePluginBridge
 // global processDouble, calls real plugin processDouble.
+//
+//export processDoublePluginBridge
 func processDoublePluginBridge(cp *C.CPlugin, in, out **C.double, sampleFrames int32) {
 	p := getPlugin(cp)
 	for i := range p.inputDouble.data {
@@ -73,8 +78,9 @@ func processDoublePluginBridge(cp *C.CPlugin, in, out **C.double, sampleFrames i
 	return
 }
 
-//export processFloatPluginBridge
 // global processFloat, calls real plugin processFloat.
+//
+//export processFloatPluginBridge
 func processFloatPluginBridge(cp *C.CPlugin, in, out **C.float, sampleFrames int32) {
 	p := getPlugin(cp)
 	for i := range p.inputFloat.data {
@@ -89,14 +95,16 @@ func processFloatPluginBridge(cp *C.CPlugin, in, out **C.float, sampleFrames int
 	return
 }
 
-//export getParameterPluginBridge
 // global getParameter, calls real plugin getParameter.
+//
+//export getParameterPluginBridge
 func getParameterPluginBridge(cp *C.CPlugin, index int32) float32 {
 	return getPlugin(cp).Parameters[index].Value
 }
 
-//export setParameterPluginBridge
 // global setParameter, calls real plugin setParameter.
+//
+//export setParameterPluginBridge
 func setParameterPluginBridge(cp *C.CPlugin, index int32, value float32) {
 	getPlugin(cp).Parameters[index].Value = value
 }

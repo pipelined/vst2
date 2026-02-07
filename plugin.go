@@ -1,9 +1,11 @@
+//go:build plugin
 // +build plugin
 
 package vst2
 
 //#include "include/plugin/plugin.c"
 import "C"
+
 import (
 	"sync"
 	"unsafe"

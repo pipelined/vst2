@@ -1,22 +1,63 @@
+# OS files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+*~
+*.swp
+*.swo
+
 ### Go ###
 # Binaries for programs and plugins
 *.exe
+*.exe~
+*.dll
 *.so
 *.dylib
 
 # Test binary, build with `go test -c`
 *.test
 
-# Golang project vendor packages which should be ignored
-vendor/
+# Output of the go coverage tool
+*.out
+coverage.html
+
+# Build artifacts
+bin/
+
+# Go build cache
+.cache/
+
+# vendor directory (remove if you want to vendor)
+# vendor/
 
 ### VisualStudioCode ###
 .vscode/*
-.vscode/settings.json
-.vscode/tasks.json
-.vscode/launch.json
-.vscode/extensions.json
-.history
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+!.vscode/code-snippets
+.history/
+*.code-workspace
+
+### JetBrains ###
+.idea/
+
+### Trunk ###
+.trunk/
+
+### C/C++ ###
+*.o
+*.a
+*.lib
+*.obj
 
 # Golang dep tool
 Gopkg.lock
+
+# AI Agents
+.claude/

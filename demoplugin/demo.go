@@ -1,3 +1,4 @@
+//go:build plugin
 // +build plugin
 
 package main
@@ -5,6 +6,7 @@ package main
 import (
 	"fmt"
 	"math"
+
 	"pipelined.dev/audio/vst2"
 )
 
@@ -38,7 +40,7 @@ func init() {
 				&gain,
 			},
 			ProcessDoubleFunc: func(in, out vst2.DoubleBuffer) {
-				var g = math.Pow(10, float64(gain.GetValue())/20)
+				g := math.Pow(10, float64(gain.GetValue())/20)
 				for c := 0; c < channels; c++ {
 					for i := 0; i < in.Frames; i++ {
 						out.Channel(c)[i] = in.Channel(c)[i] * g
@@ -46,7 +48,7 @@ func init() {
 				}
 			},
 			ProcessFloatFunc: func(in, out vst2.FloatBuffer) {
-				var g = math.Pow(10, float64(gain.GetValue())/20)
+				g := math.Pow(10, float64(gain.GetValue())/20)
 				for c := 0; c < channels; c++ {
 					for i := 0; i < in.Frames; i++ {
 						out.Channel(c)[i] = in.Channel(c)[i] * float32(g)

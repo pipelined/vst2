@@ -37,7 +37,7 @@ type (
 		reserved             int16 // always zero
 		CategoryLabel        ascii24
 
-		future [16]byte //Reserved for future.
+		future [16]byte // Reserved for future.
 	}
 
 	// ParameterFlag is used to describe ParameterProperties struct.

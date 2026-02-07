@@ -1,3 +1,4 @@
+//go:build !plugin
 // +build !plugin
 
 package vst2
@@ -15,13 +16,11 @@ const (
 	FileExtension = ".dll"
 )
 
-var (
-	// ScanPaths of Vst2 files
-	scanPaths = []string{
-		"C:\\Program Files (x86)\\Steinberg\\VSTPlugins",
-		"C:\\Program Files\\Steinberg\\VSTPlugins ",
-	}
-)
+// ScanPaths of Vst2 files
+var scanPaths = []string{
+	"C:\\Program Files (x86)\\Steinberg\\VSTPlugins",
+	"C:\\Program Files\\Steinberg\\VSTPlugins ",
+}
 
 func init() {
 	envVstPath := os.Getenv("VST_PATH")
@@ -36,13 +35,13 @@ func Open(path string) (*VST, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to get absolute path for '%s': %w", path, err)
 	}
-	//Load plugin by path
+	// Load plugin by path
 	dll, err := syscall.LoadDLL(path)
 	if err != nil {
 		return nil, fmt.Errorf("failed to load VST from '%s': %w", path, err)
 	}
 
-	//Get pointer to plugin's Main function
+	// Get pointer to plugin's Main function
 	m, err := syscall.GetProcAddress(dll.Handle, main)
 	if err == nil {
 		return &VST{

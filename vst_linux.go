@@ -1,3 +1,4 @@
+//go:build !plugin
 // +build !plugin
 
 package vst2
@@ -6,6 +7,7 @@ package vst2
 // #include <dlfcn.h>
 // #include <stdlib.h>
 import "C"
+
 import (
 	"fmt"
 	"os"
@@ -18,13 +20,11 @@ const (
 	FileExtension = ".so"
 )
 
-var (
-	// ScanPaths of Vst2 files
-	scanPaths = []string{
-		"/usr/local/lib/vst",
-		"/usr/lib/vst",
-	}
-)
+// ScanPaths of Vst2 files
+var scanPaths = []string{
+	"/usr/local/lib/vst",
+	"/usr/lib/vst",
+}
 
 func init() {
 	home := os.Getenv("HOME")

@@ -1,3 +1,4 @@
+//go:build !plugin
 // +build !plugin
 
 package vst2
@@ -7,6 +8,7 @@ package vst2
 #include "include/host/host.c"
 */
 import "C"
+
 import (
 	"fmt"
 	"sync"
@@ -15,15 +17,13 @@ import (
 	"pipelined.dev/signal"
 )
 
-var (
-	// global state for callbacks.
-	callbacks = struct {
-		sync.RWMutex
-		mapping map[unsafe.Pointer]HostCallbackFunc
-	}{
-		mapping: map[unsafe.Pointer]HostCallbackFunc{},
-	}
-)
+// global state for callbacks.
+var callbacks = struct {
+	sync.RWMutex
+	mapping map[unsafe.Pointer]HostCallbackFunc
+}{
+	mapping: map[unsafe.Pointer]HostCallbackFunc{},
+}
 
 const (
 	// VST main function namp.

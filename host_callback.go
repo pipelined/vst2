@@ -26,7 +26,7 @@ var callbacks = struct {
 }
 
 const (
-	// VST main function namp.
+	// VST main function name.
 	main = "VSTPluginMain"
 	// VST API version.
 	version = 2400
@@ -34,7 +34,7 @@ const (
 
 type (
 	// VST is a reference to VST main function.
-	// It also keeps reference to VST handle to clean up on Closp.
+	// It also keeps reference to VST handle to clean up on Close.
 	VST struct {
 		main   pluginMain
 		handle uintptr
@@ -62,6 +62,14 @@ type (
 func (h Host) Callback() HostCallbackFunc {
 	return func(op HostOpcode, index int32, value int64, ptr unsafe.Pointer, opt float32) int64 {
 		switch op {
+		case HostAutomate:
+			if h.Automate != nil {
+				h.Automate(index, opt)
+			}
+		case HostIdle:
+			if h.Idle != nil {
+				h.Idle()
+			}
 		case HostGetCurrentProcessLevel:
 			if h.GetProcessLevel != nil {
 				return int64(h.GetProcessLevel())
@@ -78,6 +86,83 @@ func (h Host) Callback() HostCallbackFunc {
 			if h.GetTimeInfo != nil {
 				return int64(uintptr(unsafe.Pointer(h.GetTimeInfo(TimeInfoFlag(value)))))
 			}
+		case HostProcessEvents:
+			if h.ProcessEvents != nil {
+				h.ProcessEvents((*EventsPtr)(ptr))
+				return 1
+			}
+		case HostIOChanged:
+			if h.IOChanged != nil {
+				if h.IOChanged() {
+					return 1
+				}
+			}
+		case HostSizeWindow:
+			if h.SizeWindow != nil {
+				if h.SizeWindow(index, int32(value)) {
+					return 1
+				}
+			}
+		case HostGetInputLatency:
+			if h.GetInputLatency != nil {
+				return int64(h.GetInputLatency())
+			}
+		case HostGetOutputLatency:
+			if h.GetOutputLatency != nil {
+				return int64(h.GetOutputLatency())
+			}
+		case HostGetAutomationState:
+			if h.GetAutomationState != nil {
+				return int64(h.GetAutomationState())
+			}
+		case HostGetVendorString:
+			if h.GetVendorString != nil {
+				s := (*ascii64)(ptr)
+				copyASCII(s[:], h.GetVendorString())
+				return 1
+			}
+		case HostGetProductString:
+			if h.GetProductString != nil {
+				s := (*ascii64)(ptr)
+				copyASCII(s[:], h.GetProductString())
+				return 1
+			}
+		case HostGetVendorVersion:
+			if h.GetVendorVersion != nil {
+				return int64(h.GetVendorVersion())
+			}
+		case HostCanDo:
+			if h.CanDo != nil {
+				s := HostCanDoString(C.GoString((*C.char)(ptr)))
+				return int64(h.CanDo(s))
+			}
+		case HostGetLanguage:
+			if h.GetLanguage != nil {
+				return int64(h.GetLanguage())
+			}
+		case HostGetDirectory:
+			if h.GetDirectory != nil {
+				dir := h.GetDirectory()
+				return int64(uintptr(unsafe.Pointer(C.CString(dir))))
+			}
+		case HostUpdateDisplay:
+			if h.UpdateDisplay != nil {
+				if h.UpdateDisplay() {
+					return 1
+				}
+			}
+		case HostBeginEdit:
+			if h.BeginEdit != nil {
+				if h.BeginEdit(index) {
+					return 1
+				}
+			}
+		case HostEndEdit:
+			if h.EndEdit != nil {
+				if h.EndEdit(index) {
+					return 1
+				}
+			}
 		}
 		return 0
 	}
@@ -93,7 +178,7 @@ func NoopHostCallback() HostCallbackFunc {
 }
 
 // Plugin new instance of VST plugin with provided callback.
-// This function also calls dispatch with EffOpen opcodp.
+// This function also calls dispatch with EffOpen opcode.
 func (v *VST) Plugin(c HostCallbackFunc) *Plugin {
 	if v.main == nil || c == nil {
 		return nil
@@ -314,4 +399,130 @@ func (p *Plugin) SetBankData(data []byte) {
 // not null-terminated.
 func stringToCString(s string) *C.char {
 	return (*C.char)(unsafe.Pointer(&[]byte(s)[0]))
+}
+
+// SendEvents sends MIDI events to the hosted plugin. The caller creates
+// events via the Events() constructor and is responsible for calling
+// Free() afterward.
+func (p *Plugin) SendEvents(events *EventsPtr) {
+	p.Dispatch(PlugProcessEvents, 0, 0, unsafe.Pointer(events), 0)
+}
+
+// EditorGetRect returns the editor rectangle. Returns nil if plugin has
+// no editor.
+func (p *Plugin) EditorGetRect() *EditorRectangle {
+	var rect *EditorRectangle
+	r := p.Dispatch(PlugEditGetRect, 0, 0, unsafe.Pointer(&rect), 0)
+	if r == 0 && rect == nil {
+		return nil
+	}
+	return rect
+}
+
+// EditorOpen opens the plugin editor in the provided native window handle
+// (HWND on Windows, NSView* on macOS, X11 Window on Linux).
+func (p *Plugin) EditorOpen(window unsafe.Pointer) {
+	p.Dispatch(PlugEditOpen, 0, 0, window, 0)
+}
+
+// EditorClose closes the plugin editor window.
+func (p *Plugin) EditorClose() {
+	p.Dispatch(PlugEditClose, 0, 0, nil, 0)
+}
+
+// EditorIdle notifies the plugin editor to do idle processing.
+func (p *Plugin) EditorIdle() {
+	p.Dispatch(PlugEditIdle, 0, 0, nil, 0)
+}
+
+// CanDo queries the plugin about its capabilities. Returns YesCanDo,
+// NoCanDo, or MaybeCanDo.
+func (p *Plugin) CanDo(s PluginCanDoString) CanDoResponse {
+	cs := C.CString(string(s))
+	defer C.free(unsafe.Pointer(cs))
+	return CanDoResponse(p.Dispatch(PlugCanDo, 0, 0, unsafe.Pointer(cs), 0))
+}
+
+// GetTailSize returns the tail size in samples (e.g. reverb time).
+// Returns 0 as default, 1 means no tail.
+func (p *Plugin) GetTailSize() int {
+	return int(p.Dispatch(PlugGetTailSize, 0, 0, nil, 0))
+}
+
+// GetInputProperties returns pin properties for the given input index.
+// If the opcode is not supported, the boolean result is false.
+func (p *Plugin) GetInputProperties(index int) (*PinProperties, bool) {
+	var props PinProperties
+	r := p.Dispatch(PlugGetInputProperties, int32(index), 0, unsafe.Pointer(&props), 0)
+	if r > 0 {
+		return &props, true
+	}
+	return nil, false
+}
+
+// GetOutputProperties returns pin properties for the given output index.
+// If the opcode is not supported, the boolean result is false.
+func (p *Plugin) GetOutputProperties(index int) (*PinProperties, bool) {
+	var props PinProperties
+	r := p.Dispatch(PlugGetOutputProperties, int32(index), 0, unsafe.Pointer(&props), 0)
+	if r > 0 {
+		return &props, true
+	}
+	return nil, false
+}
+
+// GetVSTVersion returns the VST version supported by the plugin (e.g. 2400).
+func (p *Plugin) GetVSTVersion() int {
+	return int(p.Dispatch(PlugGetVstVersion, 0, 0, nil, 0))
+}
+
+// GetPluginName returns the name of the plugin (up to 32 chars).
+func (p *Plugin) GetPluginName() string {
+	var s ascii32
+	p.Dispatch(PlugGetPluginName, 0, 0, unsafe.Pointer(&s), 0)
+	return s.String()
+}
+
+// GetVendorString returns the plugin vendor string (up to 64 chars).
+func (p *Plugin) GetVendorString() string {
+	var s ascii64
+	p.Dispatch(PlugGetVendorString, 0, 0, unsafe.Pointer(&s), 0)
+	return s.String()
+}
+
+// GetProductString returns the plugin product string (up to 64 chars).
+func (p *Plugin) GetProductString() string {
+	var s ascii64
+	p.Dispatch(PlugGetProductString, 0, 0, unsafe.Pointer(&s), 0)
+	return s.String()
+}
+
+// GetVendorVersion returns the plugin vendor-specific version.
+func (p *Plugin) GetVendorVersion() int {
+	return int(p.Dispatch(PlugGetVendorVersion, 0, 0, nil, 0))
+}
+
+// GetCategory returns the plugin category.
+func (p *Plugin) GetCategory() PluginCategory {
+	return PluginCategory(p.Dispatch(PlugGetPlugCategory, 0, 0, nil, 0))
+}
+
+// NumInputs returns the number of audio input channels.
+func (p *Plugin) NumInputs() int {
+	return int(p.p.numInputs)
+}
+
+// NumOutputs returns the number of audio output channels.
+func (p *Plugin) NumOutputs() int {
+	return int(p.p.numOutputs)
+}
+
+// UniqueID returns the plugin's unique identifier.
+func (p *Plugin) UniqueID() int32 {
+	return int32(p.p.uniqueID)
+}
+
+// InitialDelay returns the plugin's latency in samples.
+func (p *Plugin) InitialDelay() int {
+	return int(p.p.initialDelay)
 }

@@ -32,6 +32,10 @@ func (s ascii24) String() string {
 	return trimNull(string(s[:]))
 }
 
+func (s ascii32) String() string {
+	return trimNull(string(s[:]))
+}
+
 func (s ascii64) String() string {
 	return trimNull(string(s[:]))
 }

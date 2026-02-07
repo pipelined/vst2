@@ -3,7 +3,10 @@
 
 package vst2
 
-//#include "include/plugin/plugin.c"
+/*
+#include <stdlib.h>
+#include "include/plugin/plugin.c"
+*/
 import "C"
 
 import (
@@ -163,6 +166,64 @@ func (h callbackHandler) host(cp *C.CPlugin) Host {
 		},
 		UpdateDisplay: func() bool {
 			return C.callbackHost(h.callback, cp, C.int(HostUpdateDisplay), 0, 0, nil, 0) > 0
+		},
+		Automate: func(index int32, value float32) {
+			C.callbackHost(h.callback, cp, C.int(HostAutomate), C.int32_t(index), 0, nil, C.float(value))
+		},
+		Idle: func() {
+			C.callbackHost(h.callback, cp, C.int(HostIdle), 0, 0, nil, 0)
+		},
+		ProcessEvents: func(events *EventsPtr) {
+			C.callbackHost(h.callback, cp, C.int(HostProcessEvents), 0, 0, unsafe.Pointer(events), 0)
+		},
+		IOChanged: func() bool {
+			return C.callbackHost(h.callback, cp, C.int(HostIOChanged), 0, 0, nil, 0) > 0
+		},
+		SizeWindow: func(width, height int32) bool {
+			return C.callbackHost(h.callback, cp, C.int(HostSizeWindow), C.int32_t(width), C.int64_t(height), nil, 0) > 0
+		},
+		GetInputLatency: func() int32 {
+			return int32(C.callbackHost(h.callback, cp, C.int(HostGetInputLatency), 0, 0, nil, 0))
+		},
+		GetOutputLatency: func() int32 {
+			return int32(C.callbackHost(h.callback, cp, C.int(HostGetOutputLatency), 0, 0, nil, 0))
+		},
+		GetAutomationState: func() AutomationState {
+			return AutomationState(C.callbackHost(h.callback, cp, C.int(HostGetAutomationState), 0, 0, nil, 0))
+		},
+		GetVendorString: func() string {
+			var s ascii64
+			C.callbackHost(h.callback, cp, C.int(HostGetVendorString), 0, 0, unsafe.Pointer(&s), 0)
+			return s.String()
+		},
+		GetProductString: func() string {
+			var s ascii64
+			C.callbackHost(h.callback, cp, C.int(HostGetProductString), 0, 0, unsafe.Pointer(&s), 0)
+			return s.String()
+		},
+		GetVendorVersion: func() int32 {
+			return int32(C.callbackHost(h.callback, cp, C.int(HostGetVendorVersion), 0, 0, nil, 0))
+		},
+		CanDo: func(s HostCanDoString) CanDoResponse {
+			cs := C.CString(string(s))
+			defer C.free(unsafe.Pointer(cs))
+			return CanDoResponse(C.callbackHost(h.callback, cp, C.int(HostCanDo), 0, 0, unsafe.Pointer(cs), 0))
+		},
+		GetLanguage: func() HostLanguage {
+			return HostLanguage(C.callbackHost(h.callback, cp, C.int(HostGetLanguage), 0, 0, nil, 0))
+		},
+		GetDirectory: func() string {
+			ptr := unsafe.Pointer(uintptr(C.callbackHost(h.callback, cp, C.int(HostGetDirectory), 0, 0, nil, 0)))
+			if ptr == nil {
+				return ""
+			}
+			return C.GoString((*C.char)(ptr))
+		},
+		BeginEdit: func(index int32) bool {
+			return C.callbackHost(h.callback, cp, C.int(HostBeginEdit), C.int32_t(index), 0, nil, 0) > 0
+		},
+		EndEdit: func(index int32) bool {
+			return C.callbackHost(h.callback, cp, C.int(HostEndEdit), C.int32_t(index), 0, nil, 0) > 0
 		},
 	}
 }

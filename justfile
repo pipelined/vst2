@@ -61,3 +61,7 @@ clean:
 # Run demo plugin test
 test-demo:
     go test -v -timeout 30s ./demoplugin/...
+
+fix:
+    just lint-fix
+    just fmt

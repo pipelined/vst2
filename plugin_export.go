@@ -54,8 +54,11 @@ func dispatchPluginBridge(cp *C.CPlugin, opcode int32, index int32, value int64,
 	pluginOpcode := PluginOpcode(opcode)
 	ret := p.dispatchFunc(pluginOpcode, index, value, ptr, opt)
 	if pluginOpcode == plugClose {
-		plugins.RLock()
-		defer plugins.RUnlock()
+		// delete mutates the map, so this needs the write lock. Holding
+		// only the read lock here races with newGoPlugin's insert and can
+		// crash the host with a concurrent map write.
+		plugins.Lock()
+		defer plugins.Unlock()
 		delete(plugins.mapping, uintptr(unsafe.Pointer(cp)))
 	}
 	return ret

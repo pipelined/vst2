@@ -56,6 +56,7 @@ type (
 	// Dispatcher handles plugin dispatch calls from the host.
 	Dispatcher struct {
 		SetBufferSizeFunc func(size int)
+		SetSampleRateFunc func(sampleRate float64)              // called by host to notify the plugin about a new sample rate, never from within the audio processing callback
 		CanDoFunc         func(PluginCanDoString) CanDoResponse // called by host to query the plugin about its capabilities
 		CloseFunc         func()                                // called by host right before deleting the plugin, use to free up resources
 		ProcessEventsFunc func(*EventsPtr)                      // called by host to pass events (e.g. MIDI events) along with their time stamps (frames) within the next processing block
@@ -116,6 +117,13 @@ func (d Dispatcher) dispatchFunc(p Plugin) dispatchFunc {
 				return 0
 			}
 			d.SetBufferSizeFunc(int(value))
+		case plugSetSampleRate:
+			if d.SetSampleRateFunc == nil {
+				return 0
+			}
+			// the sample rate is passed in the opt float parameter, not
+			// in value. See Host.SetSampleRate in host_callback.go.
+			d.SetSampleRateFunc(float64(opt))
 		case PlugGetPluginName:
 			s := (*ascii32)(ptr)
 			copyASCII(s[:], p.Name)

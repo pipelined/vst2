@@ -57,6 +57,25 @@ func TestBuffer(t *testing.T) {
 	t.Run("stereo iterate", testBuffer([][]float64{{11, 12, 13}, {21, 22, 23}}, iterate))
 }
 
+func TestBufferNumChannels(t *testing.T) {
+	for _, channels := range []int{1, 2, 8} {
+		db := NewDoubleBuffer(channels, 4)
+		assertEqual(t, "double channels", db.NumChannels(), channels)
+		db.Free()
+
+		fb := NewFloatBuffer(channels, 4)
+		assertEqual(t, "float channels", fb.NumChannels(), channels)
+		fb.Free()
+	}
+
+	var (
+		emptyDouble DoubleBuffer
+		emptyFloat  FloatBuffer
+	)
+	assertEqual(t, "double channels", emptyDouble.NumChannels(), 0)
+	assertEqual(t, "float channels", emptyFloat.NumChannels(), 0)
+}
+
 func assertEqual(t *testing.T, name string, result, expected interface{}) {
 	t.Helper()
 	if !reflect.DeepEqual(expected, result) {

@@ -74,6 +74,12 @@ func (b DoubleBuffer) cArray() **C.double {
 	return (**C.double)(unsafe.Pointer(&b.data[0]))
 }
 
+// NumChannels returns the number of channels in the buffer. Channel must
+// only be called with an index in the [0, NumChannels) range.
+func (b DoubleBuffer) NumChannels() int {
+	return len(b.data)
+}
+
 // Channel returns slice that's backed by C array and stores samples from
 // single channel.
 func (b DoubleBuffer) Channel(i int) []float64 {
@@ -136,6 +142,12 @@ func (b FloatBuffer) Write(s signal.Floating) int {
 // cArray returns C array that is used as storage for buffer.
 func (b FloatBuffer) cArray() **C.float {
 	return (**C.float)(unsafe.Pointer(&b.data[0]))
+}
+
+// NumChannels returns the number of channels in the buffer. Channel must
+// only be called with an index in the [0, NumChannels) range.
+func (b FloatBuffer) NumChannels() int {
+	return len(b.data)
 }
 
 // Channel returns slice that's backed by C array and stores samples from

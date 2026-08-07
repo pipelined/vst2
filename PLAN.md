@@ -2,7 +2,7 @@
 
 ## Context
 
-The `pipelined.dev/audio/vst2` library already supports basic VST2 plugin hosting (load, configure, process audio, get/set parameters, presets). However, only 5 of 41+ host callback opcodes are implemented, there is no way to send MIDI events to hosted plugins, no editor/UI window support, and no plugin capability queries. This plan extends the library to be a fully-featured VST2 host.
+The `github.com/cwbudde/vst2` library already supports basic VST2 plugin hosting (load, configure, process audio, get/set parameters, presets). However, only 5 of 41+ host callback opcodes are implemented, there is no way to send MIDI events to hosted plugins, no editor/UI window support, and no plugin capability queries. This plan extends the library to be a fully-featured VST2 host.
 
 **No C bridge changes are needed.** The existing `dispatchHostBridge` and `hostCallbackBridge` in the C layer are fully generic -- they pass any opcode through. All work is in Go.
 

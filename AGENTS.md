@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Go library implementing the VST2 SDK API, providing type-safe bindings for building both VST2 audio plugin hosts and plugins without direct CGO/unsafe interaction. Module path: `pipelined.dev/audio/vst2`.
+Go library implementing the VST2 SDK API, providing type-safe bindings for building both VST2 audio plugin hosts and plugins without direct CGO/unsafe interaction. Module path: `github.com/cwbudde/vst2`.
 
 ## Build & Test Commands
 

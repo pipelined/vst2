@@ -10,7 +10,7 @@ import (
 	"runtime"
 	"unsafe"
 
-	"pipelined.dev/audio/vst2"
+	"github.com/cwbudde/vst2"
 	"pipelined.dev/signal"
 )
 

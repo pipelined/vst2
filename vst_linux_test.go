@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"testing"
 
-	"pipelined.dev/audio/vst2"
+	"github.com/cwbudde/vst2"
 )
 
 func TestLinux(t *testing.T) {

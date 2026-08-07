@@ -1,4 +1,4 @@
-module pipelined.dev/audio/vst2
+module github.com/cwbudde/vst2
 
 require (
 	pipelined.dev/pipe v0.10.0

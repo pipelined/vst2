@@ -77,9 +77,22 @@ type (
 )
 
 func (d Dispatcher) dispatchFunc(p Plugin) dispatchFunc {
+	// chunk holds the C allocation handed to the host by the last
+	// plugGetChunk call. The VST2 contract makes the plugin the owner of
+	// that buffer and requires it to stay valid until the host asks for
+	// the next chunk, so it can only be released on the following
+	// plugGetChunk or when the plugin is closed.
+	var chunk unsafe.Pointer
+	freeChunk := func() {
+		if chunk != nil {
+			C.free(chunk)
+			chunk = nil
+		}
+	}
 	return func(op PluginOpcode, index int32, value int64, ptr unsafe.Pointer, opt float32) int64 {
 		switch op {
 		case plugClose:
+			freeChunk()
 			if d.CloseFunc != nil {
 				d.CloseFunc()
 			}
@@ -130,12 +143,16 @@ func (d Dispatcher) dispatchFunc(p Plugin) dispatchFunc {
 			if d.GetChunkFunc == nil {
 				return 0
 			}
-			chunk := d.GetChunkFunc(index > 0)
-			if len(chunk) == 0 {
+			b := d.GetChunkFunc(index > 0)
+			if len(b) == 0 {
 				return 0
 			}
-			*(*unsafe.Pointer)(ptr) = unsafe.Pointer(C.CBytes(chunk))
-			return int64(len(chunk))
+			// the host is done with the buffer returned by the previous
+			// call, release it before handing out a new one.
+			freeChunk()
+			chunk = C.CBytes(b)
+			*(*unsafe.Pointer)(ptr) = chunk
+			return int64(len(b))
 		case plugSetChunk:
 			if d.SetChunkFunc == nil {
 				return 0

@@ -99,12 +99,12 @@ func processFloatPluginBridge(cp *C.CPlugin, in, out **C.float, sampleFrames int
 //
 //export getParameterPluginBridge
 func getParameterPluginBridge(cp *C.CPlugin, index int32) float32 {
-	return getPlugin(cp).Parameters[index].Value
+	return getPlugin(cp).Parameters[index].RawValue()
 }
 
 // global setParameter, calls real plugin setParameter.
 //
 //export setParameterPluginBridge
 func setParameterPluginBridge(cp *C.CPlugin, index int32, value float32) {
-	getPlugin(cp).Parameters[index].Value = value
+	getPlugin(cp).Parameters[index].SetValue(value)
 }

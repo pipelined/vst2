@@ -17,9 +17,8 @@ func init() {
 	)
 	vst2.PluginAllocator = func(h vst2.Host) (vst2.Plugin, vst2.Dispatcher) {
 		gain := vst2.Parameter{
-			Name:  "Gain",
-			Unit:  "db",
-			Value: 0.5,
+			Name: "Gain",
+			Unit: "db",
 			GetValueLabelFunc: func(value float32) string {
 				return fmt.Sprintf("%+.2f", value)
 			},
@@ -27,6 +26,7 @@ func init() {
 				return -20 + (40 * value)
 			},
 		}
+		gain.SetValue(0.5)
 		channels := 2
 		return vst2.Plugin{
 			UniqueID:       uniqueID,

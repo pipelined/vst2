@@ -2,7 +2,9 @@ package vst2
 
 import (
 	"fmt"
+	"math"
 	"strings"
+	"sync/atomic"
 )
 
 // EffectMagic is constant in every plugin.
@@ -758,13 +760,21 @@ const (
 
 type (
 	// Parameter refers to plugin parameter that can be mutated in the pipe.
+	//
+	// The raw normalized value is not an exported field, because the host
+	// reads and writes it from its own thread while the audio callback
+	// reads it concurrently. Use SetValue and RawValue instead, they
+	// access it atomically.
 	Parameter struct {
 		Name              string
 		Unit              string
-		Value             float32
 		NotAutomated      bool
 		GetValueLabelFunc func(value float32) string
 		GetValueFunc      func(value float32) float32
+
+		// value stores the float32 bits of the raw normalized [0,1]
+		// value and must only be touched through sync/atomic.
+		value uint32
 	}
 
 	// Preset refers to plugin presets.
@@ -773,18 +783,36 @@ type (
 	}
 )
 
+// SetValue atomically sets the raw normalized parameter value. This is the
+// value the host exchanges with the plugin and it is expected to be in the
+// [0,1] range. It is not passed through GetValueFunc.
+func (e *Parameter) SetValue(value float32) {
+	atomic.StoreUint32(&e.value, math.Float32bits(value))
+}
+
+// RawValue atomically returns the raw normalized parameter value in the
+// [0,1] range, exactly as it was set by the host or by SetValue. Use
+// GetValue to obtain the mapped physical value instead.
+func (e *Parameter) RawValue() float32 {
+	return math.Float32frombits(atomic.LoadUint32(&e.value))
+}
+
 // GetValue should be called in ProcessDoubleFunc or ProcessFloatFunc and will be called in GetDisplayVal.
-// It returns the plain Value or the return value of GetValueFunc, when it was set for the Parameter
-func (e Parameter) GetValue() float32 {
+// It returns the mapped physical value, i.e. the raw normalized value passed
+// through GetValueFunc. If GetValueFunc is not set, the raw normalized value
+// is returned unchanged, which makes GetValue equivalent to RawValue.
+func (e *Parameter) GetValue() float32 {
+	value := e.RawValue()
 	if e.GetValueFunc == nil {
-		return e.Value
+		return value
 	}
-	return e.GetValueFunc(e.Value)
+	return e.GetValueFunc(value)
 }
 
 // GetValueLabel will be called in HostOpcode plugGetParamDisplay. Return a string formatted float value or the return
-// value of GetValueLabelFunc, when it was set for the Parameter
-func (e Parameter) GetValueLabel() string {
+// value of GetValueLabelFunc, when it was set for the Parameter. Both are fed
+// with the mapped value returned by GetValue, not with the raw normalized one.
+func (e *Parameter) GetValueLabel() string {
 	if e.GetValueLabelFunc == nil {
 		return fmt.Sprintf("%f", e.GetValue())
 	}
